@@ -1,0 +1,2357 @@
+
+ ▐▛███▜▌   Claude Code v2.1.17
+▝▜█████▛▘  Opus 4.5 · Claude Pro
+  ▘▘ ▝▝    ~/Development/hyOS
+
+❯ In PlayerExtendedHandler.java implement the teleportation TODO 
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 379 lines
+
+⏺ I can see the TODO at lines 116-117. Let me check how other parts of the
+  codebase interact with player transforms and if there are any hints about the
+  teleportation API.
+
+⏺ Search(pattern: "setPosition|teleport|moveTo", path:
+        "server-api/hytale-api-leonardoxr")
+  ⎿  Found 7 files (ctrl+o to expand)
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/AdminHandler.java)
+  ⎿  Read 251 lines
+
+⏺ Let me check if there are any utilities or additional info about the Hytale
+  server API that might show how transforms work.
+
+⏺ Search(pattern: "getTransform|PlayerRef", path:
+        "server-api/hytale-api-leonardoxr", output_mode: "content")
+  ⎿  Found 224 lines (ctrl+o to expand)
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/WorldExtendedHandler.java)
+  ⎿  Read 298 lines
+
+⏺ Now I have a good understanding of the codebase patterns. The code uses
+  PlayerRef with methods like getTransform(), getPacketHandler(), and
+  getWorldUuid(). I'll implement the teleportation using a reasonable approach
+  based on the Hytale server SDK patterns.
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 13 lines, removed 3 lines
+      113              targetWorld =                                     
+           universe.getWorld(playerRef.getWorldUuid());                  
+      114          }                                                     
+      115                                                                
+      116 -        // TODO: Implement actual teleportation via server    
+          -API                                                           
+      117 -        // This would involve updating the player's transform 
+          - component                                                    
+      118 -                                                              
+      116          String worldName = targetWorld != null ?              
+           targetWorld.getName() : "unknown";                            
+      117          double x = teleportRequest.x() != null ?              
+           teleportRequest.x() : 0;                                      
+      118          double y = teleportRequest.y() != null ?              
+           teleportRequest.y() : 0;                                      
+      119          double z = teleportRequest.z() != null ?              
+           teleportRequest.z() : 0;                                      
+      120                                                                
+      121 +        // Perform teleportation via PlayerRef                
+      122 +        boolean crossWorldTeleport = targetWorld != null &&   
+      123 +                                                              
+          +!targetWorld.getUuid().equals(playerRef.getWorldUuid());      
+      124 +                                                              
+      125 +        if (crossWorldTeleport) {                             
+      126 +            // Cross-world teleport: move player to target    
+          +world at specified position                                   
+      127 +            playerRef.teleportTo(targetWorld, x, y, z);       
+      128 +        } else {                                              
+      129 +            // Same-world teleport: update transform position 
+          + directly                                                     
+      130 +            var transform = playerRef.getTransform();         
+      131 +            transform.setPosition(x, y, z);                   
+      132 +        }                                                     
+      133 +                                                              
+      134          LOGGER.info("Teleported %s to %.2f, %.2f, %.2f in %s  
+           (by %s)".formatted(                                           
+      135                  playerRef.getUsername(), x, y, z, worldName,  
+           identity.clientId()                                           
+      136          ));                                                   
+
+⏺ Let me verify the implementation compiles correctly.
+
+⏺ Bash(cd /Users/reisscashmore/Development/hyOS/server-api/hytale-api-leonardoxr
+       && ./gradlew compileJava 2>&1)
+  ⎿  Error: Exit code 1
+     WARNING: A restricted method in java.lang.System has been called
+     WARNING: java.lang.System::load has been called by 
+     net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed 
+     module 
+     (file:/Users/reisscashmore/.gradle/wrapper/dists/gradle-9.2.1-bin/2t0n5ozlw
+     xmuyvbp7dnzaxug/gradle-9.2.1/lib/native-platform-0.22-milestone-29.jar)
+     WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for 
+     callers in this module
+     WARNING: Restricted methods will be blocked in a future release unless 
+     native access is enabled
+
+     Calculating task graph as configuration cache cannot be reused because file
+     'build.gradle' has changed.
+
+     > Task :compileJava FAILED
+     /Users/reisscashmore/Development/hyOS/server-api/hytale-api-leonardoxr/src/
+     ain/java/com/hytale/api/http/handlers/PlayerExtendedHandler.java:123: error
+      cannot find symbol
+
+     … +49 lines (ctrl+o to see all)
+
+⏺ I see the API uses Vector3d for positions. Let me check how to construct it
+  and find the correct methods.
+
+⏺ Search(pattern: "Vector3d|new Vector3", path:
+        "server-api/hytale-api-leonardoxr", output_mode: "content")
+  ⎿  Found 5 lines (ctrl+o to expand)
+
+⏺ Search(pattern: "import.*Vector|import.*hytale", path:
+        "server-api/hytale-api-leonardoxr", output_mode: "content")
+  ⎿  Found 141 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/reisscashmore/Development/hyOS/server-api/hytale-api-leonardoxr
+       && find . -name "*.jar" -o -name "stubs" -type d 2>/dev/null | head -20)
+  ⎿  Tool use rejected with user message: the server jar is here 
+     config-truenas/data/server/HytaleServer.jar
+
+⏺ Read(server-api/hytale-api-leonardoxr/build.gradle)
+  ⎿  Read 65 lines
+
+⏺ Bash(jar tf config-truenas/data/server/HytaleServer.jar | grep -E
+      "(Vector3|Transform|PlayerRef)" | head -30)
+  ⎿ com/hypixel/hytale/plugin/early/TransformingClassLoader.class
+    com/hypixel/hytale/plugin/early/ClassTransformer.class
+    com/hypixel/hytale/server/core/modules/entity/player/PlayerSystems$Upda
+    … +38 lines (ctrl+o to expand)
+
+
+⏺ Bash(javap -classpath config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.server.core.universe.PlayerRef 2>&1)
+  ⎿ Compiled from "PlayerRef.java"
+    public class com.hypixel.hytale.server.core.universe.PlayerRef implemen
+    ts com.hypixel.hytale.component.Component<com.hypixel.hytale.server.cor
+    … +60 lines (ctrl+o to expand)
+
+
+
+⏺ I see updatePosition(World, Transform, Vector3f) is the method for
+  teleportation. Let me check the Transform class.
+
+⏺ Bash(javap -classpath config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.math.vector.Vector3d 2>&1)
+  ⎿ Compiled from "Vector3d.java"
+    public class com.hypixel.hytale.math.vector.Vector3d {
+      public static final com.hypixel.hytale.codec.builder.BuilderCodec<com
+    … +143 lines (ctrl+o to expand)
+
+
+⏺ Bash(javap -classpath config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.server.core.universe.world.World 2>&1 | grep -E
+      "getUuid|getName|public")
+  ⎿ public class com.hypixel.hytale.server.core.universe.world.World extend
+    s com.hypixel.hytale.server.core.util.thread.TickingThread implements j
+    ava.util.concurrent.Executor, com.hypixel.hytale.metrics.ExecutorMetric
+    … +128 lines (ctrl+o to expand)
+
+
+
+
+⏺ Now I understand the API. Let me update the implementation correctly.
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 30 lines
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 1 line
+       6  import com.hytale.api.exception.ApiException;                  
+       7  import com.hytale.api.security.ApiPermissions;                 
+       8  import com.hytale.api.security.ClientIdentity;                 
+       9 +import com.hypixel.hytale.math.vector.Transform;               
+      10  import com.hypixel.hytale.server.core.HytaleServer;            
+      11  import com.hypixel.hytale.server.core.entity.entities.Player;  
+      12  import com.hypixel.hytale.server.core.universe.PlayerRef;      
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 70 lines
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 11 lines, removed 8 lines
+      119          double y = teleportRequest.y() != null ?              
+           teleportRequest.y() : 0;                                      
+      120          double z = teleportRequest.z() != null ?              
+           teleportRequest.z() : 0;                                      
+      121                                                                
+      122 -        // Perform teleportation via PlayerRef                
+      123 -        boolean crossWorldTeleport = targetWorld != null &&   
+      124 -                                                              
+          -!targetWorld.getUuid().equals(playerRef.getWorldUuid());      
+      122 +        // Create new transform for target position           
+      123 +        Transform newTransform = new Transform(x, y, z);      
+      124                                                                
+      125 +        // Determine if this is a cross-world teleport        
+      126 +        World currentWorld =                                  
+          +universe.getWorld(playerRef.getWorldUuid());                  
+      127 +        boolean crossWorldTeleport = targetWorld != null &&   
+          +currentWorld != null &&                                       
+      128 +                                                              
+          +!targetWorld.getName().equals(currentWorld.getName());        
+      129 +                                                              
+      130          if (crossWorldTeleport) {                             
+      131 -            // Cross-world teleport: move                     
+          - player to target world at specified position                 
+      132 -            playerRef.teleportTo(targetWorld, x, y, z);       
+      131 +            // Cross-world teleport: add                      
+          + player to target world at specified position                 
+      132 +            targetWorld.addPlayer(playerRef, newTransform);   
+      133          } else {                                              
+      134 -            // Same-world teleport: update transform position 
+          - directly                                                     
+      135 -            var transform = playerRef.getTransform();         
+      136 -            transform.setPosition(x, y, z);                   
+      134 +            // Same-world teleport: update player position    
+      135 +            playerRef.updatePosition(targetWorld,             
+          +newTransform, playerRef.getHeadRotation());                   
+      136          }                                                     
+      137                                                                
+      138          LOGGER.info("Teleported %s to %.2f, %.2f, %.2f in %s  
+           (by %s)".formatted(                                           
+
+⏺ Bash(cd /Users/reisscashmore/Development/hyOS/server-api/hytale-api-leonardoxr
+       && ./gradlew compileJava 2>&1)
+  ⎿ WARNING: A restricted method in java.lang.System has been called
+    WARNING: java.lang.System::load has been called by net.rubygrapefruit.p
+    latform.internal.NativeLibraryLoader in an unnamed module (file:/Users/
+    … +13 lines (ctrl+o to expand)
+
+
+
+⏺ The teleportation has been implemented. Let me show you the final
+  implementation.
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 65 lines
+
+⏺ Done. The teleportation TODO has been implemented at
+  PlayerExtendedHandler.java:122-136. The implementation:
+
+  1. Added import for com.hypixel.hytale.math.vector.Transform
+  2. Same-world teleport: Uses playerRef.updatePosition(targetWorld, 
+  newTransform, playerRef.getHeadRotation()) to move the player within their
+  current world
+  3. Cross-world teleport: Uses targetWorld.addPlayer(playerRef, newTransform)
+  to transfer the player to a different world at the specified coordinates
+
+  The build compiles successfully.
+
+✻ Churned for 3m 5s
+
+❯ For some reason now the build and up commands are not getting the latest  
+  built JAR file when the server is span up                                 
+
+⏺ Let me investigate the build and deployment setup.
+
+⏺ Read(server-api/hytale-api-leonardoxr/config-truenas/docker-compose.yml)
+  ⎿  Error: Interrupted by user
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ docker compose -f docker-compose.yml build --no-cache && docker compose   
+  -f docker-compose.yml up --force-recreate -d                              
+
+⏺ Read(server-api/hytale-api-leonardoxr/config-truenas/Dockerfile)
+  ⎿  Error reading file
+
+⏺ Search(pattern: "**/Dockerfile")
+  ⎿  Found 0 files
+
+⏺ The config-truenas folder is outside this repo. Let me check the parent
+  directory structure.
+
+⏺ Bash(ls -la ../../config-truenas/ 2>/dev/null || ls -la ../config-truenas/
+      2>/dev/null || echo "Checking parent..." && ls -la ../ | head -20)
+  ⎿  total 88
+     drwxr-xr-x@ 10 reisscashmore  staff    320 Jan 19 23:18 .
+     drwxr-xr-x  13 reisscashmore  staff    416 Jan 20 01:47 ..
+     … +22 lines (ctrl+o to expand)
+
+⏺ Read(config-truenas/docker-compose.yml)
+  ⎿  Read 53 lines
+
+⏺ I see the issue. The Dockerfile copies from plugins/ directory at build time
+  (line 115), but your Gradle build outputs to build/libs/. You need to copy the
+   JAR to the plugins folder before building Docker.
+
+⏺ Bash(ls -la ../../config-truenas/plugins/ && echo "---" && ls -la build/libs/
+      2>/dev/null || echo "build/libs not found - run ./gradlew build first")
+  ⎿  total 424
+     drwxr-xr-x@  4 reisscashmore  staff     128 Jan 19 16:07 .
+     drwxr-xr-x@ 10 reisscashmore  staff     320 Jan 19 23:18 ..
+     … +9 lines (ctrl+o to expand)
+
+⏺ Found it. The plugins/ folder has an older JAR (01:49) while your build output
+   (01:57) is newer:
+
+  plugins/hytale-api-1.0.0.jar   214,469 bytes  Jan 20 01:49
+  build/libs/hytale-api-1.0.0.jar 214,502 bytes  Jan 20 01:57
+
+  You need to copy the JAR after building. Run:
+
+  ./gradlew build && cp build/libs/hytale-api-1.0.0.jar
+  ../../config-truenas/plugins/
+
+  Then run your docker compose command.
+
+  Alternatively, I can update the Gradle build to automatically copy the JAR to
+  the plugins folder. Would you like me to add that?
+
+✻ Cogitated for 39s
+
+❯ Okay I have verified that our added lines are running in the JAR on the   
+  server but still the teleport does not work                               
+
+⏺ Let me check how other handlers execute server operations and see if there's
+  threading or async handling needed.
+
+⏺ Bash(javap -classpath ../../config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.server.core.universe.world.World 2>&1 | grep -E
+      "addPlayer|execute")
+  ⎿   public void execute(java.lang.Runnable);
+      public java.util.concurrent.CompletableFuture<com.hypixel.hytale.serv
+    er.core.universe.PlayerRef> addPlayer(com.hypixel.hytale.server.core.un
+    … +8 lines (ctrl+o to expand)
+
+
+
+⏺ The issue is likely thread-safety. The World has an execute(Runnable) method -
+   operations need to run on the world's thread. Let me update the teleport
+  implementation.
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 30 lines
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 15 lines, removed 4 lines
+      127          boolean crossWorldTeleport = targetWorld != null &&   
+           currentWorld != null &&                                       
+      128                                                                
+           !targetWorld.getName().equals(currentWorld.getName());        
+      129                                                                
+      130 +        // Capture final references for lambda                
+      131 +        final World finalTargetWorld = targetWorld;           
+      132 +        final PlayerRef finalPlayerRef = playerRef;           
+      133 +                                                              
+      134          if (crossWorldTeleport) {                             
+      135              // Cross-world teleport: add player to target     
+           world at specified position                                   
+      136 -            targetWorld.addPlayer(playerRef, newTransform);   
+      136 +            // This is async and runs on the target world's   
+          +thread                                                        
+      137 +            finalTargetWorld.addPlayer(finalPlayerRef,        
+          +newTransform)                                                 
+      138 +                    .exceptionally(ex -> {                    
+      139 +                        LOGGER.warning("Cross-world teleport  
+          +failed: " + ex.getMessage());                                 
+      140 +                        return null;                          
+      141 +                    });                                       
+      142          } else {                                              
+      143 -            // Same-world teleport: update player position    
+      144 -        LOGGER.info("Same-world teleport: updating player     
+          -position");                                                   
+      145 -            playerRef.updatePosition(targetWorld,             
+          -newTransform, playerRef.getHeadRotation());                   
+      143 +            // Same-world teleport: execute on                
+          +the world's thread                                            
+      144 +            finalTargetWorld.execute(() -> {                  
+      145 +                                                              
+          +finalPlayerRef.updatePosition(finalTargetWorld, newTransform, 
+          + finalPlayerRef.getHeadRotation());                           
+      146 +                LOGGER.info("Position update executed on      
+          +world thread");                                               
+      147 +            });                                               
+      148          }                                                     
+      149                                                                
+      150          LOGGER.info("Teleported %s to %.2f, %.2f, %.2f in %s  
+           (by %s)".formatted(                                           
+
+⏺ Bash(./gradlew build && cp build/libs/hytale-api-1.0.0.jar
+      ../../config-truenas/plugins/ && echo "Build and copy complete")
+  ⎿  Reusing configuration cache.
+     > Task :processTestResources NO-SOURCE
+     > Task :processResources UP-TO-DATE
+     … +23 lines (ctrl+o to expand)
+
+⏺ Build complete and JAR copied. The key change: operations now execute on the
+  world's thread via world.execute().
+
+  Same-world teleport: Now wrapped in finalTargetWorld.execute(() -> { ... }) to
+   run on the world's tick thread.
+
+  Cross-world teleport: addPlayer already handles threading internally (returns
+  CompletableFuture), but I added error logging.
+
+  Rebuild your Docker container now:
+  docker compose -f docker-compose.yml build --no-cache && docker compose -f
+  docker-compose.yml up --force-recreate -d
+
+  If it still doesn't work, check the server logs for the "Position update
+  executed on world thread" message or any warnings.
+
+✻ Cogitated for 41s
+
+❯ I see the "Position update executed on world thread" log but still        
+  nothing happens to the user in game. Are we missing something?            
+
+⏺ The updatePosition might only update server-side tracking, not actually move
+  the client. Let me check for teleport packets or other methods.
+
+⏺ Bash(jar tf ../../config-truenas/data/server/HytaleServer.jar | grep -iE
+      "(teleport|position)" | head -30)
+  ⎿ com/hypixel/hytale/server/core/modules/entity/player/KnockbackPredictio
+    nSystems$ClearOnTeleport.class
+    com/hypixel/hytale/server/core/modules/entity/component/PositionDataCom
+    … +47 lines (ctrl+o to expand)
+
+
+
+⏺ There's a dedicated teleport system. Let me check the Teleport class and
+  PendingTeleport.
+
+⏺ Bash(javap -classpath ../../config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.server.core.modules.entity.teleport.PendingTeleport
+      2>&1)
+  ⎿ Compiled from "PendingTeleport.java"
+    public class com.hypixel.hytale.server.core.modules.entity.teleport.Pen
+    dingTeleport implements com.hypixel.hytale.component.Component<com.hypi
+    … +19 lines (ctrl+o to expand)
+
+
+
+⏺ The teleport system uses components. We need to create a Teleport component
+  and add it to the player. Let me check how to add components to entities.
+
+⏺ Bash(javap -classpath ../../config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.component.Holder 2>&1 | head -40)
+  ⎿  Compiled from "Holder.java"
+     public class com.hypixel.hytale.component.Holder<ECS_TYPE> {
+       static final boolean $assertionsDisabled;
+     … +62 lines (ctrl+o to expand)
+
+⏺ I see. We need to add a Teleport component to the player's holder. Let me
+  update the implementation.
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 25 lines
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 2 lines
+       7  import com.hytale.api.security.ApiPermissions;                 
+       8  import com.hytale.api.security.ClientIdentity;                 
+       9  import com.hypixel.hytale.math.vector.Transform;               
+      10 +import com.hypixel.hytale.math.vector.Vector3d;                
+      11  import com.hypixel.hytale.server.core.HytaleServer;            
+      12  import com.hypixel.hytale.server.core.entity.entities.Player;  
+      13 +import com.hypixel.hytale.server.core.modules.entity.teleport. 
+         +Teleport;                                                      
+      14  import com.hypixel.hytale.server.core.universe.PlayerRef;      
+      15  import com.hypixel.hytale.server.core.universe.Universe;       
+      16  import com.hypixel.hytale.server.core.universe.world.World;    
+
+⏺ Good info. Now let me update the teleport logic to use the proper Teleport
+  component system.
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 35 lines
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 15 lines, removed 6 lines
+      121          double y = teleportRequest.y() != null ?              
+           teleportRequest.y() : 0;                                      
+      122          double z = teleportRequest.z() != null ?              
+           teleportRequest.z() : 0;                                      
+      123                                                                
+      124 -        // Create new transform for target position           
+      125 -        Transform newTransform = new Transform(x, y, z);      
+      124 +        // Create target position                             
+      125 +        Vector3d targetPosition = new Vector3d(x, y, z);      
+      126                                                                
+      127          // Determine if this is a cross-world teleport        
+      128          World currentWorld =                                  
+           universe.getWorld(playerRef.getWorldUuid());                  
+     ...
+      135                                                                
+      136          if (crossWorldTeleport) {                             
+      137              // Cross-world teleport: add player to target     
+           world at specified position                                   
+      138 -            // This is async and runs on the target world's   
+          -thread                                                        
+      138 +            Transform newTransform = new Transform(x, y, z);  
+      139              finalTargetWorld.addPlayer(finalPlayerRef,        
+           newTransform)                                                 
+      140                      .exceptionally(ex -> {                    
+      141                          LOGGER.warning("Cross-world teleport  
+           failed: " + ex.getMessage());                                 
+      142                          return null;                          
+      143                      });                                       
+      144          } else {                                              
+      145 -            // Same-world teleport: execute on the world's    
+          -thread                                                        
+      145 +            // Same-world teleport: use the Teleport          
+          +component system                                              
+      146              finalTargetWorld.execute(() -> {                  
+      147 -                                                              
+          -finalPlayerRef.updatePosition(finalTargetWorld, newTransform, 
+          - finalPlayerRef.getHeadRotation());                           
+      148 -                LOGGER.info("Position update executed on      
+          -world thread");                                               
+      147 +                // Create a Teleport component for the player 
+      148 +                Teleport teleport = Teleport.createForPlayer( 
+      149 +                        finalTargetWorld,                     
+      150 +                        targetPosition,                       
+      151 +                        finalPlayerRef.getHeadRotation()      
+      152 +                );                                            
+      153 +                                                              
+      154 +                // Add the teleport component to the player's 
+          + entity holder                                                
+      155 +                finalPlayerRef.getHolder().addComponent(Telep 
+          +ort.getComponentType(), teleport);                            
+      156 +                                                              
+      157 +                LOGGER.info("Teleport component added to      
+          +player on world thread");                                     
+      158              });                                               
+      159          }                                                     
+      160                                                                
+
+⏺ Bash(./gradlew build && cp build/libs/hytale-api-1.0.0.jar
+      ../../config-truenas/plugins/ && echo "Build and copy complete")
+  ⎿  Reusing configuration cache.
+     > Task :processTestResources NO-SOURCE
+     > Task :processResources UP-TO-DATE
+     … +23 lines (ctrl+o to expand)
+
+⏺ Build complete. The key change: now using the proper Hytale ECS teleport
+  system:
+
+  Teleport teleport = Teleport.createForPlayer(world, position, headRotation);
+  playerRef.getHolder().addComponent(Teleport.getComponentType(), teleport);
+
+  The TeleportSystems in the server will process this component and handle
+  client synchronization.
+
+  Rebuild your Docker container and test again. Look for "Teleport component
+  added to player on world thread" in logs.
+
+✻ Cooked for 1m 8s
+
+❯ 2026-01-20T02:12:51.725968172Z     at                                     
+  ThirdPartyPlugin//com.hytale.api.http.handlers.PlayerExtendedHandler.lamb 
+  da$handleTeleport$1(PlayerExtendedHandler.java:155)                       
+                                                                            
+  2026-01-20T02:12:51.725969339Z     at com.hypixel.hytale.server.core.univ 
+  erse.world.World.consumeTaskQueue(World.java:894)                         
+                                                                            
+  2026-01-20T02:12:51.725970297Z     at                                     
+  com.hypixel.hytale.server.core.universe.world.World.tick(World.java:411)  
+                                                                            
+  2026-01-20T02:12:51.725971214Z     at com.hypixel.hytale.server.core.util 
+  .thread.TickingThread.run(TickingThread.java:89)                          
+                                                                            
+  2026-01-20T02:12:51.725972172Z     at                                     
+  java.base/java.lang.Thread.run(Unknown Source)                            
+                                                                            
+  2026-01-20T02:12:51.725973005Z                                            
+                                                                            
+  2026-01-20T02:12:54.386980173Z [2026/01/20 02:12:54   INFO]               
+  [com.hytale.api.http.handlers.PlayerExtendedHandler] Teleported Ricehead  
+  to 1400.00, 120.00, -165.00 in default (by hyos-manager)                  
+                                                                            
+  2026-01-20T02:12:54.390180673Z [2026/01/20 02:12:54 SEVERE]               
+  [World|default] Failed to run task!                                       
+                                                                            
+  2026-01-20T02:12:54.390202965Z java.lang.NullPointerException: Cannot     
+  invoke "com.hypixel.hytale.component.Holder.addComponent(com.hypixel.hyta 
+  le.component.ComponentType, com.hypixel.hytale.component.Component)"      
+  because the return value of                                               
+  "com.hypixel.hytale.server.core.universe.PlayerRef.getHolder()" is null   
+                                                                            
+  2026-01-20T02:12:54.390205715Z     at                                     
+  ThirdPartyPlugin//com.hytale.api.http.handlers.PlayerExtendedHandler.lamb 
+  da$handleTeleport$1(PlayerExtendedHandler.java:155)                       
+                                                                            
+  2026-01-20T02:12:54.390216132Z     at com.hypixel.hytale.server.core.univ 
+  erse.world.World.consumeTaskQueue(World.java:894)                         
+                                                                            
+  2026-01-20T02:12:54.390217173Z     at                                     
+  com.hypixel.hytale.server.core.universe.world.World.tick(World.java:411)  
+                                                                            
+  2026-01-20T02:12:54.390218048Z     at com.hypixel.hytale.server.core.util 
+  .thread.TickingThread.run(TickingThread.java:89)                          
+                                                                            
+  2026-01-20T02:12:54.390218923Z     at                                     
+  java.base/java.lang.Thread.run(Unknown Source)                            
+                                                                            
+  2026-01-20T02:12:54.390219715Z                                            
+                                                                            
+                                                                            
+
+⏺ The PlayerRef.getHolder() returns null - it's a reference wrapper, not the
+  entity itself. We need to get the actual entity from the world. Let me fix
+  this.
+
+⏺ Bash(javap -classpath ../../config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.server.core.entity.Entity 2>&1 | grep -E
+      "getHolder|getComponent|public")
+  ⎿ public abstract class com.hypixel.hytale.server.core.entity.Entity impl
+    ements com.hypixel.hytale.component.Component<com.hypixel.hytale.server
+    .core.universe.world.storage.EntityStore> {
+    … +55 lines (ctrl+o to expand)
+
+
+
+⏺ Bash(javap -classpath ../../config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.component.Ref 2>&1 | head -30)
+  ⎿ Compiled from "Ref.java"
+    public class com.hypixel.hytale.component.Ref<ECS_TYPE> {
+      public static final com.hypixel.hytale.component.Ref<?>[] EMPTY_ARRAY
+    … +19 lines (ctrl+o to expand)
+
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 25 lines
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 13 lines, removed 3 lines
+      143                      });                                       
+      144          } else {                                              
+      145              // Same-world teleport: use the Teleport          
+           component system                                              
+      146 +            final UUID playerUuid = playerRef.getUuid();      
+      147 +                                                              
+      148              finalTargetWorld.execute(() -> {                  
+      149 +                // Get the player entity from the world       
+      150 +                var entity =                                  
+          +finalTargetWorld.getEntity(playerUuid);                       
+      151 +                if (entity == null) {                         
+      152 +                    LOGGER.warning("Could not find player     
+          +entity for teleport: " + playerUuid);                         
+      153 +                    return;                                   
+      154 +                }                                             
+      155 +                                                              
+      156                  // Create a Teleport component for the player 
+      157                  Teleport teleport = Teleport.createForPlayer( 
+      158                          finalTargetWorld,                     
+     ...
+      151                          finalPlayerRef.getHeadRotation()      
+      152                  );                                            
+      153                                                                
+      154 -                // Add the teleport component to the player's 
+          -entity holder                                                 
+      155 -                finalPlayerRef.getHolder().addComponent(Telep 
+          -ort.getComponentType(), teleport);                            
+      154 +                // Add the teleport component to the entity's 
+          +holder                                                        
+      155 +                var holder = entity.toHolder();               
+      156 +                                                              
+          +holder.addComponent(Teleport.getComponentType(), teleport);   
+      157                                                                
+      158 -                LOGGER.info("Teleport component added to      
+          -player on world thread");                                     
+      158 +                LOGGER.info("Teleport component added to      
+          +player entity on world thread");                              
+      159              });                                               
+      160          }                                                     
+      161                                                                
+
+⏺ Bash(./gradlew build && cp build/libs/hytale-api-1.0.0.jar
+      ../../config-truenas/plugins/ && echo "Build and copy complete")
+  ⎿  Reusing configuration cache.
+     > Task :processTestResources NO-SOURCE
+     > Task :processResources UP-TO-DATE
+     … +34 lines (ctrl+o to expand)
+
+⏺ Build complete (ignore the deprecation warning - likely from toHolder()). Now
+  getting the entity from the world and using entity.toHolder():
+
+  var entity = finalTargetWorld.getEntity(playerUuid);
+  var holder = entity.toHolder();
+  holder.addComponent(Teleport.getComponentType(), teleport);
+
+  Rebuild Docker and test. Look for "Teleport component added to player entity
+  on world thread" or the warning message if the entity isn't found.
+
+✻ Churned for 43s
+
+❯ Here is a different mod and code which shows how teleporting can be done 
+
+⏺ Please share the code and I'll adapt our implementation to match.
+
+❯ ackage com.github.grule.teleportrequests;                                 
+                                                                            
+  import com.hypixel.hytale.component.Ref;                                  
+  import com.hypixel.hytale.server.core.modules.entity.teleport.Teleport;   
+  import com.hypixel.hytale.server.core.universe.PlayerRef;                 
+  import com.hypixel.hytale.server.core.universe.Universe;                  
+  import com.hypixel.hytale.server.core.universe.world.storage.EntityStore; 
+                                                                            
+  import java.util.UUID;                                                    
+                                                                            
+  public class TeleportRequest {                                            
+  private final UUID requester;                                             
+  private final UUID target;                                                
+  private final long expiresAt;                                             
+  private final Type type;                                                  
+  private boolean executed = false;                                         
+                                                                            
+  /**                                                                       
+  * Represents a teleport request from one player to another.               
+  *                                                                         
+  * @param requester The UUID of the player requesting to teleport          
+  * @param target    The UUID of the target player of the request           
+  * @param expiresAt Timestamp in milliseconds when this request            
+  expires                                                                   
+  */                                                                        
+  private TeleportRequest(UUID requester, UUID target, long expiresAt,      
+  TeleportRequest.Type type) {                                              
+  this.requester = requester;                                               
+  this.target = target;                                                     
+  this.expiresAt = expiresAt;                                               
+  this.type = type;                                                         
+  }                                                                         
+                                                                            
+  public boolean execute() {                                                
+  var universe = Universe.get();                                            
+  PlayerRef requesterPlayer = universe.getPlayer(requester);                
+  PlayerRef targetPlayer = universe.getPlayer(target);                      
+                                                                            
+  if (requesterPlayer == null || targetPlayer == null) {                    
+  return false;                                                             
+  }                                                                         
+                                                                            
+  final Ref<EntityStore> playerToTeleportRef;                               
+  final PlayerRef targetPlayerToTeleport;                                   
+                                                                            
+  if (this.type == Type.TELEPORT_TO) {                                      
+  playerToTeleportRef = requesterPlayer.getReference();                     
+  if (playerToTeleportRef == null) {                                        
+  return false;                                                             
+  }                                                                         
+  targetPlayerToTeleport = targetPlayer;                                    
+  } else {                                                                  
+  playerToTeleportRef = targetPlayer.getReference();                        
+  if (playerToTeleportRef == null) {                                        
+  return false;                                                             
+  }                                                                         
+  targetPlayerToTeleport = requesterPlayer;                                 
+  }                                                                         
+                                                                            
+  var targetPlayerToTeleportRef =                                           
+  targetPlayerToTeleport.getReference();                                    
+  if (targetPlayerToTeleportRef == null) {                                  
+  return false;                                                             
+  }                                                                         
+                                                                            
+  var transform = targetPlayerToTeleport.getTransform();                    
+  playerToTeleportRef.getStore().putComponent(                              
+  playerToTeleportRef,                                                      
+  Teleport.getComponentType(),                                              
+  new Teleport(                                                             
+                                                                            
+  targetPlayerToTeleportRef.getStore().getExternalData().getWorld(),        
+  transform.getPosition(),                                                  
+  transform.getRotation()                                                   
+  )                                                                         
+  );                                                                        
+  executed = true;                                                          
+  return true;                                                              
+  }                                                                         
+                                                                            
+  public UUID getRequester() {                                              
+  return requester;                                                         
+  }                                                                         
+                                                                            
+  public UUID getTarget() {                                                 
+  return target;                                                            
+  }                                                                         
+                                                                            
+  public Type getType() {                                                   
+  return type;                                                              
+  }                                                                         
+                                                                            
+  /**                                                                       
+  * Checks if this request has expired.                                     
+  *                                                                         
+  * @return true if the request is past its expiration time or if the       
+  request has                                                               
+  *         already been executed                                           
+  */                                                                        
+  public boolean isExpired() {                                              
+  return System.currentTimeMillis() > expiresAt || executed;                
+  }                                                                         
+                                                                            
+  /**                                                                       
+  * Creates a new teleport request with a given timeout.                    
+  *                                                                         
+  * @param requester      The UUID of the player requesting to              
+  teleport                                                                  
+  * @param target         The UUID of the target player of the request      
+  * @param timeoutSeconds How long the request is valid for                 
+  * @return A new TeleportRequest instance                                  
+  */                                                                        
+  public static TeleportRequest create(UUID requester, UUID target, int     
+  timeoutSeconds, TeleportRequest.Type type) {                              
+  long expiresAt = System.currentTimeMillis() + (timeoutSeconds *           
+  1000L);                                                                   
+  return new TeleportRequest(requester, target, expiresAt, type);           
+  }                                                                         
+                                                                            
+  public enum Type {                                                        
+  TELEPORT_TO,                                                              
+  TELEPORT_HERE,                                                            
+  }                                                                         
+  }                                                                         
+
+⏺ This is the key pattern:
+
+  playerRef.getReference().getStore().putComponent(
+      playerRef.getReference(),
+      Teleport.getComponentType(),
+      new Teleport(world, position, rotation)
+  );
+
+  Let me update our implementation.
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 50 lines
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 18 lines, removed 21 lines
+      142                          return null;                          
+      143                      });                                       
+      144          } else {                                              
+      145 -            // Same-world teleport: use the Teleport component
+          - system                                                       
+      146 -            final UUID playerUuid = playerRef.getUuid();      
+      145 +            // Same-world teleport: use the Teleport component
+          + via Store                                                    
+      146 +            var playerReference = playerRef.getReference();   
+      147 +            if (playerReference == null) {                    
+      148 +                throw                                         
+          +ApiException.InternalError.serverError("Player reference is   
+          +null");                                                       
+      149 +            }                                                 
+      150                                                                
+      151 -            finalTargetWorld.execute(() -> {                  
+      152 -                // Get the player entity from the world       
+      153 -                var entity =                                  
+          -finalTargetWorld.getEntity(playerUuid);                       
+      154 -                if (entity == null) {                         
+      155 -                    LOGGER.warning("Could not find player     
+          -entity for teleport: " + playerUuid);                         
+      156 -                    return;                                   
+      157 -                }                                             
+      151 +            // Get current rotation to preserve it            
+      152 +            var currentTransform = playerRef.getTransform();  
+      153                                                                
+      154 -                // Create a Teleport component for the player 
+      155 -                Teleport teleport = Teleport.createForPlayer( 
+      156 -                        finalTargetWorld,                     
+      157 -                        targetPosition,                       
+      158 -                        finalPlayerRef.getHeadRotation()      
+      159 -                );                                            
+      154 +            // Add teleport component via the store (this is  
+          +the correct pattern)                                          
+      155 +            playerReference.getStore().putComponent(          
+      156 +                    playerReference,                          
+      157 +                    Teleport.getComponentType(),              
+      158 +                    new Teleport(                             
+      159 +                            finalTargetWorld,                 
+      160 +                            targetPosition,                   
+      161 +                            currentTransform.getRotation()    
+      162 +                    )                                         
+      163 +            );                                                
+      164                                                                
+      165 -                // Add the teleport component to the entity's 
+          - holder                                                       
+      166 -                var holder = entity.toHolder();               
+      167 -                                                              
+          -holder.addComponent(Teleport.getComponentType(), teleport);   
+      168 -                                                              
+      169 -                LOGGER.info("Teleport component added to      
+          -player entity on world thread");                              
+      170 -            });                                               
+      165 +            LOGGER.info("Teleport component added via         
+          +store");                                                      
+      166          }                                                     
+      167                                                                
+      168          LOGGER.info("Teleported %s to %.2f, %.2f, %.2f in %s  
+           (by %s)".formatted(                                           
+
+⏺ Bash(./gradlew build && cp build/libs/hytale-api-1.0.0.jar
+      ../../config-truenas/plugins/ && echo "Build and copy complete")
+  ⎿  Error: Exit code 1
+     WARNING: A restricted method in java.lang.System has been called
+     WARNING: java.lang.System::load has been called by 
+     net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed 
+     module 
+     (file:/Users/reisscashmore/.gradle/wrapper/dists/gradle-9.2.1-bin/2t0n5ozlw
+     xmuyvbp7dnzaxug/gradle-9.2.1/lib/native-platform-0.22-milestone-29.jar)
+     WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for 
+     callers in this module
+     WARNING: Restricted methods will be blocked in a future release unless 
+     native access is enabled
+
+     /Users/reisscashmore/Development/hyOS/server-api/hytale-api-leonardoxr/src/
+     ain/java/com/hytale/api/http/handlers/PlayerExtendedHandler.java:148: error
+      cannot find symbol
+                     throw ApiException.InternalError.serverError("Player 
+     reference is null");
+                                                     ^
+       symbol:   method serverError(String)
+     … +30 lines (ctrl+o to see all)
+
+⏺ Search(pattern: "InternalError", path: "server-api/hytale-api-leonardoxr/src/m
+        ain/java/com/hytale/api/exception/ApiException.java", output_mode:
+        "content")
+  ⎿  Found 25 lines (ctrl+o to expand)
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 1 line, removed 1 line
+      145              // Same-world teleport: use the Teleport          
+           component via Store                                           
+      146              var playerReference = playerRef.getReference();   
+      147              if (playerReference == null) {                    
+      148 -                throw ApiException.InternalError.serverError  
+          -("Player reference is null");                                 
+      148 +                throw new ApiException.InternalError          
+          +("Player reference is null");                                 
+      149              }                                                 
+      150                                                                
+      151              // Get current rotation to preserve it            
+
+⏺ Bash(./gradlew build && cp build/libs/hytale-api-1.0.0.jar
+      ../../config-truenas/plugins/ && echo "Build and copy complete")
+  ⎿  Reusing configuration cache.
+     > Task :processTestResources NO-SOURCE
+     > Task :processResources UP-TO-DATE
+     … +23 lines (ctrl+o to expand)
+
+⏺ Build complete. Now using the correct pattern from the working mod:
+
+  var playerReference = playerRef.getReference();
+  playerReference.getStore().putComponent(
+      playerReference,
+      Teleport.getComponentType(),
+      new Teleport(targetWorld, targetPosition, currentTransform.getRotation())
+  );
+
+  Rebuild Docker and test. This matches the pattern from the teleport mod
+  exactly.
+
+✻ Cogitated for 45s
+
+❯                                                                           
+  2026-01-20T02:17:58.463688342Z java.lang.IllegalStateException: Assert    
+  not in thread! Thread[#101,WorldThread -                                  
+  default,5,InnocuousForkJoinWorkerThreadGroup] but was in                  
+  Thread[#109,nioEventLoopGroup-3-7,10,main]                                
+                                                                            
+  2026-01-20T02:17:58.463690300Z     at                                     
+  com.hypixel.hytale.component.Store.assertThread(Store.java:2303)          
+                                                                            
+  2026-01-20T02:17:58.463691217Z     at                                     
+  com.hypixel.hytale.component.Store.putComponent(Store.java:1168)          
+                                                                            
+  2026-01-20T02:17:58.463691967Z     at                                     
+  ThirdPartyPlugin//com.hytale.api.http.handlers.PlayerExtendedHandler.hand 
+  leTeleport(PlayerExtendedHandler.java:155)                                
+                                                                            
+  2026-01-20T02:17:58.463692800Z     at ThirdPartyPlugin//com.hytale.api.ht 
+  tp.HttpRequestRouter.route(HttpRequestRouter.java:237)                    
+                                                                            
+  2026-01-20T02:17:58.463693592Z     at ThirdPartyPlugin//com.hytale.api.ht 
+  tp.HttpRequestRouter.channelRead0(HttpRequestRouter.java:121)             
+                                                                            
+  2026-01-20T02:17:58.463694342Z     at ThirdPartyPlugin//com.hytale.api.ht 
+  tp.HttpRequestRouter.channelRead0(HttpRequestRouter.java:29)              
+                                                                            
+  2026-01-20T02:17:58.463695092Z     at io.netty.channel.SimpleChannelInbou 
+  ndHandler.channelRead(SimpleChannelInboundHandler.java:99)                
+                                                                            
+  2026-01-20T02:17:58.463695842Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:356)       
+                                                                            
+  2026-01-20T02:17:58.463703009Z     at io.netty.channel.SimpleChannelInbou 
+  ndHandler.channelRead(SimpleChannelInboundHandler.java:102)               
+                                                                            
+  2026-01-20T02:17:58.463703842Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:356)       
+                                                                            
+  2026-01-20T02:17:58.463704592Z     at io.netty.handler.codec.MessageToMes 
+  sageDecoder.channelRead(MessageToMessageDecoder.java:107)                 
+                                                                            
+  2026-01-20T02:17:58.463705300Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:356)       
+                                                                            
+  2026-01-20T02:17:58.463706050Z     at io.netty.channel.ChannelInboundHand 
+  lerAdapter.channelRead(ChannelInboundHandlerAdapter.java:93)              
+                                                                            
+  2026-01-20T02:17:58.463706842Z     at io.netty.handler.codec.http.websock 
+  etx.Utf8FrameValidator.channelRead(Utf8FrameValidator.java:98)            
+                                                                            
+  2026-01-20T02:17:58.463707550Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:356)       
+                                                                            
+  2026-01-20T02:17:58.463708342Z     at                                     
+  io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandshakeHa 
+  ndler.channelRead(WebSocketServerProtocolHandshakeHandler.java:67)        
+                                                                            
+  2026-01-20T02:17:58.463709217Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:356)       
+                                                                            
+  2026-01-20T02:17:58.463710634Z     at ThirdPartyPlugin//com.hytale.api.ra 
+  telimit.RateLimitMiddleware.channelRead0(RateLimitMiddleware.java:44)     
+                                                                            
+  2026-01-20T02:17:58.463711384Z     at ThirdPartyPlugin//com.hytale.api.ra 
+  telimit.RateLimitMiddleware.channelRead0(RateLimitMiddleware.java:17)     
+                                                                            
+  2026-01-20T02:17:58.463712134Z     at io.netty.channel.SimpleChannelInbou 
+  ndHandler.channelRead(SimpleChannelInboundHandler.java:99)                
+                                                                            
+  2026-01-20T02:17:58.463713092Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:356)       
+                                                                            
+  2026-01-20T02:17:58.463713884Z     at io.netty.handler.codec.MessageToMes 
+  sageDecoder.channelRead(MessageToMessageDecoder.java:107)                 
+                                                                            
+  2026-01-20T02:17:58.463714634Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:356)       
+                                                                            
+  2026-01-20T02:17:58.463715425Z     at                                     
+  io.netty.channel.CombinedChannelDuplexHandler$DelegatingChannelHandlerCon 
+  text.fireChannelRead(CombinedChannelDuplexHandler.java:434)               
+                                                                            
+  2026-01-20T02:17:58.463716217Z     at io.netty.handler.codec.ByteToMessag 
+  eDecoder.fireChannelRead(ByteToMessageDecoder.java:361)                   
+                                                                            
+  2026-01-20T02:17:58.463716967Z     at io.netty.handler.codec.ByteToMessag 
+  eDecoder.channelRead(ByteToMessageDecoder.java:325)                       
+                                                                            
+  2026-01-20T02:17:58.463717675Z     at io.netty.channel.CombinedChannelDup 
+  lexHandler.channelRead(CombinedChannelDuplexHandler.java:249)             
+                                                                            
+  2026-01-20T02:17:58.463718425Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:354)       
+                                                                            
+  2026-01-20T02:17:58.463719175Z     at io.netty.handler.timeout.IdleStateH 
+  andler.channelRead(IdleStateHandler.java:293)                             
+                                                                            
+  2026-01-20T02:17:58.463719884Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:354)       
+                                                                            
+  2026-01-20T02:17:58.463721675Z     at io.netty.channel.DefaultChannelPipe 
+  line$HeadContext.channelRead(DefaultChannelPipeline.java:1429)            
+                                                                            
+  2026-01-20T02:17:58.463722467Z     at io.netty.channel.DefaultChannelPipe 
+  line.fireChannelRead(DefaultChannelPipeline.java:918)                     
+                                                                            
+  2026-01-20T02:17:58.463723259Z     at io.netty.channel.nio.AbstractNioByt 
+  eChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:172)              
+                                                                            
+  2026-01-20T02:17:58.463724009Z     at io.netty.channel.nio.AbstractNioCha 
+  nnel$AbstractNioUnsafe.handle(AbstractNioChannel.java:445)                
+                                                                            
+  2026-01-20T02:17:58.463724800Z     at io.netty.channel.nio.NioIoHandler$D 
+  efaultNioRegistration.handle(NioIoHandler.java:388)                       
+                                                                            
+  2026-01-20T02:17:58.463725509Z     at io.netty.channel.nio.NioIoHandler.p 
+  rocessSelectedKey(NioIoHandler.java:596)                                  
+                                                                            
+  2026-01-20T02:17:58.463726217Z     at io.netty.channel.nio.NioIoHandler.p 
+  rocessSelectedKeysPlain(NioIoHandler.java:541)                            
+                                                                            
+  2026-01-20T02:17:58.463727134Z     at io.netty.channel.nio.NioIoHandler.p 
+  rocessSelectedKeys(NioIoHandler.java:514)                                 
+                                                                            
+  2026-01-20T02:17:58.463727842Z     at                                     
+  io.netty.channel.nio.NioIoHandler.run(NioIoHandler.java:484)              
+                                                                            
+  2026-01-20T02:17:58.463728550Z     at io.netty.channel.SingleThreadIoEven 
+  tLoop.runIo(SingleThreadIoEventLoop.java:225)                             
+                                                                            
+  2026-01-20T02:17:58.463729300Z     at io.netty.channel.SingleThreadIoEven 
+  tLoop.run(SingleThreadIoEventLoop.java:196)                               
+                                                                            
+  2026-01-20T02:17:58.463730050Z     at io.netty.util.concurrent.SingleThre 
+  adEventExecutor$5.run(SingleThreadEventExecutor.java:1195)                
+                                                                            
+  2026-01-20T02:17:58.463730800Z     at                                     
+  io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74) 
+                                                                            
+  2026-01-20T02:17:58.463731509Z     at io.netty.util.concurrent.FastThread 
+  LocalRunnable.run(FastThreadLocalRunnable.java:30)                        
+                                                                            
+  2026-01-20T02:17:58.463732259Z     at                                     
+  java.base/java.lang.Thread.run(Unknown Source)                            
+                                                                            
+  2026-01-20T02:17:58.463732967Z                                            
+                                                                            
+                                                                            
+
+⏺ Right, we need to execute on the world thread. Let me wrap it properly.
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 14 lines, removed 13 lines
+      149              }                                                 
+      150                                                                
+      151              // Get current rotation to preserve it            
+      152 -            var currentTransform = playerRef.getTransform();  
+      152 +            var currentRotation = playerRef.getTransform()    
+          +.getRotation();                                               
+      153                                                                
+      154 -            // Add teleport component via the store (this is  
+          -the correct pattern)                                          
+      155 -            playerReference.getStore().putComponent(          
+      156 -                    playerReference,                          
+      157 -                    Teleport.getComponentType(),              
+      158 -                    new Teleport(                             
+      159 -                            finalTargetWorld,                 
+      160 -                            targetPosition,                   
+      161 -                            currentTransform.getRotation()    
+      162 -                    )                                         
+      163 -            );                                                
+      164 -                                                              
+      165 -            LOGGER.info("Teleport component added via store");
+      154 +            // Execute on world thread - Store.putComponent   
+          +requires it                                                   
+      155 +            finalTargetWorld.execute(() -> {                  
+      156 +                playerReference.getStore().putComponent(      
+      157 +                        playerReference,                      
+      158 +                        Teleport.getComponentType(),          
+      159 +                        new Teleport(                         
+      160 +                                finalTargetWorld,             
+      161 +                                targetPosition,               
+      162 +                                currentRotation               
+      163 +                        )                                     
+      164 +                );                                            
+      165 +                                                              
+          +LOGGER.info("Teleport component added via store               
+          + on world thread");                                           
+      166 +            });                                               
+      167          }                                                     
+      168                                                                
+      169          LOGGER.info("Teleported %s to %.2f, %.2f, %.2f in %s  
+           (by %s)".formatted(                                           
+
+⏺ Bash(./gradlew build && cp build/libs/hytale-api-1.0.0.jar
+      ../../config-truenas/plugins/ && echo "Build and copy complete")
+  ⎿  Reusing configuration cache.
+     > Task :processTestResources NO-SOURCE
+     > Task :processResources UP-TO-DATE
+     … +23 lines (ctrl+o to expand)
+
+⏺ Build complete. Now combining both requirements:
+  1. Correct pattern: playerReference.getStore().putComponent(...)
+  2. Execute on world thread: world.execute(() -> { ... })
+
+  Rebuild Docker and test.
+ ▐▛███▜▌   Claude Code v2.1.17
+▝▜█████▛▘  Opus 4.5 · Claude Pro
+  ▘▘ ▝▝    ~/Development/hyOS
+
+❯ In PlayerExtendedHandler.java implement the teleportation TODO 
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 379 lines
+
+⏺ I can see the TODO at lines 116-117. Let me check how other parts of the
+  codebase interact with player transforms and if there are any hints about the
+  teleportation API.
+
+⏺ Search(pattern: "setPosition|teleport|moveTo", path:
+        "server-api/hytale-api-leonardoxr")
+  ⎿  Found 7 files (ctrl+o to expand)
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/AdminHandler.java)
+  ⎿  Read 251 lines
+
+⏺ Let me check if there are any utilities or additional info about the Hytale
+  server API that might show how transforms work.
+
+⏺ Search(pattern: "getTransform|PlayerRef", path:
+        "server-api/hytale-api-leonardoxr", output_mode: "content")
+  ⎿  Found 224 lines (ctrl+o to expand)
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/WorldExtendedHandler.java)
+  ⎿  Read 298 lines
+
+⏺ Now I have a good understanding of the codebase patterns. The code uses
+  PlayerRef with methods like getTransform(), getPacketHandler(), and
+  getWorldUuid(). I'll implement the teleportation using a reasonable approach
+  based on the Hytale server SDK patterns.
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 13 lines, removed 3 lines
+      113              targetWorld =                                     
+           universe.getWorld(playerRef.getWorldUuid());                  
+      114          }                                                     
+      115                                                                
+      116 -        // TODO: Implement actual teleportation via server    
+          -API                                                           
+      117 -        // This would involve updating the player's transform 
+          - component                                                    
+      118 -                                                              
+      116          String worldName = targetWorld != null ?              
+           targetWorld.getName() : "unknown";                            
+      117          double x = teleportRequest.x() != null ?              
+           teleportRequest.x() : 0;                                      
+      118          double y = teleportRequest.y() != null ?              
+           teleportRequest.y() : 0;                                      
+      119          double z = teleportRequest.z() != null ?              
+           teleportRequest.z() : 0;                                      
+      120                                                                
+      121 +        // Perform teleportation via PlayerRef                
+      122 +        boolean crossWorldTeleport = targetWorld != null &&   
+      123 +                                                              
+          +!targetWorld.getUuid().equals(playerRef.getWorldUuid());      
+      124 +                                                              
+      125 +        if (crossWorldTeleport) {                             
+      126 +            // Cross-world teleport: move player to target    
+          +world at specified position                                   
+      127 +            playerRef.teleportTo(targetWorld, x, y, z);       
+      128 +        } else {                                              
+      129 +            // Same-world teleport: update transform position 
+          + directly                                                     
+      130 +            var transform = playerRef.getTransform();         
+      131 +            transform.setPosition(x, y, z);                   
+      132 +        }                                                     
+      133 +                                                              
+      134          LOGGER.info("Teleported %s to %.2f, %.2f, %.2f in %s  
+           (by %s)".formatted(                                           
+      135                  playerRef.getUsername(), x, y, z, worldName,  
+           identity.clientId()                                           
+      136          ));                                                   
+
+⏺ Let me verify the implementation compiles correctly.
+
+⏺ Bash(cd /Users/reisscashmore/Development/hyOS/server-api/hytale-api-leonardoxr
+       && ./gradlew compileJava 2>&1)
+  ⎿  Error: Exit code 1
+     WARNING: A restricted method in java.lang.System has been called
+     WARNING: java.lang.System::load has been called by 
+     net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed 
+     module 
+     (file:/Users/reisscashmore/.gradle/wrapper/dists/gradle-9.2.1-bin/2t0n5ozlw
+     xmuyvbp7dnzaxug/gradle-9.2.1/lib/native-platform-0.22-milestone-29.jar)
+     WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for 
+     callers in this module
+     WARNING: Restricted methods will be blocked in a future release unless 
+     native access is enabled
+
+     Calculating task graph as configuration cache cannot be reused because file
+     'build.gradle' has changed.
+
+     > Task :compileJava FAILED
+     /Users/reisscashmore/Development/hyOS/server-api/hytale-api-leonardoxr/src/
+     ain/java/com/hytale/api/http/handlers/PlayerExtendedHandler.java:123: error
+      cannot find symbol
+
+     … +49 lines (ctrl+o to see all)
+
+⏺ I see the API uses Vector3d for positions. Let me check how to construct it
+  and find the correct methods.
+
+⏺ Search(pattern: "Vector3d|new Vector3", path:
+        "server-api/hytale-api-leonardoxr", output_mode: "content")
+  ⎿  Found 5 lines (ctrl+o to expand)
+
+⏺ Search(pattern: "import.*Vector|import.*hytale", path:
+        "server-api/hytale-api-leonardoxr", output_mode: "content")
+  ⎿  Found 141 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/reisscashmore/Development/hyOS/server-api/hytale-api-leonardoxr
+       && find . -name "*.jar" -o -name "stubs" -type d 2>/dev/null | head -20)
+  ⎿  Tool use rejected with user message: the server jar is here 
+     config-truenas/data/server/HytaleServer.jar
+
+⏺ Read(server-api/hytale-api-leonardoxr/build.gradle)
+  ⎿  Read 65 lines
+
+⏺ Bash(jar tf config-truenas/data/server/HytaleServer.jar | grep -E
+      "(Vector3|Transform|PlayerRef)" | head -30)
+  ⎿ com/hypixel/hytale/plugin/early/TransformingClassLoader.class
+    com/hypixel/hytale/plugin/early/ClassTransformer.class
+    com/hypixel/hytale/server/core/modules/entity/player/PlayerSystems$Upda
+    … +38 lines (ctrl+o to expand)
+
+
+⏺ Bash(javap -classpath config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.server.core.universe.PlayerRef 2>&1)
+  ⎿ Compiled from "PlayerRef.java"
+    public class com.hypixel.hytale.server.core.universe.PlayerRef implemen
+    ts com.hypixel.hytale.component.Component<com.hypixel.hytale.server.cor
+    … +60 lines (ctrl+o to expand)
+
+
+
+⏺ I see updatePosition(World, Transform, Vector3f) is the method for
+  teleportation. Let me check the Transform class.
+
+⏺ Bash(javap -classpath config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.math.vector.Vector3d 2>&1)
+  ⎿ Compiled from "Vector3d.java"
+    public class com.hypixel.hytale.math.vector.Vector3d {
+      public static final com.hypixel.hytale.codec.builder.BuilderCodec<com
+    … +143 lines (ctrl+o to expand)
+
+
+⏺ Bash(javap -classpath config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.server.core.universe.world.World 2>&1 | grep -E
+      "getUuid|getName|public")
+  ⎿ public class com.hypixel.hytale.server.core.universe.world.World extend
+    s com.hypixel.hytale.server.core.util.thread.TickingThread implements j
+    ava.util.concurrent.Executor, com.hypixel.hytale.metrics.ExecutorMetric
+    … +128 lines (ctrl+o to expand)
+
+
+
+
+⏺ Now I understand the API. Let me update the implementation correctly.
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 30 lines
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 1 line
+       6  import com.hytale.api.exception.ApiException;                  
+       7  import com.hytale.api.security.ApiPermissions;                 
+       8  import com.hytale.api.security.ClientIdentity;                 
+       9 +import com.hypixel.hytale.math.vector.Transform;               
+      10  import com.hypixel.hytale.server.core.HytaleServer;            
+      11  import com.hypixel.hytale.server.core.entity.entities.Player;  
+      12  import com.hypixel.hytale.server.core.universe.PlayerRef;      
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 70 lines
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 11 lines, removed 8 lines
+      119          double y = teleportRequest.y() != null ?              
+           teleportRequest.y() : 0;                                      
+      120          double z = teleportRequest.z() != null ?              
+           teleportRequest.z() : 0;                                      
+      121                                                                
+      122 -        // Perform teleportation via PlayerRef                
+      123 -        boolean crossWorldTeleport = targetWorld != null &&   
+      124 -                                                              
+          -!targetWorld.getUuid().equals(playerRef.getWorldUuid());      
+      122 +        // Create new transform for target position           
+      123 +        Transform newTransform = new Transform(x, y, z);      
+      124                                                                
+      125 +        // Determine if this is a cross-world teleport        
+      126 +        World currentWorld =                                  
+          +universe.getWorld(playerRef.getWorldUuid());                  
+      127 +        boolean crossWorldTeleport = targetWorld != null &&   
+          +currentWorld != null &&                                       
+      128 +                                                              
+          +!targetWorld.getName().equals(currentWorld.getName());        
+      129 +                                                              
+      130          if (crossWorldTeleport) {                             
+      131 -            // Cross-world teleport: move                     
+          - player to target world at specified position                 
+      132 -            playerRef.teleportTo(targetWorld, x, y, z);       
+      131 +            // Cross-world teleport: add                      
+          + player to target world at specified position                 
+      132 +            targetWorld.addPlayer(playerRef, newTransform);   
+      133          } else {                                              
+      134 -            // Same-world teleport: update transform position 
+          - directly                                                     
+      135 -            var transform = playerRef.getTransform();         
+      136 -            transform.setPosition(x, y, z);                   
+      134 +            // Same-world teleport: update player position    
+      135 +            playerRef.updatePosition(targetWorld,             
+          +newTransform, playerRef.getHeadRotation());                   
+      136          }                                                     
+      137                                                                
+      138          LOGGER.info("Teleported %s to %.2f, %.2f, %.2f in %s  
+           (by %s)".formatted(                                           
+
+⏺ Bash(cd /Users/reisscashmore/Development/hyOS/server-api/hytale-api-leonardoxr
+       && ./gradlew compileJava 2>&1)
+  ⎿ WARNING: A restricted method in java.lang.System has been called
+    WARNING: java.lang.System::load has been called by net.rubygrapefruit.p
+    latform.internal.NativeLibraryLoader in an unnamed module (file:/Users/
+    … +13 lines (ctrl+o to expand)
+
+
+
+⏺ The teleportation has been implemented. Let me show you the final
+  implementation.
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 65 lines
+
+⏺ Done. The teleportation TODO has been implemented at
+  PlayerExtendedHandler.java:122-136. The implementation:
+
+  1. Added import for com.hypixel.hytale.math.vector.Transform
+  2. Same-world teleport: Uses playerRef.updatePosition(targetWorld, 
+  newTransform, playerRef.getHeadRotation()) to move the player within their
+  current world
+  3. Cross-world teleport: Uses targetWorld.addPlayer(playerRef, newTransform)
+  to transfer the player to a different world at the specified coordinates
+
+  The build compiles successfully.
+
+✻ Churned for 3m 5s
+
+❯ For some reason now the build and up commands are not getting the latest  
+  built JAR file when the server is span up                                 
+
+⏺ Let me investigate the build and deployment setup.
+
+⏺ Read(server-api/hytale-api-leonardoxr/config-truenas/docker-compose.yml)
+  ⎿  Error: Interrupted by user
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ docker compose -f docker-compose.yml build --no-cache && docker compose   
+  -f docker-compose.yml up --force-recreate -d                              
+
+⏺ Read(server-api/hytale-api-leonardoxr/config-truenas/Dockerfile)
+  ⎿  Error reading file
+
+⏺ Search(pattern: "**/Dockerfile")
+  ⎿  Found 0 files
+
+⏺ The config-truenas folder is outside this repo. Let me check the parent
+  directory structure.
+
+⏺ Bash(ls -la ../../config-truenas/ 2>/dev/null || ls -la ../config-truenas/
+      2>/dev/null || echo "Checking parent..." && ls -la ../ | head -20)
+  ⎿  total 88
+     drwxr-xr-x@ 10 reisscashmore  staff    320 Jan 19 23:18 .
+     drwxr-xr-x  13 reisscashmore  staff    416 Jan 20 01:47 ..
+     … +22 lines (ctrl+o to expand)
+
+⏺ Read(config-truenas/docker-compose.yml)
+  ⎿  Read 53 lines
+
+⏺ I see the issue. The Dockerfile copies from plugins/ directory at build time
+  (line 115), but your Gradle build outputs to build/libs/. You need to copy the
+   JAR to the plugins folder before building Docker.
+
+⏺ Bash(ls -la ../../config-truenas/plugins/ && echo "---" && ls -la build/libs/
+      2>/dev/null || echo "build/libs not found - run ./gradlew build first")
+  ⎿  total 424
+     drwxr-xr-x@  4 reisscashmore  staff     128 Jan 19 16:07 .
+     drwxr-xr-x@ 10 reisscashmore  staff     320 Jan 19 23:18 ..
+     … +9 lines (ctrl+o to expand)
+
+⏺ Found it. The plugins/ folder has an older JAR (01:49) while your build output
+   (01:57) is newer:
+
+  plugins/hytale-api-1.0.0.jar   214,469 bytes  Jan 20 01:49
+  build/libs/hytale-api-1.0.0.jar 214,502 bytes  Jan 20 01:57
+
+  You need to copy the JAR after building. Run:
+
+  ./gradlew build && cp build/libs/hytale-api-1.0.0.jar
+  ../../config-truenas/plugins/
+
+  Then run your docker compose command.
+
+  Alternatively, I can update the Gradle build to automatically copy the JAR to
+  the plugins folder. Would you like me to add that?
+
+✻ Cogitated for 39s
+
+❯ Okay I have verified that our added lines are running in the JAR on the   
+  server but still the teleport does not work                               
+
+⏺ Let me check how other handlers execute server operations and see if there's
+  threading or async handling needed.
+
+⏺ Bash(javap -classpath ../../config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.server.core.universe.world.World 2>&1 | grep -E
+      "addPlayer|execute")
+  ⎿   public void execute(java.lang.Runnable);
+      public java.util.concurrent.CompletableFuture<com.hypixel.hytale.serv
+    er.core.universe.PlayerRef> addPlayer(com.hypixel.hytale.server.core.un
+    … +8 lines (ctrl+o to expand)
+
+
+
+⏺ The issue is likely thread-safety. The World has an execute(Runnable) method -
+   operations need to run on the world's thread. Let me update the teleport
+  implementation.
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 30 lines
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 15 lines, removed 4 lines
+      127          boolean crossWorldTeleport = targetWorld != null &&   
+           currentWorld != null &&                                       
+      128                                                                
+           !targetWorld.getName().equals(currentWorld.getName());        
+      129                                                                
+      130 +        // Capture final references for lambda                
+      131 +        final World finalTargetWorld = targetWorld;           
+      132 +        final PlayerRef finalPlayerRef = playerRef;           
+      133 +                                                              
+      134          if (crossWorldTeleport) {                             
+      135              // Cross-world teleport: add player to target     
+           world at specified position                                   
+      136 -            targetWorld.addPlayer(playerRef, newTransform);   
+      136 +            // This is async and runs on the target world's   
+          +thread                                                        
+      137 +            finalTargetWorld.addPlayer(finalPlayerRef,        
+          +newTransform)                                                 
+      138 +                    .exceptionally(ex -> {                    
+      139 +                        LOGGER.warning("Cross-world teleport  
+          +failed: " + ex.getMessage());                                 
+      140 +                        return null;                          
+      141 +                    });                                       
+      142          } else {                                              
+      143 -            // Same-world teleport: update player position    
+      144 -        LOGGER.info("Same-world teleport: updating player     
+          -position");                                                   
+      145 -            playerRef.updatePosition(targetWorld,             
+          -newTransform, playerRef.getHeadRotation());                   
+      143 +            // Same-world teleport: execute on                
+          +the world's thread                                            
+      144 +            finalTargetWorld.execute(() -> {                  
+      145 +                                                              
+          +finalPlayerRef.updatePosition(finalTargetWorld, newTransform, 
+          + finalPlayerRef.getHeadRotation());                           
+      146 +                LOGGER.info("Position update executed on      
+          +world thread");                                               
+      147 +            });                                               
+      148          }                                                     
+      149                                                                
+      150          LOGGER.info("Teleported %s to %.2f, %.2f, %.2f in %s  
+           (by %s)".formatted(                                           
+
+⏺ Bash(./gradlew build && cp build/libs/hytale-api-1.0.0.jar
+      ../../config-truenas/plugins/ && echo "Build and copy complete")
+  ⎿  Reusing configuration cache.
+     > Task :processTestResources NO-SOURCE
+     > Task :processResources UP-TO-DATE
+     … +23 lines (ctrl+o to expand)
+
+⏺ Build complete and JAR copied. The key change: operations now execute on the
+  world's thread via world.execute().
+
+  Same-world teleport: Now wrapped in finalTargetWorld.execute(() -> { ... }) to
+   run on the world's tick thread.
+
+  Cross-world teleport: addPlayer already handles threading internally (returns
+  CompletableFuture), but I added error logging.
+
+  Rebuild your Docker container now:
+  docker compose -f docker-compose.yml build --no-cache && docker compose -f
+  docker-compose.yml up --force-recreate -d
+
+  If it still doesn't work, check the server logs for the "Position update
+  executed on world thread" message or any warnings.
+
+✻ Cogitated for 41s
+
+❯ I see the "Position update executed on world thread" log but still        
+  nothing happens to the user in game. Are we missing something?            
+
+⏺ The updatePosition might only update server-side tracking, not actually move
+  the client. Let me check for teleport packets or other methods.
+
+⏺ Bash(jar tf ../../config-truenas/data/server/HytaleServer.jar | grep -iE
+      "(teleport|position)" | head -30)
+  ⎿ com/hypixel/hytale/server/core/modules/entity/player/KnockbackPredictio
+    nSystems$ClearOnTeleport.class
+    com/hypixel/hytale/server/core/modules/entity/component/PositionDataCom
+    … +47 lines (ctrl+o to expand)
+
+
+
+⏺ There's a dedicated teleport system. Let me check the Teleport class and
+  PendingTeleport.
+
+⏺ Bash(javap -classpath ../../config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.server.core.modules.entity.teleport.PendingTeleport
+      2>&1)
+  ⎿ Compiled from "PendingTeleport.java"
+    public class com.hypixel.hytale.server.core.modules.entity.teleport.Pen
+    dingTeleport implements com.hypixel.hytale.component.Component<com.hypi
+    … +19 lines (ctrl+o to expand)
+
+
+
+⏺ The teleport system uses components. We need to create a Teleport component
+  and add it to the player. Let me check how to add components to entities.
+
+⏺ Bash(javap -classpath ../../config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.component.Holder 2>&1 | head -40)
+  ⎿  Compiled from "Holder.java"
+     public class com.hypixel.hytale.component.Holder<ECS_TYPE> {
+       static final boolean $assertionsDisabled;
+     … +62 lines (ctrl+o to expand)
+
+⏺ I see. We need to add a Teleport component to the player's holder. Let me
+  update the implementation.
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 25 lines
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 2 lines
+       7  import com.hytale.api.security.ApiPermissions;                 
+       8  import com.hytale.api.security.ClientIdentity;                 
+       9  import com.hypixel.hytale.math.vector.Transform;               
+      10 +import com.hypixel.hytale.math.vector.Vector3d;                
+      11  import com.hypixel.hytale.server.core.HytaleServer;            
+      12  import com.hypixel.hytale.server.core.entity.entities.Player;  
+      13 +import com.hypixel.hytale.server.core.modules.entity.teleport. 
+         +Teleport;                                                      
+      14  import com.hypixel.hytale.server.core.universe.PlayerRef;      
+      15  import com.hypixel.hytale.server.core.universe.Universe;       
+      16  import com.hypixel.hytale.server.core.universe.world.World;    
+
+⏺ Good info. Now let me update the teleport logic to use the proper Teleport
+  component system.
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 35 lines
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 15 lines, removed 6 lines
+      121          double y = teleportRequest.y() != null ?              
+           teleportRequest.y() : 0;                                      
+      122          double z = teleportRequest.z() != null ?              
+           teleportRequest.z() : 0;                                      
+      123                                                                
+      124 -        // Create new transform for target position           
+      125 -        Transform newTransform = new Transform(x, y, z);      
+      124 +        // Create target position                             
+      125 +        Vector3d targetPosition = new Vector3d(x, y, z);      
+      126                                                                
+      127          // Determine if this is a cross-world teleport        
+      128          World currentWorld =                                  
+           universe.getWorld(playerRef.getWorldUuid());                  
+     ...
+      135                                                                
+      136          if (crossWorldTeleport) {                             
+      137              // Cross-world teleport: add player to target     
+           world at specified position                                   
+      138 -            // This is async and runs on the target world's   
+          -thread                                                        
+      138 +            Transform newTransform = new Transform(x, y, z);  
+      139              finalTargetWorld.addPlayer(finalPlayerRef,        
+           newTransform)                                                 
+      140                      .exceptionally(ex -> {                    
+      141                          LOGGER.warning("Cross-world teleport  
+           failed: " + ex.getMessage());                                 
+      142                          return null;                          
+      143                      });                                       
+      144          } else {                                              
+      145 -            // Same-world teleport: execute on the world's    
+          -thread                                                        
+      145 +            // Same-world teleport: use the Teleport          
+          +component system                                              
+      146              finalTargetWorld.execute(() -> {                  
+      147 -                                                              
+          -finalPlayerRef.updatePosition(finalTargetWorld, newTransform, 
+          - finalPlayerRef.getHeadRotation());                           
+      148 -                LOGGER.info("Position update executed on      
+          -world thread");                                               
+      147 +                // Create a Teleport component for the player 
+      148 +                Teleport teleport = Teleport.createForPlayer( 
+      149 +                        finalTargetWorld,                     
+      150 +                        targetPosition,                       
+      151 +                        finalPlayerRef.getHeadRotation()      
+      152 +                );                                            
+      153 +                                                              
+      154 +                // Add the teleport component to the player's 
+          + entity holder                                                
+      155 +                finalPlayerRef.getHolder().addComponent(Telep 
+          +ort.getComponentType(), teleport);                            
+      156 +                                                              
+      157 +                LOGGER.info("Teleport component added to      
+          +player on world thread");                                     
+      158              });                                               
+      159          }                                                     
+      160                                                                
+
+⏺ Bash(./gradlew build && cp build/libs/hytale-api-1.0.0.jar
+      ../../config-truenas/plugins/ && echo "Build and copy complete")
+  ⎿  Reusing configuration cache.
+     > Task :processTestResources NO-SOURCE
+     > Task :processResources UP-TO-DATE
+     … +23 lines (ctrl+o to expand)
+
+⏺ Build complete. The key change: now using the proper Hytale ECS teleport
+  system:
+
+  Teleport teleport = Teleport.createForPlayer(world, position, headRotation);
+  playerRef.getHolder().addComponent(Teleport.getComponentType(), teleport);
+
+  The TeleportSystems in the server will process this component and handle
+  client synchronization.
+
+  Rebuild your Docker container and test again. Look for "Teleport component
+  added to player on world thread" in logs.
+
+✻ Cooked for 1m 8s
+
+❯ 2026-01-20T02:12:51.725968172Z     at                                     
+  ThirdPartyPlugin//com.hytale.api.http.handlers.PlayerExtendedHandler.lamb 
+  da$handleTeleport$1(PlayerExtendedHandler.java:155)                       
+                                                                            
+  2026-01-20T02:12:51.725969339Z     at com.hypixel.hytale.server.core.univ 
+  erse.world.World.consumeTaskQueue(World.java:894)                         
+                                                                            
+  2026-01-20T02:12:51.725970297Z     at                                     
+  com.hypixel.hytale.server.core.universe.world.World.tick(World.java:411)  
+                                                                            
+  2026-01-20T02:12:51.725971214Z     at com.hypixel.hytale.server.core.util 
+  .thread.TickingThread.run(TickingThread.java:89)                          
+                                                                            
+  2026-01-20T02:12:51.725972172Z     at                                     
+  java.base/java.lang.Thread.run(Unknown Source)                            
+                                                                            
+  2026-01-20T02:12:51.725973005Z                                            
+                                                                            
+  2026-01-20T02:12:54.386980173Z [2026/01/20 02:12:54   INFO]               
+  [com.hytale.api.http.handlers.PlayerExtendedHandler] Teleported Ricehead  
+  to 1400.00, 120.00, -165.00 in default (by hyos-manager)                  
+                                                                            
+  2026-01-20T02:12:54.390180673Z [2026/01/20 02:12:54 SEVERE]               
+  [World|default] Failed to run task!                                       
+                                                                            
+  2026-01-20T02:12:54.390202965Z java.lang.NullPointerException: Cannot     
+  invoke "com.hypixel.hytale.component.Holder.addComponent(com.hypixel.hyta 
+  le.component.ComponentType, com.hypixel.hytale.component.Component)"      
+  because the return value of                                               
+  "com.hypixel.hytale.server.core.universe.PlayerRef.getHolder()" is null   
+                                                                            
+  2026-01-20T02:12:54.390205715Z     at                                     
+  ThirdPartyPlugin//com.hytale.api.http.handlers.PlayerExtendedHandler.lamb 
+  da$handleTeleport$1(PlayerExtendedHandler.java:155)                       
+                                                                            
+  2026-01-20T02:12:54.390216132Z     at com.hypixel.hytale.server.core.univ 
+  erse.world.World.consumeTaskQueue(World.java:894)                         
+                                                                            
+  2026-01-20T02:12:54.390217173Z     at                                     
+  com.hypixel.hytale.server.core.universe.world.World.tick(World.java:411)  
+                                                                            
+  2026-01-20T02:12:54.390218048Z     at com.hypixel.hytale.server.core.util 
+  .thread.TickingThread.run(TickingThread.java:89)                          
+                                                                            
+  2026-01-20T02:12:54.390218923Z     at                                     
+  java.base/java.lang.Thread.run(Unknown Source)                            
+                                                                            
+  2026-01-20T02:12:54.390219715Z                                            
+                                                                            
+                                                                            
+
+⏺ The PlayerRef.getHolder() returns null - it's a reference wrapper, not the
+  entity itself. We need to get the actual entity from the world. Let me fix
+  this.
+
+⏺ Bash(javap -classpath ../../config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.server.core.entity.Entity 2>&1 | grep -E
+      "getHolder|getComponent|public")
+  ⎿ public abstract class com.hypixel.hytale.server.core.entity.Entity impl
+    ements com.hypixel.hytale.component.Component<com.hypixel.hytale.server
+    .core.universe.world.storage.EntityStore> {
+    … +55 lines (ctrl+o to expand)
+
+
+
+⏺ Bash(javap -classpath ../../config-truenas/data/server/HytaleServer.jar
+      com.hypixel.hytale.component.Ref 2>&1 | head -30)
+  ⎿ Compiled from "Ref.java"
+    public class com.hypixel.hytale.component.Ref<ECS_TYPE> {
+      public static final com.hypixel.hytale.component.Ref<?>[] EMPTY_ARRAY
+    … +19 lines (ctrl+o to expand)
+
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 25 lines
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 13 lines, removed 3 lines
+      143                      });                                       
+      144          } else {                                              
+      145              // Same-world teleport: use the Teleport          
+           component system                                              
+      146 +            final UUID playerUuid = playerRef.getUuid();      
+      147 +                                                              
+      148              finalTargetWorld.execute(() -> {                  
+      149 +                // Get the player entity from the world       
+      150 +                var entity =                                  
+          +finalTargetWorld.getEntity(playerUuid);                       
+      151 +                if (entity == null) {                         
+      152 +                    LOGGER.warning("Could not find player     
+          +entity for teleport: " + playerUuid);                         
+      153 +                    return;                                   
+      154 +                }                                             
+      155 +                                                              
+      156                  // Create a Teleport component for the player 
+      157                  Teleport teleport = Teleport.createForPlayer( 
+      158                          finalTargetWorld,                     
+     ...
+      151                          finalPlayerRef.getHeadRotation()      
+      152                  );                                            
+      153                                                                
+      154 -                // Add the teleport component to the player's 
+          -entity holder                                                 
+      155 -                finalPlayerRef.getHolder().addComponent(Telep 
+          -ort.getComponentType(), teleport);                            
+      154 +                // Add the teleport component to the entity's 
+          +holder                                                        
+      155 +                var holder = entity.toHolder();               
+      156 +                                                              
+          +holder.addComponent(Teleport.getComponentType(), teleport);   
+      157                                                                
+      158 -                LOGGER.info("Teleport component added to      
+          -player on world thread");                                     
+      158 +                LOGGER.info("Teleport component added to      
+          +player entity on world thread");                              
+      159              });                                               
+      160          }                                                     
+      161                                                                
+
+⏺ Bash(./gradlew build && cp build/libs/hytale-api-1.0.0.jar
+      ../../config-truenas/plugins/ && echo "Build and copy complete")
+  ⎿  Reusing configuration cache.
+     > Task :processTestResources NO-SOURCE
+     > Task :processResources UP-TO-DATE
+     … +34 lines (ctrl+o to expand)
+
+⏺ Build complete (ignore the deprecation warning - likely from toHolder()). Now
+  getting the entity from the world and using entity.toHolder():
+
+  var entity = finalTargetWorld.getEntity(playerUuid);
+  var holder = entity.toHolder();
+  holder.addComponent(Teleport.getComponentType(), teleport);
+
+  Rebuild Docker and test. Look for "Teleport component added to player entity
+  on world thread" or the warning message if the entity isn't found.
+
+✻ Churned for 43s
+
+❯ Here is a different mod and code which shows how teleporting can be done 
+
+⏺ Please share the code and I'll adapt our implementation to match.
+
+❯ ackage com.github.grule.teleportrequests;                                 
+                                                                            
+  import com.hypixel.hytale.component.Ref;                                  
+  import com.hypixel.hytale.server.core.modules.entity.teleport.Teleport;   
+  import com.hypixel.hytale.server.core.universe.PlayerRef;                 
+  import com.hypixel.hytale.server.core.universe.Universe;                  
+  import com.hypixel.hytale.server.core.universe.world.storage.EntityStore; 
+                                                                            
+  import java.util.UUID;                                                    
+                                                                            
+  public class TeleportRequest {                                            
+  private final UUID requester;                                             
+  private final UUID target;                                                
+  private final long expiresAt;                                             
+  private final Type type;                                                  
+  private boolean executed = false;                                         
+                                                                            
+  /**                                                                       
+  * Represents a teleport request from one player to another.               
+  *                                                                         
+  * @param requester The UUID of the player requesting to teleport          
+  * @param target    The UUID of the target player of the request           
+  * @param expiresAt Timestamp in milliseconds when this request            
+  expires                                                                   
+  */                                                                        
+  private TeleportRequest(UUID requester, UUID target, long expiresAt,      
+  TeleportRequest.Type type) {                                              
+  this.requester = requester;                                               
+  this.target = target;                                                     
+  this.expiresAt = expiresAt;                                               
+  this.type = type;                                                         
+  }                                                                         
+                                                                            
+  public boolean execute() {                                                
+  var universe = Universe.get();                                            
+  PlayerRef requesterPlayer = universe.getPlayer(requester);                
+  PlayerRef targetPlayer = universe.getPlayer(target);                      
+                                                                            
+  if (requesterPlayer == null || targetPlayer == null) {                    
+  return false;                                                             
+  }                                                                         
+                                                                            
+  final Ref<EntityStore> playerToTeleportRef;                               
+  final PlayerRef targetPlayerToTeleport;                                   
+                                                                            
+  if (this.type == Type.TELEPORT_TO) {                                      
+  playerToTeleportRef = requesterPlayer.getReference();                     
+  if (playerToTeleportRef == null) {                                        
+  return false;                                                             
+  }                                                                         
+  targetPlayerToTeleport = targetPlayer;                                    
+  } else {                                                                  
+  playerToTeleportRef = targetPlayer.getReference();                        
+  if (playerToTeleportRef == null) {                                        
+  return false;                                                             
+  }                                                                         
+  targetPlayerToTeleport = requesterPlayer;                                 
+  }                                                                         
+                                                                            
+  var targetPlayerToTeleportRef =                                           
+  targetPlayerToTeleport.getReference();                                    
+  if (targetPlayerToTeleportRef == null) {                                  
+  return false;                                                             
+  }                                                                         
+                                                                            
+  var transform = targetPlayerToTeleport.getTransform();                    
+  playerToTeleportRef.getStore().putComponent(                              
+  playerToTeleportRef,                                                      
+  Teleport.getComponentType(),                                              
+  new Teleport(                                                             
+                                                                            
+  targetPlayerToTeleportRef.getStore().getExternalData().getWorld(),        
+  transform.getPosition(),                                                  
+  transform.getRotation()                                                   
+  )                                                                         
+  );                                                                        
+  executed = true;                                                          
+  return true;                                                              
+  }                                                                         
+                                                                            
+  public UUID getRequester() {                                              
+  return requester;                                                         
+  }                                                                         
+                                                                            
+  public UUID getTarget() {                                                 
+  return target;                                                            
+  }                                                                         
+                                                                            
+  public Type getType() {                                                   
+  return type;                                                              
+  }                                                                         
+                                                                            
+  /**                                                                       
+  * Checks if this request has expired.                                     
+  *                                                                         
+  * @return true if the request is past its expiration time or if the       
+  request has                                                               
+  *         already been executed                                           
+  */                                                                        
+  public boolean isExpired() {                                              
+  return System.currentTimeMillis() > expiresAt || executed;                
+  }                                                                         
+                                                                            
+  /**                                                                       
+  * Creates a new teleport request with a given timeout.                    
+  *                                                                         
+  * @param requester      The UUID of the player requesting to              
+  teleport                                                                  
+  * @param target         The UUID of the target player of the request      
+  * @param timeoutSeconds How long the request is valid for                 
+  * @return A new TeleportRequest instance                                  
+  */                                                                        
+  public static TeleportRequest create(UUID requester, UUID target, int     
+  timeoutSeconds, TeleportRequest.Type type) {                              
+  long expiresAt = System.currentTimeMillis() + (timeoutSeconds *           
+  1000L);                                                                   
+  return new TeleportRequest(requester, target, expiresAt, type);           
+  }                                                                         
+                                                                            
+  public enum Type {                                                        
+  TELEPORT_TO,                                                              
+  TELEPORT_HERE,                                                            
+  }                                                                         
+  }                                                                         
+
+⏺ This is the key pattern:
+
+  playerRef.getReference().getStore().putComponent(
+      playerRef.getReference(),
+      Teleport.getComponentType(),
+      new Teleport(world, position, rotation)
+  );
+
+  Let me update our implementation.
+
+⏺ Read(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/handle
+      rs/PlayerExtendedHandler.java)
+  ⎿  Read 50 lines
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 18 lines, removed 21 lines
+      142                          return null;                          
+      143                      });                                       
+      144          } else {                                              
+      145 -            // Same-world teleport: use the Teleport component
+          - system                                                       
+      146 -            final UUID playerUuid = playerRef.getUuid();      
+      145 +            // Same-world teleport: use the Teleport component
+          + via Store                                                    
+      146 +            var playerReference = playerRef.getReference();   
+      147 +            if (playerReference == null) {                    
+      148 +                throw                                         
+          +ApiException.InternalError.serverError("Player reference is   
+          +null");                                                       
+      149 +            }                                                 
+      150                                                                
+      151 -            finalTargetWorld.execute(() -> {                  
+      152 -                // Get the player entity from the world       
+      153 -                var entity =                                  
+          -finalTargetWorld.getEntity(playerUuid);                       
+      154 -                if (entity == null) {                         
+      155 -                    LOGGER.warning("Could not find player     
+          -entity for teleport: " + playerUuid);                         
+      156 -                    return;                                   
+      157 -                }                                             
+      151 +            // Get current rotation to preserve it            
+      152 +            var currentTransform = playerRef.getTransform();  
+      153                                                                
+      154 -                // Create a Teleport component for the player 
+      155 -                Teleport teleport = Teleport.createForPlayer( 
+      156 -                        finalTargetWorld,                     
+      157 -                        targetPosition,                       
+      158 -                        finalPlayerRef.getHeadRotation()      
+      159 -                );                                            
+      154 +            // Add teleport component via the store (this is  
+          +the correct pattern)                                          
+      155 +            playerReference.getStore().putComponent(          
+      156 +                    playerReference,                          
+      157 +                    Teleport.getComponentType(),              
+      158 +                    new Teleport(                             
+      159 +                            finalTargetWorld,                 
+      160 +                            targetPosition,                   
+      161 +                            currentTransform.getRotation()    
+      162 +                    )                                         
+      163 +            );                                                
+      164                                                                
+      165 -                // Add the teleport component to the entity's 
+          - holder                                                       
+      166 -                var holder = entity.toHolder();               
+      167 -                                                              
+          -holder.addComponent(Teleport.getComponentType(), teleport);   
+      168 -                                                              
+      169 -                LOGGER.info("Teleport component added to      
+          -player entity on world thread");                              
+      170 -            });                                               
+      165 +            LOGGER.info("Teleport component added via         
+          +store");                                                      
+      166          }                                                     
+      167                                                                
+      168          LOGGER.info("Teleported %s to %.2f, %.2f, %.2f in %s  
+           (by %s)".formatted(                                           
+
+⏺ Bash(./gradlew build && cp build/libs/hytale-api-1.0.0.jar
+      ../../config-truenas/plugins/ && echo "Build and copy complete")
+  ⎿  Error: Exit code 1
+     WARNING: A restricted method in java.lang.System has been called
+     WARNING: java.lang.System::load has been called by 
+     net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed 
+     module 
+     (file:/Users/reisscashmore/.gradle/wrapper/dists/gradle-9.2.1-bin/2t0n5ozlw
+     xmuyvbp7dnzaxug/gradle-9.2.1/lib/native-platform-0.22-milestone-29.jar)
+     WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for 
+     callers in this module
+     WARNING: Restricted methods will be blocked in a future release unless 
+     native access is enabled
+
+     /Users/reisscashmore/Development/hyOS/server-api/hytale-api-leonardoxr/src/
+     ain/java/com/hytale/api/http/handlers/PlayerExtendedHandler.java:148: error
+      cannot find symbol
+                     throw ApiException.InternalError.serverError("Player 
+     reference is null");
+                                                     ^
+       symbol:   method serverError(String)
+     … +30 lines (ctrl+o to see all)
+
+⏺ Search(pattern: "InternalError", path: "server-api/hytale-api-leonardoxr/src/m
+        ain/java/com/hytale/api/exception/ApiException.java", output_mode:
+        "content")
+  ⎿  Found 25 lines (ctrl+o to expand)
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 1 line, removed 1 line
+      145              // Same-world teleport: use the Teleport          
+           component via Store                                           
+      146              var playerReference = playerRef.getReference();   
+      147              if (playerReference == null) {                    
+      148 -                throw ApiException.InternalError.serverError  
+          -("Player reference is null");                                 
+      148 +                throw new ApiException.InternalError          
+          +("Player reference is null");                                 
+      149              }                                                 
+      150                                                                
+      151              // Get current rotation to preserve it            
+
+⏺ Bash(./gradlew build && cp build/libs/hytale-api-1.0.0.jar
+      ../../config-truenas/plugins/ && echo "Build and copy complete")
+  ⎿  Reusing configuration cache.
+     > Task :processTestResources NO-SOURCE
+     > Task :processResources UP-TO-DATE
+     … +23 lines (ctrl+o to expand)
+
+⏺ Build complete. Now using the correct pattern from the working mod:
+
+  var playerReference = playerRef.getReference();
+  playerReference.getStore().putComponent(
+      playerReference,
+      Teleport.getComponentType(),
+      new Teleport(targetWorld, targetPosition, currentTransform.getRotation())
+  );
+
+  Rebuild Docker and test. This matches the pattern from the teleport mod
+  exactly.
+
+✻ Cogitated for 45s
+
+❯                                                                           
+  2026-01-20T02:17:58.463688342Z java.lang.IllegalStateException: Assert    
+  not in thread! Thread[#101,WorldThread -                                  
+  default,5,InnocuousForkJoinWorkerThreadGroup] but was in                  
+  Thread[#109,nioEventLoopGroup-3-7,10,main]                                
+                                                                            
+  2026-01-20T02:17:58.463690300Z     at                                     
+  com.hypixel.hytale.component.Store.assertThread(Store.java:2303)          
+                                                                            
+  2026-01-20T02:17:58.463691217Z     at                                     
+  com.hypixel.hytale.component.Store.putComponent(Store.java:1168)          
+                                                                            
+  2026-01-20T02:17:58.463691967Z     at                                     
+  ThirdPartyPlugin//com.hytale.api.http.handlers.PlayerExtendedHandler.hand 
+  leTeleport(PlayerExtendedHandler.java:155)                                
+                                                                            
+  2026-01-20T02:17:58.463692800Z     at ThirdPartyPlugin//com.hytale.api.ht 
+  tp.HttpRequestRouter.route(HttpRequestRouter.java:237)                    
+                                                                            
+  2026-01-20T02:17:58.463693592Z     at ThirdPartyPlugin//com.hytale.api.ht 
+  tp.HttpRequestRouter.channelRead0(HttpRequestRouter.java:121)             
+                                                                            
+  2026-01-20T02:17:58.463694342Z     at ThirdPartyPlugin//com.hytale.api.ht 
+  tp.HttpRequestRouter.channelRead0(HttpRequestRouter.java:29)              
+                                                                            
+  2026-01-20T02:17:58.463695092Z     at io.netty.channel.SimpleChannelInbou 
+  ndHandler.channelRead(SimpleChannelInboundHandler.java:99)                
+                                                                            
+  2026-01-20T02:17:58.463695842Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:356)       
+                                                                            
+  2026-01-20T02:17:58.463703009Z     at io.netty.channel.SimpleChannelInbou 
+  ndHandler.channelRead(SimpleChannelInboundHandler.java:102)               
+                                                                            
+  2026-01-20T02:17:58.463703842Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:356)       
+                                                                            
+  2026-01-20T02:17:58.463704592Z     at io.netty.handler.codec.MessageToMes 
+  sageDecoder.channelRead(MessageToMessageDecoder.java:107)                 
+                                                                            
+  2026-01-20T02:17:58.463705300Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:356)       
+                                                                            
+  2026-01-20T02:17:58.463706050Z     at io.netty.channel.ChannelInboundHand 
+  lerAdapter.channelRead(ChannelInboundHandlerAdapter.java:93)              
+                                                                            
+  2026-01-20T02:17:58.463706842Z     at io.netty.handler.codec.http.websock 
+  etx.Utf8FrameValidator.channelRead(Utf8FrameValidator.java:98)            
+                                                                            
+  2026-01-20T02:17:58.463707550Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:356)       
+                                                                            
+  2026-01-20T02:17:58.463708342Z     at                                     
+  io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandshakeHa 
+  ndler.channelRead(WebSocketServerProtocolHandshakeHandler.java:67)        
+                                                                            
+  2026-01-20T02:17:58.463709217Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:356)       
+                                                                            
+  2026-01-20T02:17:58.463710634Z     at ThirdPartyPlugin//com.hytale.api.ra 
+  telimit.RateLimitMiddleware.channelRead0(RateLimitMiddleware.java:44)     
+                                                                            
+  2026-01-20T02:17:58.463711384Z     at ThirdPartyPlugin//com.hytale.api.ra 
+  telimit.RateLimitMiddleware.channelRead0(RateLimitMiddleware.java:17)     
+                                                                            
+  2026-01-20T02:17:58.463712134Z     at io.netty.channel.SimpleChannelInbou 
+  ndHandler.channelRead(SimpleChannelInboundHandler.java:99)                
+                                                                            
+  2026-01-20T02:17:58.463713092Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:356)       
+                                                                            
+  2026-01-20T02:17:58.463713884Z     at io.netty.handler.codec.MessageToMes 
+  sageDecoder.channelRead(MessageToMessageDecoder.java:107)                 
+                                                                            
+  2026-01-20T02:17:58.463714634Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:356)       
+                                                                            
+  2026-01-20T02:17:58.463715425Z     at                                     
+  io.netty.channel.CombinedChannelDuplexHandler$DelegatingChannelHandlerCon 
+  text.fireChannelRead(CombinedChannelDuplexHandler.java:434)               
+                                                                            
+  2026-01-20T02:17:58.463716217Z     at io.netty.handler.codec.ByteToMessag 
+  eDecoder.fireChannelRead(ByteToMessageDecoder.java:361)                   
+                                                                            
+  2026-01-20T02:17:58.463716967Z     at io.netty.handler.codec.ByteToMessag 
+  eDecoder.channelRead(ByteToMessageDecoder.java:325)                       
+                                                                            
+  2026-01-20T02:17:58.463717675Z     at io.netty.channel.CombinedChannelDup 
+  lexHandler.channelRead(CombinedChannelDuplexHandler.java:249)             
+                                                                            
+  2026-01-20T02:17:58.463718425Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:354)       
+                                                                            
+  2026-01-20T02:17:58.463719175Z     at io.netty.handler.timeout.IdleStateH 
+  andler.channelRead(IdleStateHandler.java:293)                             
+                                                                            
+  2026-01-20T02:17:58.463719884Z     at io.netty.channel.AbstractChannelHan 
+  dlerContext.fireChannelRead(AbstractChannelHandlerContext.java:354)       
+                                                                            
+  2026-01-20T02:17:58.463721675Z     at io.netty.channel.DefaultChannelPipe 
+  line$HeadContext.channelRead(DefaultChannelPipeline.java:1429)            
+                                                                            
+  2026-01-20T02:17:58.463722467Z     at io.netty.channel.DefaultChannelPipe 
+  line.fireChannelRead(DefaultChannelPipeline.java:918)                     
+                                                                            
+  2026-01-20T02:17:58.463723259Z     at io.netty.channel.nio.AbstractNioByt 
+  eChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:172)              
+                                                                            
+  2026-01-20T02:17:58.463724009Z     at io.netty.channel.nio.AbstractNioCha 
+  nnel$AbstractNioUnsafe.handle(AbstractNioChannel.java:445)                
+                                                                            
+  2026-01-20T02:17:58.463724800Z     at io.netty.channel.nio.NioIoHandler$D 
+  efaultNioRegistration.handle(NioIoHandler.java:388)                       
+                                                                            
+  2026-01-20T02:17:58.463725509Z     at io.netty.channel.nio.NioIoHandler.p 
+  rocessSelectedKey(NioIoHandler.java:596)                                  
+                                                                            
+  2026-01-20T02:17:58.463726217Z     at io.netty.channel.nio.NioIoHandler.p 
+  rocessSelectedKeysPlain(NioIoHandler.java:541)                            
+                                                                            
+  2026-01-20T02:17:58.463727134Z     at io.netty.channel.nio.NioIoHandler.p 
+  rocessSelectedKeys(NioIoHandler.java:514)                                 
+                                                                            
+  2026-01-20T02:17:58.463727842Z     at                                     
+  io.netty.channel.nio.NioIoHandler.run(NioIoHandler.java:484)              
+                                                                            
+  2026-01-20T02:17:58.463728550Z     at io.netty.channel.SingleThreadIoEven 
+  tLoop.runIo(SingleThreadIoEventLoop.java:225)                             
+                                                                            
+  2026-01-20T02:17:58.463729300Z     at io.netty.channel.SingleThreadIoEven 
+  tLoop.run(SingleThreadIoEventLoop.java:196)                               
+                                                                            
+  2026-01-20T02:17:58.463730050Z     at io.netty.util.concurrent.SingleThre 
+  adEventExecutor$5.run(SingleThreadEventExecutor.java:1195)                
+                                                                            
+  2026-01-20T02:17:58.463730800Z     at                                     
+  io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74) 
+                                                                            
+  2026-01-20T02:17:58.463731509Z     at io.netty.util.concurrent.FastThread 
+  LocalRunnable.run(FastThreadLocalRunnable.java:30)                        
+                                                                            
+  2026-01-20T02:17:58.463732259Z     at                                     
+  java.base/java.lang.Thread.run(Unknown Source)                            
+                                                                            
+  2026-01-20T02:17:58.463732967Z                                            
+                                                                            
+                                                                            
+
+⏺ Right, we need to execute on the world thread. Let me wrap it properly.
+
+⏺ Update(server-api/hytale-api-leonardoxr/src/main/java/com/hytale/api/http/hand
+        lers/PlayerExtendedHandler.java)
+  ⎿  Added 14 lines, removed 13 lines
+      149              }                                                 
+      150                                                                
+      151              // Get current rotation to preserve it            
+      152 -            var currentTransform = playerRef.getTransform();  
+      152 +            var currentRotation = playerRef.getTransform()    
+          +.getRotation();                                               
+      153                                                                
+      154 -            // Add teleport component via the store (this is  
+          -the correct pattern)                                          
+      155 -            playerReference.getStore().putComponent(          
+      156 -                    playerReference,                          
+      157 -                    Teleport.getComponentType(),              
+      158 -                    new Teleport(                             
+      159 -                            finalTargetWorld,                 
+      160 -                            targetPosition,                   
+      161 -                            currentTransform.getRotation()    
+      162 -                    )                                         
+      163 -            );                                                
+      164 -                                                              
+      165 -            LOGGER.info("Teleport component added via store");
+      154 +            // Execute on world thread - Store.putComponent   
+          +requires it                                                   
+      155 +            finalTargetWorld.execute(() -> {                  
+      156 +                playerReference.getStore().putComponent(      
+      157 +                        playerReference,                      
+      158 +                        Teleport.getComponentType(),          
+      159 +                        new Teleport(                         
+      160 +                                finalTargetWorld,             
+      161 +                                targetPosition,               
+      162 +                                currentRotation               
+      163 +                        )                                     
+      164 +                );                                            
+      165 +                                                              
+          +LOGGER.info("Teleport component added via store               
+          + on world thread");                                           
+      166 +            });                                               
+      167          }                                                     
+      168                                                                
+      169          LOGGER.info("Teleported %s to %.2f, %.2f, %.2f in %s  
+           (by %s)".formatted(                                           
+
+⏺ Bash(./gradlew build && cp build/libs/hytale-api-1.0.0.jar
+      ../../config-truenas/plugins/ && echo "Build and copy complete")
+  ⎿  Reusing configuration cache.
+     > Task :processTestResources NO-SOURCE
+     > Task :processResources UP-TO-DATE
+     … +23 lines (ctrl+o to expand)
+
+⏺ Build complete. Now combining both requirements:
+  1. Correct pattern: playerReference.getStore().putComponent(...)
+  2. Execute on world thread: world.execute(() -> { ... })
+
+  Rebuild Docker and test.
