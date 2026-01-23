@@ -1,0 +1,71 @@
+services:
+  hytale:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hytale-server:developer
+    container_name: hytale-dev
+    restart: unless-stopped
+
+    # UDP port for QUIC protocol
+    ports:
+      - "${SERVER_PORT:-5520}:5520/udp"
+
+    # Environment configuration
+    environment:
+      # JVM Memory
+      JAVA_XMS: "${JAVA_XMS:-4G}"
+      JAVA_XMX: "${JAVA_XMX:-8G}"
+
+      # Server settings
+      SERVER_PORT: "5520"
+      PATCHLINE: "${PATCHLINE:-release}"
+      ENABLE_AOT: "${ENABLE_AOT:-true}"
+      DISABLE_SENTRY: "true"  # Always disabled in dev
+
+      # Development settings
+      LOG_LEVEL: "${LOG_LEVEL:-DEBUG}"
+      ACCEPT_EARLY_PLUGINS: "true"
+      ALLOW_OP: "true"
+
+      # CurseForge Mod Installation (optional)
+      MOD_INSTALL_MODE: "${MOD_INSTALL_MODE:-off}"  # Set to "curseforge" to enable
+      CURSEFORGE_API_KEY: "${CURSEFORGE_API_KEY:-}"
+      CURSEFORGE_MOD_LIST: "${CURSEFORGE_MOD_LIST:-}"  # Comma-separated: "123456,789012:4567890"
+      CURSEFORGE_GAME_VERSION: "${CURSEFORGE_GAME_VERSION:-Early Access}"
+
+      # Timezone
+      TZ: "${TZ:-UTC}"
+
+    # Persistent storage
+    volumes:
+      # Server data
+      - hytale-dev-data:/data
+      # Machine ID for encrypted auth persistence
+      - /etc/machine-id:/etc/machine-id:ro
+      # Optional: Mount local mods folder for development
+      # - ./mods:/data/mods
+
+    # Interactive mode
+    stdin_open: true
+    tty: true
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: ${MEMORY_LIMIT:-12G}
+        reservations:
+          memory: ${MEMORY_RESERVATION:-4G}
+
+    # Health monitoring
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "HytaleServer.jar"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s  # Longer for dev builds
+
+volumes:
+  hytale-dev-data:
+    name: hytale-developer-data

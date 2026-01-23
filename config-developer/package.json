@@ -1,0 +1,16 @@
+{
+  "name": "hytale-server-developer",
+  "version": "1.0.0",
+  "description": "Hytale dedicated server with developer tools and mod support",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/main.ts",
+    "build": "bun build src/main.ts --outdir dist --target bun",
+    "dev": "bun run --watch src/main.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  }
+}

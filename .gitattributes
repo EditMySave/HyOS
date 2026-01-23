@@ -1,0 +1,2 @@
+/Users/reisscashmore/Development/ems-hyOS/config-truenas/data/Assets.zip filter=lfs diff=lfs merge=lfs -text
+/Users/reisscashmore/Development/ems-hyOS/config-truenas/data/server/HytaleServer.jar filter=lfs diff=lfs merge=lfs -text

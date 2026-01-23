@@ -1,0 +1,66 @@
+services:
+  hytale:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hytale-server:minimal
+    container_name: hytale-server
+    restart: unless-stopped
+
+    # UDP port for QUIC protocol
+    ports:
+      - "${SERVER_PORT:-5520}:5520/udp"
+
+    # Environment configuration
+    environment:
+      # JVM Memory
+      JAVA_XMS: "${JAVA_XMS:-4G}"
+      JAVA_XMX: "${JAVA_XMX:-8G}"
+
+      # Server settings
+      SERVER_PORT: "5520"
+      PATCHLINE: "${PATCHLINE:-release}"
+      ENABLE_AOT: "${ENABLE_AOT:-true}"
+      DISABLE_SENTRY: "${DISABLE_SENTRY:-false}"
+
+      # Backup settings (optional)
+      ENABLE_BACKUP: "${ENABLE_BACKUP:-false}"
+      BACKUP_FREQUENCY: "${BACKUP_FREQUENCY:-30}"
+
+      # Plugin settings (optional)
+      ACCEPT_EARLY_PLUGINS: "${ACCEPT_EARLY_PLUGINS:-false}"
+      ALLOW_OP: "${ALLOW_OP:-false}"
+
+      # Timezone
+      TZ: "${TZ:-UTC}"
+
+    # Persistent storage
+    volumes:
+      # Server data (world, config, mods)
+      - hytale-data:/data
+      # Machine ID for encrypted auth persistence
+      - /etc/machine-id:/etc/machine-id:ro
+
+    # Interactive mode for auth flow
+    stdin_open: true
+    tty: true
+
+    # Resource limits (adjust based on your system)
+    deploy:
+      resources:
+        limits:
+          memory: ${MEMORY_LIMIT:-10G}
+        reservations:
+          memory: ${MEMORY_RESERVATION:-4G}
+
+    # Health monitoring
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "HytaleServer.jar"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+volumes:
+  hytale-data:
+    name: hytale-server-data

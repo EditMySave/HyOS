@@ -1,0 +1,36 @@
+# =============================================================================
+# Local Development Compose
+# =============================================================================
+# For testing the server manager locally before deploying to TrueNAS
+#
+# Usage:
+#   docker compose up -d
+#
+# Note: This expects the Hytale server to be running in a container named "hyos"
+
+services:
+  manager:
+    build: .
+    container_name: hyos-manager-dev
+    ports:
+      - "3000:3000"
+    environment:
+      # Adapter configuration
+      - ADAPTER_TYPE=console
+      - HYTALE_CONTAINER_NAME=hyos
+      - HYTALE_STATE_DIR=/data/.state
+      - HYTALE_SERVER_HOST=host.docker.internal
+      - HYTALE_SERVER_PORT=5520
+      - NODE_ENV=development
+    volumes:
+      # Mount local state directory for testing
+      # Update this path to match your local Hytale server data
+      - hytale-test-data:/data:ro
+      # Docker socket for container control
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  hytale-test-data:
+    external: true

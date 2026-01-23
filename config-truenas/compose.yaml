@@ -1,0 +1,212 @@
+# =============================================================================
+# HyOS - Hytale Server + Manager - TrueNAS SCALE Custom App
+# =============================================================================
+# Paste this entire file into: Apps → Discover Apps → Custom App → Install via YAML
+#
+# CONFIGURATION STEPS:
+# 1. Create a dataset for server data (e.g., tank/apps/hytale)
+# 2. Set dataset permissions: User 568, Group 568
+# 3. Update the volume path below to match your dataset
+# 4. Set your API_CLIENT_SECRET (password for the management API)
+# 5. Adjust memory settings based on your system (minimum 8GB recommended)
+#
+# ACCESS:
+# - Game Server: UDP port 5520
+# - Management UI: http://your-truenas-ip:3000
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Shared configuration - SET YOUR PASSWORD HERE
+# ---------------------------------------------------------------------------
+x-api-config: &api-config
+  # REQUIRED: Set your management API password (minimum 8 characters)
+  API_CLIENT_SECRET: ${API_CLIENT_SECRET:-changeme123}
+  API_CLIENT_ID: ${API_CLIENT_ID:-hyos-manager}
+
+services:
+  hytale:
+    # Use pre-built image from Docker Hub
+    # Using :latest with pull_policy: always ensures restarts pull the latest image
+    image: riceheadv8/hyos:latest
+    pull_policy: always
+    container_name: hyos
+
+    # Run as TrueNAS apps user (568:568) - ensure dataset matches
+    user: "568:568"
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Interactive mode for OAuth authentication
+    stdin_open: true
+    tty: true
+
+    # ==========================================================================
+    # Environment Configuration
+    # ==========================================================================
+    environment:
+      # Inherit shared API config
+      <<: *api-config
+
+      # --- User Settings ---
+      PUID: 568
+      PGID: 568
+      UMASK: "002"
+      TZ: ${TZ:-UTC}
+
+      # --- JVM Memory Settings ---
+      # Minimum 8G recommended, increase for larger worlds
+      JAVA_XMS: ${JAVA_XMS:-8G}
+      JAVA_XMX: ${JAVA_XMX:-12G}
+
+      # --- JVM Garbage Collector ---
+      USE_ZGC: "false"
+      G1_MAX_PAUSE: "200"
+
+      # --- Server Settings ---
+      SERVER_PORT: "5520"
+      PATCHLINE: ${PATCHLINE:-release}
+      ENABLE_AOT: "true"
+      AUTO_UPDATE: "false"
+
+      # --- Config Generation ---
+      SKIP_CONFIG_GENERATION: "false"
+      SERVER_NAME: ${SERVER_NAME:-Hytale Server}
+      SERVER_MOTD: ${SERVER_MOTD:-}
+      SERVER_PASSWORD: ${SERVER_PASSWORD:-}
+      MAX_PLAYERS: ${MAX_PLAYERS:-100}
+      MAX_VIEW_RADIUS: "32"
+      DEFAULT_WORLD: ${DEFAULT_WORLD:-default}
+      DEFAULT_GAMEMODE: ${DEFAULT_GAMEMODE:-Adventure}
+      LOCAL_COMPRESSION: "false"
+      DISPLAY_TMP_TAGS: "false"
+      PLAYER_STORAGE_TYPE: "Hytale"
+
+      # --- Whitelist ---
+      WHITELIST_ENABLED: ${WHITELIST_ENABLED:-false}
+
+      # --- Hytale Server Options ---
+      HYTALE_ACCEPT_EARLY_PLUGINS: "false"
+      HYTALE_ALLOW_OP: "false"
+      HYTALE_BACKUP: "true"
+      HYTALE_BACKUP_FREQUENCY: "30"
+      HYTALE_DISABLE_SENTRY: "false"
+
+      # --- REST API Plugin ---
+      API_ENABLED: "true"
+      API_PORT: "8080"
+      API_WEBSOCKET_ENABLED: "true"
+      API_WEBSOCKET_STATUS_INTERVAL: "1"
+      # Force regenerate API config on startup to sync password from environment
+      API_REGENERATE_CONFIG: "true"
+
+      # --- Debug ---
+      DEBUG: "false"
+      NO_COLOR: "false"
+
+    # Exposed ports
+    ports:
+      # UDP port for Hytale QUIC protocol (game traffic)
+      - "5520:5520/udp"
+      # HTTP port for REST API (optional - comment out if not using API)
+      - "8080:8080/tcp"
+
+    # Volume mounts
+    # IMPORTANT: Update the host path to your TrueNAS dataset
+    volumes:
+      # Server data (world, config, mods, backups, auth)
+      - /mnt/tank/apps/hytale:/data:rw
+
+    # Health check using modular script
+    healthcheck:
+      test: ["CMD", "/opt/scripts/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s
+
+    # Graceful shutdown
+    stop_grace_period: 30s
+
+    # Logging - limit log size
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+    # Security
+    security_opt:
+      - no-new-privileges:true
+
+  # ===========================================================================
+  # Server Manager (Web UI)
+  # ===========================================================================
+  manager:
+    image: riceheadv8/hyos-manager:latest
+    pull_policy: always
+    container_name: hyos-manager
+
+    # Run as TrueNAS apps user
+    user: "568:568"
+
+    restart: unless-stopped
+
+    environment:
+      # Inherit shared API config (same password as server)
+      <<: *api-config
+      # Map to REST adapter env var names
+      REST_API_CLIENT_SECRET: ${API_CLIENT_SECRET:-changeme123}
+      REST_API_CLIENT_ID: ${API_CLIENT_ID:-hyos-manager}
+
+      # Adapter configuration
+      ADAPTER_TYPE: rest
+      HYTALE_CONTAINER_NAME: hyos
+      HYTALE_STATE_DIR: /data/.state
+      HYTALE_SERVER_HOST: hytale
+      HYTALE_SERVER_PORT: "5520"
+
+      # REST API URL
+      REST_API_URL: http://hytale:8080
+
+      # Node environment
+      NODE_ENV: production
+
+    # Web UI port
+    ports:
+      - "3000:3000"
+
+    # Volume mounts
+    volumes:
+      # Shared data directory (for state files)
+      - /mnt/tank/apps/hytale:/data:ro
+      # Docker socket for container control
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    # Depends on the Hytale server
+    depends_on:
+      - hytale
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/server/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    # Logging
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Security - needs Docker socket access
+    security_opt:
+      - no-new-privileges:true
+
+# Network configuration (use default bridge)
+networks:
+  default:
+    driver: bridge

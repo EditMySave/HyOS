@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+:root {
+  /* Cablefied Dark Theme Colors */
+  --background: #0d0d0d;
+  --background-secondary: #151515;
+  --background-tertiary: #1a1a1a;
+  
+  --foreground: #ffffff;
+  --foreground-secondary: #a1a1a1;
+  --foreground-muted: #666666;
+  
+  --border: #222222;
+  --border-subtle: #1a1a1a;
+  
+  --accent: #ffffff;
+  --accent-secondary: #888888;
+  
+  /* Status colors - muted versions */
+  --status-online: #22c55e;
+  --status-offline: #ef4444;
+  --status-warning: #eab308;
+
+  /* Subtle pattern colors */
+  --pattern-dot: rgba(255, 255, 255, 0.06);
+  --pattern-line: rgba(255, 255, 255, 0.07);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Cablefied-like dotted background (not a square grid) */
+body {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(circle at 1px 1px, var(--pattern-dot) 1px, transparent 0),
+    repeating-linear-gradient(
+      90deg,
+      var(--pattern-line) 0 1px,
+      transparent 1px 160px
+    );
+  background-size: 22px 22px, 160px 1px;
+  background-position: 0 0, 0 0;
+  color: var(--foreground);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+}
+
+/* Make app surfaces square-edged like Cablefied */
+body :where(button, input, select, textarea, section, pre, code) {
+  border-radius: 0 !important;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #333333;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--foreground);
+}
+
+/* Focus ring style */
+*:focus-visible {
+  outline: 1px solid var(--foreground-muted);
+  outline-offset: 2px;
+}
+
+/* Input placeholder */
+input::placeholder,
+textarea::placeholder {
+  color: var(--foreground-muted);
+}
+
+/* Smooth transitions */
+button, a, input, select {
+  transition: all 0.15s ease;
+}

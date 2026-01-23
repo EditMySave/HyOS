@@ -1,0 +1,92 @@
+# =============================================================================
+# HyOS - Local Build & Test
+# =============================================================================
+# This file is for BUILDING images locally before pushing to Docker Hub.
+#
+# Workflow:
+# 1. Build both:  docker compose build
+# 2. Tag server:  docker tag hyos:truenas riceheadv8/hyos:latest
+# 3. Tag manager: docker tag hyos-manager:latest riceheadv8/hyos-manager:latest
+# 4. Push both:   docker push riceheadv8/hyos:latest && docker push riceheadv8/hyos-manager:latest
+# =============================================================================
+
+# Shared API config - change the password here for local testing
+x-api-config: &api-config
+  API_CLIENT_SECRET: test
+  API_CLIENT_ID: hyos-manager
+
+services:
+  # ---------------------------------------------------------------------------
+  # Hytale Server
+  # ---------------------------------------------------------------------------
+  hyos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+    image: hyos:truenas
+    platform: linux/amd64
+    container_name: hyos
+
+    ports:
+      - "5520:5520/udp"
+      - "8080:8080/tcp"
+
+    environment:
+      <<: *api-config
+      PUID: 568
+      PGID: 568
+      JAVA_XMS: 8G
+      JAVA_XMX: 12G
+      SERVER_PORT: "5520"
+      TZ: UTC
+      API_ENABLED: "true"
+      API_PORT: "8080"
+      API_REGENERATE_CONFIG: "true"
+
+    volumes:
+      - ./data:/data
+
+    deploy:
+      resources:
+        limits:
+          memory: 14G
+        reservations:
+          memory: 8G
+
+    stdin_open: true
+    tty: true
+
+  # ---------------------------------------------------------------------------
+  # Server Manager (Web UI)
+  # ---------------------------------------------------------------------------
+  manager:
+    build:
+      context: ../server-manager/hyos-server-manager/next
+      dockerfile: Dockerfile
+    image: hyos-manager:latest
+    platform: linux/amd64
+    container_name: hyos-manager
+
+    ports:
+      - "3000:3000"
+
+    environment:
+      <<: *api-config
+      REST_API_CLIENT_SECRET: test
+      REST_API_CLIENT_ID: hyos-manager
+      ADAPTER_TYPE: rest
+      HYTALE_CONTAINER_NAME: hyos
+      HYTALE_STATE_DIR: /data/.state
+      HYTALE_SERVER_HOST: hyos
+      HYTALE_SERVER_PORT: "5520"
+      REST_API_URL: http://hyos:8080
+      NODE_ENV: production
+
+    volumes:
+      - ./data:/data:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    depends_on:
+      - hyos
