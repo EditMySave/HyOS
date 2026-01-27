@@ -1,16 +1,33 @@
-import { NextResponse } from 'next/server';
-import { getAdapter } from '@/lib/adapters';
+import { NextResponse } from "next/server";
+import { isDockerAvailable, restartServerContainer } from "@/lib/docker";
+import { clearCache } from "@/lib/hytale-api";
 
 export async function POST() {
   try {
-    const adapter = await getAdapter();
-    await adapter.restart();
-    
-    return NextResponse.json({ success: true, message: 'Server restarting' });
+    // Check if Docker is available
+    const dockerAvailable = await isDockerAvailable();
+    if (!dockerAvailable) {
+      return NextResponse.json(
+        { error: "Docker not available - cannot control server" },
+        { status: 503 },
+      );
+    }
+
+    // Restart the container
+    await restartServerContainer();
+
+    // Clear API cache so health checks start fresh
+    clearCache();
+
+    return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("[restart] Error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to restart server' },
-      { status: 500 }
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to restart server",
+      },
+      { status: 500 },
     );
   }
 }

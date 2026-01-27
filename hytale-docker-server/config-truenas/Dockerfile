@@ -76,6 +76,13 @@ ENV API_ENABLED=true \
     API_CLIENT_SECRET="" \
     API_WEBSOCKET_ENABLED=true
 
+# Auto-update configuration
+ENV AUTO_UPDATE=false \
+    AUTO_UPDATE_INTERVAL=3600 \
+    AUTO_UPDATE_TIME="" \
+    AUTO_UPDATE_RESTART=true \
+    AUTO_UPDATE_BACKUP=true
+
 # Install runtime dependencies
 RUN apk add --no-cache \
     # Init system

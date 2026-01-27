@@ -1,0 +1,98 @@
+---
+description: TrueNAS SCALE Docker deployment guidelines
+globs: hytale-docker-server/config-truenas/**/*
+alwaysApply: false
+---
+
+# Docker Server TrueNAS Rules
+
+## State File API
+
+Docker containers expose state via JSON files in `/data/.state/`:
+
+- `server.json` - Server status (starting/running/stopped/crashed)
+- `version.json` - Current version and update availability
+- `auth.json` - OAuth authentication status
+- `config.json` - Sanitized server configuration
+- `health.json` - Health check results
+
+## TrueNAS Best Practices
+
+### Resource Limits (Required)
+
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '4.0'
+      memory: 10G
+    reservations:
+      cpus: '2.0'
+      memory: 4G
+```
+
+### Stop Grace Period (Required for Game Servers)
+
+```yaml
+stop_grace_period: 60s  # Allow clean shutdown
+```
+
+### Security Hardening
+
+```yaml
+security_opt:
+  - no-new-privileges
+cap_drop:
+  - ALL
+cap_add:
+  - NET_BIND_SERVICE  # If needed
+```
+
+### Init Container for Permissions
+
+```yaml
+services:
+  permissions:
+    image: busybox
+    command: ["sh", "-c", "chown -R 568:568 /data"]
+    volumes:
+      - /mnt/tank/apps/hytale:/data
+    user: "0:0"
+  
+  hytale:
+    depends_on:
+      permissions:
+        condition: service_completed_successfully
+```
+
+## Multiple Compose Files Warning
+
+When both `compose.yaml` and `docker-compose.yml` exist, always specify explicitly:
+
+```bash
+docker compose -f docker-compose.yml build --no-cache
+docker compose -f docker-compose.yml up --force-recreate
+```
+
+## Plugin JAR Deployment
+
+Plugins are baked into the Docker image. After modifying the API plugin:
+
+```bash
+# Rebuild JAR
+cd hytale-api-plugin && ./gradlew clean build
+
+# Copy to plugins folder
+cp build/libs/*.jar ../hytale-docker-server/config-truenas/plugins/
+
+# Rebuild Docker image (required!)
+docker compose -f docker-compose.yml build --no-cache
+```
+
+## Deployment
+
+See `.cursor/skills/deploy-truenas/SKILL.md` for deployment workflow.
+
+## Configuration
+
+Reference `SETUP.md` for comprehensive TrueNAS deployment guide.

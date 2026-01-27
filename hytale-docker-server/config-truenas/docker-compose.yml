@@ -44,6 +44,13 @@ services:
       API_ENABLED: "true"
       API_PORT: "8080"
       API_REGENERATE_CONFIG: "true"
+      # Rate limits - generous for local development
+      API_RATE_LIMIT: "300"
+      API_RATE_BURST: "50"
+      API_RATE_LIMIT_AUTH: "60"
+      API_RATE_BURST_AUTH: "10"
+      API_RATE_LIMIT_ADMIN: "120"
+      API_RATE_BURST_ADMIN: "20"
 
     volumes:
       - ./data:/data
@@ -63,11 +70,15 @@ services:
   # ---------------------------------------------------------------------------
   manager:
     build:
-      context: ../server-manager/hyos-server-manager/next
+      context: ../../server-manager/hyos-server-manager/next
       dockerfile: Dockerfile
     image: hyos-manager:latest
     platform: linux/amd64
     container_name: hyos-manager
+    # Add root group (GID 0) for Docker socket access
+    # Socket inside container is 0:0 with 660 permissions
+    group_add:
+      - "0"
 
     ports:
       - "3000:3000"
@@ -80,12 +91,12 @@ services:
       HYTALE_CONTAINER_NAME: hyos
       HYTALE_STATE_DIR: /data/.state
       HYTALE_SERVER_HOST: hyos
-      HYTALE_SERVER_PORT: "5520"
+      HYTALE_SERVER_PORT: "8080"
       REST_API_URL: http://hyos:8080
       NODE_ENV: production
 
     volumes:
-      - ./data:/data:ro
+      - ./data:/data:rw
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
     depends_on:

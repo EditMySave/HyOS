@@ -115,14 +115,26 @@ download_server_files() {
             
             if [[ "$current_version" != "$latest_version" ]] && [[ "$latest_version" != "unknown" ]]; then
                 log_step_status "update available: $latest_version" "$YELLOW"
-                # Note: Don't auto-update - let admin decide
+                state_set_version "$current_version" "$latest_version"
+                
+                # Auto-update at startup
+                log_info "AUTO_UPDATE enabled, applying update before startup..."
+                if perform_update; then
+                    log_success "Update applied successfully"
+                    # Re-detect files after update
+                    detect_existing_files
+                else
+                    log_warn "Auto-update failed, starting with current version"
+                fi
             else
                 log_step_status "up to date" "$GREEN"
+                state_set_version "$current_version" "$latest_version"
             fi
-            
-            state_set_version "$current_version" "$latest_version"
         else
-            state_set_version "$current_version" ""
+            # Just check and report, don't update
+            local latest_version
+            latest_version=$(get_latest_version)
+            state_set_version "$current_version" "$latest_version"
         fi
         
         return 0

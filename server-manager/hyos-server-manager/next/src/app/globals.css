@@ -1,21 +1,18 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Cablefied Dark Theme Colors */
-  --background: #0d0d0d;
+  /* Cablefied Dark Theme Colors - Dark by default */
   --background-secondary: #151515;
   --background-tertiary: #1a1a1a;
-  
-  --foreground: #ffffff;
   --foreground-secondary: #a1a1a1;
   --foreground-muted: #666666;
-  
-  --border: #222222;
+
   --border-subtle: #1a1a1a;
-  
-  --accent: #ffffff;
   --accent-secondary: #888888;
-  
+
   /* Status colors - muted versions */
   --status-online: #22c55e;
   --status-offline: #ef4444;
@@ -24,13 +21,119 @@
   /* Subtle pattern colors */
   --pattern-dot: rgba(255, 255, 255, 0.06);
   --pattern-line: rgba(255, 255, 255, 0.07);
+  --radius: 0rem;
+
+  /* Dark theme as default (Cablefied is always dark) */
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #141414;
+  --card-foreground: #fafafa;
+  --popover: #141414;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #0a0a0a;
+  --secondary: #1f1f1f;
+  --secondary-foreground: #fafafa;
+  --muted: #1f1f1f;
+  --muted-foreground: #a1a1a1;
+  --accent: #1f1f1f;
+  --accent-foreground: #fafafa;
+  --destructive: #ef4444;
+  --border: #262626;
+  --input: #262626;
+  --ring: #404040;
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: #141414;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #fafafa;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #1f1f1f;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #262626;
+  --sidebar-ring: #404040;
 }
 
 @theme inline {
+  /* Colors - Background */
   --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-background-tertiary: var(--background-tertiary);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Colors - Foreground */
   --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-foreground-muted: var(--foreground-muted);
+
+  /* Colors - Semantic */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-destructive: var(--destructive);
+
+  /* Colors - Borders & Inputs */
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Colors - Status */
+  --color-status-online: var(--status-online);
+  --color-status-offline: var(--status-offline);
+  --color-status-warning: var(--status-warning);
+
+  /* Colors - Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Typography - Font Families */
+  --font-family-sans:
+    var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  --font-family-mono: var(--font-geist-mono), "JetBrains Mono", monospace;
+  --font-family-cablefied: var(--font-cablefied), var(--font-inter), sans-serif;
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
+
+  /* Border Radius - All set to 0 for square edges */
+  --radius-none: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
+  --radius-full: 0;
+
+  /* Transitions */
+  --transition-default: 150ms ease;
+  --transition-fast: 100ms ease;
+  --transition-slow: 200ms ease;
 }
 
 /* Cablefied-like dotted background (not a square grid) */
@@ -43,11 +146,15 @@ body {
       var(--pattern-line) 0 1px,
       transparent 1px 160px
     );
-  background-size: 22px 22px, 160px 1px;
-  background-position: 0 0, 0 0;
-  color: var(--foreground);
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, sans-serif;
+  background-size:
+    22px 22px,
+    160px 1px;
+  background-position:
+    0 0,
+    0 0;
+  font-family:
+    var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
 }
 
 /* Make app surfaces square-edged like Cablefied */
@@ -93,6 +200,135 @@ textarea::placeholder {
 }
 
 /* Smooth transitions */
-button, a, input, select {
+button,
+a,
+input,
+select {
   transition: all 0.15s ease;
+}
+
+/* Cablefied is always dark - no light mode variant needed */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  /* Square edges for all interactive and container elements */
+  button,
+  input,
+  select,
+  textarea,
+  section,
+  pre,
+  code,
+  div[class*="rounded"],
+  [class*="rounded"] {
+    border-radius: 0 !important;
+  }
+
+  /* Default button styles */
+  button {
+    transition: all 150ms ease;
+  }
+
+  /* Default input styles */
+  input,
+  select,
+  textarea {
+    @apply bg-input border-border text-foreground;
+    transition: all 150ms ease;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-foreground-muted;
+  }
+
+  /* Default focus styles */
+  *:focus-visible {
+    @apply outline outline-1 outline-foreground-muted outline-offset-2;
+  }
+
+  /* Default link styles */
+  a {
+    transition: all 150ms ease;
+  }
+}
+
+@layer utilities {
+  /* Cablefied background pattern utility */
+  .bg-cablefied-pattern {
+    background-color: var(--background);
+    background-image:
+      radial-gradient(circle at 1px 1px, var(--pattern-dot) 1px, transparent 0),
+      repeating-linear-gradient(
+        90deg,
+        var(--pattern-line) 0 1px,
+        transparent 1px 160px
+      );
+    background-size:
+      22px 22px,
+      160px 1px;
+    background-position:
+      0 0,
+      0 0;
+  }
+
+  /* Cablefied font utility */
+  .font-cablefied {
+    font-family: var(--font-family-cablefied);
+  }
+
+  /* Status color utilities */
+  .bg-status-online {
+    background-color: var(--status-online);
+  }
+
+  .bg-status-offline {
+    background-color: var(--status-offline);
+  }
+
+  .bg-status-warning {
+    background-color: var(--status-warning);
+  }
+
+  .text-status-online {
+    color: var(--status-online);
+  }
+
+  .text-status-offline {
+    color: var(--status-offline);
+  }
+
+  .text-status-warning {
+    color: var(--status-warning);
+  }
+
+  /* Background color utilities */
+  .bg-secondary-surface {
+    background-color: var(--background-secondary);
+  }
+
+  .bg-tertiary-surface {
+    background-color: var(--background-tertiary);
+  }
+
+  /* Border utilities */
+  .border-subtle {
+    border-color: var(--border-subtle);
+  }
+
+  /* Text color utilities */
+  .text-secondary {
+    color: var(--foreground-secondary);
+  }
+
+  .text-muted {
+    color: var(--foreground-muted);
+  }
 }

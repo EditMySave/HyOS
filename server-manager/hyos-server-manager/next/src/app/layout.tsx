@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
-import { TopNav } from "./top-nav";
+import { TopNav } from "@/components/layout/top-nav";
+import { SubNav } from "@/components/layout/sub-nav";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -38,7 +39,8 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} ${cablefied.variable} antialiased`}
       >
         <TopNav />
-        {children}
+        <SubNav />
+        <main>{children}</main>
       </body>
     </html>
   );

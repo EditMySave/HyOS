@@ -1,0 +1,64 @@
+---
+description: Hytale Docker server development guidelines
+globs: hytale-docker-server/**/*
+alwaysApply: false
+---
+
+# Docker Server Rules
+
+## Configurations
+
+- `config-minimal` - Lightweight testing
+- `config-developer` - Full-featured with TypeScript/Bun
+- `config-enterprise` - Production-grade (planned)
+- `config-truenas` - TrueNAS SCALE integration
+
+## Environment Variables
+
+All Hytale CLI options available via `HYTALE_*` environment variables.
+JVM settings: `JAVA_XMS`, `JAVA_XMX`
+
+## Build Commands
+
+```bash
+cd hytale-docker-server/config-developer
+bun install && bun run build
+docker build -t hytale-server-dev .
+```
+
+## Docker Development Workflow
+
+### Fresh Build (Local Changes)
+
+```bash
+# Stop existing containers
+docker compose -f docker-compose.yml down
+
+# Build without cache
+docker compose -f docker-compose.yml build --no-cache
+
+# Start with fresh containers
+docker compose -f docker-compose.yml up --force-recreate
+```
+
+### Multiple Compose Files Warning
+
+When both `compose.yaml` and `docker-compose.yml` exist, Docker defaults to `compose.yaml`. Always specify explicitly:
+
+```bash
+docker compose -f docker-compose.yml <command>
+```
+
+### Plugin Deployment
+
+Plugins (JAR files) are copied into the image at build time via `COPY plugins/ /opt/plugins/`. After modifying a plugin:
+
+1. Rebuild the plugin JAR
+2. Copy to `plugins/` directory
+3. Rebuild Docker image with `--no-cache`
+
+### Port Configuration
+
+Common ports:
+- `5520/udp` - Game server
+- `8080/tcp` - REST API (from plugin)

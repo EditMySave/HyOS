@@ -1,10 +1,10 @@
 {
   "Version": 4,
   "UUID": {
-    "$binary": "cOlB0RqLQ/2pyrogKEXkkA==",
+    "$binary": "rSyXmQxjSGqatEv/RV93eQ==",
     "$type": "04"
   },
-  "Seed": 1768836806988,
+  "Seed": 1769454206050,
   "WorldGen": {
     "Type": "Hytale",
     "Name": "Default"
@@ -21,7 +21,7 @@
   "IsPvpEnabled": false,
   "IsFallDamageEnabled": true,
   "IsGameTimePaused": false,
-  "GameTime": "0001-01-28T21:46:40.486714303Z",
+  "GameTime": "0001-01-06T03:53:19.584068578Z",
   "ClientEffects": {
     "SunHeightPercent": 100.0,
     "SunAngleDegrees": 0.0,

@@ -1,16 +1,20 @@
-import { NextResponse } from 'next/server';
-import { getAdapter } from '@/lib/adapters';
+import { NextResponse } from "next/server";
+import { apiRequest } from "@/lib/hytale-api";
 
 export async function POST() {
   try {
-    const adapter = await getAdapter();
-    await adapter.save();
-    
-    return NextResponse.json({ success: true, message: 'World saved' });
+    await apiRequest("/server/save", {
+      method: "POST",
+    });
+
+    return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("[save] Error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to save world' },
-      { status: 500 }
+      {
+        error: error instanceof Error ? error.message : "Failed to save world",
+      },
+      { status: 500 },
     );
   }
 }

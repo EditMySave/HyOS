@@ -1,26 +1,42 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAdapter } from '@/lib/adapters';
+import { NextResponse } from "next/server";
+import { apiRequest } from "@/lib/hytale-api";
 
-export async function POST(request: NextRequest) {
+interface ApiCommandResponse {
+  success: boolean;
+  output: string;
+}
+
+export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { command } = body;
-    
-    if (!command || typeof command !== 'string') {
+
+    if (!command || typeof command !== "string") {
       return NextResponse.json(
-        { error: 'Command is required' },
-        { status: 400 }
+        { error: "Command is required" },
+        { status: 400 },
       );
     }
-    
-    const adapter = await getAdapter();
-    const result = await adapter.executeCommand(command);
-    
-    return NextResponse.json(result);
+
+    const data = await apiRequest<ApiCommandResponse>("/admin/command", {
+      method: "POST",
+      body: JSON.stringify({ command }),
+    });
+
+    return NextResponse.json({
+      success: data.success,
+      output: data.output,
+    });
   } catch (error) {
+    console.error("[command] Error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to execute command' },
-      { status: 500 }
+      {
+        success: false,
+        output: "",
+        error:
+          error instanceof Error ? error.message : "Failed to execute command",
+      },
+      { status: 500 },
     );
   }
 }

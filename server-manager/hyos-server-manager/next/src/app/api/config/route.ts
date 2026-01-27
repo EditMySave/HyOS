@@ -1,56 +1,65 @@
-/**
- * Configuration API
- * 
- * Returns current configuration and allows runtime updates
- */
+import { NextResponse } from "next/server";
+import {
+  getConfiguredVia,
+  loadConfig,
+  resetConfig,
+  saveConfig,
+} from "@/lib/services/config/config.loader";
+import { managerConfigUpdateSchema } from "@/lib/services/config/config.types";
 
-import { NextResponse } from 'next/server';
-import { getAllConfig, setConfig } from '@/lib/config';
+function toGetResponse(
+  config: Awaited<ReturnType<typeof loadConfig>>,
+  configuredVia: "file" | "environment" | null,
+) {
+  const { apiClientSecret: _, ...rest } = config;
+  return {
+    ...rest,
+    hasSecret: !!config.apiClientSecret,
+    ...(configuredVia && { configuredVia }),
+  };
+}
 
 export async function GET() {
-  return NextResponse.json(getAllConfig());
+  const [config, configuredVia] = await Promise.all([
+    loadConfig(),
+    getConfiguredVia(),
+  ]);
+  return NextResponse.json(toGetResponse(config, configuredVia));
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    
-    // Update runtime config
-    if (body.containerName !== undefined) {
-      setConfig('HYTALE_CONTAINER_NAME', body.containerName);
+    const parsed = managerConfigUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid request body", issues: parsed.error.issues },
+        { status: 400 },
+      );
     }
-    if (body.serverHost !== undefined) {
-      setConfig('HYTALE_SERVER_HOST', body.serverHost);
-    }
-    if (body.serverPort !== undefined) {
-      setConfig('HYTALE_SERVER_PORT', String(body.serverPort));
-    }
-    if (body.stateDir !== undefined) {
-      setConfig('HYTALE_STATE_DIR', body.stateDir);
-    }
-    if (body.adapterType !== undefined) {
-      setConfig('ADAPTER_TYPE', body.adapterType);
-    }
-    // REST API settings
-    if (body.restApiUrl !== undefined) {
-      setConfig('REST_API_URL', body.restApiUrl);
-    }
-    if (body.restApiClientId !== undefined) {
-      setConfig('REST_API_CLIENT_ID', body.restApiClientId);
-    }
-    if (body.restApiClientSecret !== undefined) {
-      setConfig('REST_API_CLIENT_SECRET', body.restApiClientSecret);
-    }
-    
+    const config = await saveConfig(parsed.data);
+    const configuredVia = await getConfiguredVia();
     return NextResponse.json({
       success: true,
-      message: 'Configuration updated',
-      config: getAllConfig(),
+      message: "Configuration updated",
+      ...toGetResponse(config, configuredVia),
     });
-  } catch (error) {
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to save configuration";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
+export async function DELETE() {
+  try {
+    await resetConfig();
+    return NextResponse.json({ success: true, message: "Configuration reset" });
+  } catch (err) {
+    console.error("Config reset error:", err);
     return NextResponse.json(
-      { error: 'Invalid request body' },
-      { status: 400 }
+      { error: "Failed to reset configuration" },
+      { status: 500 },
     );
   }
 }

@@ -32,21 +32,27 @@ docker build -t riceheadv8/hyos:latest .
 docker push riceheadv8/hyos:latest
 ```
 
-## Build API Plugin (Optional)
+## Multi-Architecture Publish (buildx)
 
-The hytale-api plugin enables REST API access for the server manager.
+HyOS server is **amd64 only** (Hytale downloader is amd64). Use buildx for reproducible Hub publish:
 
 ```bash
-# Requires HytaleServer.jar as dependency
-cd server-api/hytale-api-leonardoxr
-./gradlew build
+cd hytale-docker-server/config-truenas
+docker buildx build --builder multiarch --platform linux/amd64 --no-cache \
+  -t riceheadv8/hyos:latest --push -f Dockerfile .
+```
 
-# Copy JAR to plugins directory
-cp build/libs/hytale-api-*.jar ../../hytale-docker-server/config-truenas/plugins/
+For **manager** multi-arch (amd64 + arm64), see **deploy-server-manager** skill.
 
-# Rebuild Docker image to include plugin
-cd ../../hytale-docker-server/config-truenas
-docker build -t riceheadv8/hyos:latest .
+## Build API Plugin
+
+The hytale-api plugin enables REST API access. See **build-api-plugin** skill for full details.
+
+Quick build:
+```bash
+cd hytale-api-plugin
+./gradlew clean build
+cp build/libs/hytale-api-1.0.0.jar ../hytale-docker-server/config-truenas/plugins/
 ```
 
 ## Local Development
@@ -266,3 +272,8 @@ docker exec hyos cat /data/.state/auth.json
 2. Check `API_ENABLED=true` in environment
 3. Review server logs for plugin errors
 4. Ensure `API_REGENERATE_CONFIG=true` if changing credentials
+
+## Related Skills
+
+- **deploy-server-manager**: Next.js web UI container (manager build, adapter config)
+- **build-api-plugin**: Building the REST API plugin JAR

@@ -1,19 +1,30 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAdapter } from '@/lib/adapters';
+import { NextResponse } from "next/server";
+import { apiRequest } from "@/lib/hytale-api";
+
+interface PlayerStats {
+  playTime: number;
+  deaths: number;
+  mobKills: number;
+  playerKills: number;
+  blocksPlaced: number;
+  blocksDestroyed: number;
+}
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ uuid: string }> }
+  _request: Request,
+  { params }: { params: Promise<{ uuid: string }> },
 ) {
   try {
     const { uuid } = await params;
-    const adapter = await getAdapter();
-    const result = await adapter.getPlayerStats(uuid);
-    return NextResponse.json(result);
+    const data = await apiRequest<PlayerStats>(`/players/${uuid}/stats`);
+    return NextResponse.json(data);
   } catch (error) {
+    console.error("[stats] Error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to get player stats' },
-      { status: 500 }
+      {
+        error: error instanceof Error ? error.message : "Failed to get stats",
+      },
+      { status: 500 },
     );
   }
 }

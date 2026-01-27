@@ -43,6 +43,13 @@ export JAVA_XMX="${JAVA_XMX:-8G}"
 export ENABLE_AOT="${ENABLE_AOT:-true}"
 export PATCHLINE="${PATCHLINE:-release}"
 
+# Auto-update defaults
+export AUTO_UPDATE="${AUTO_UPDATE:-false}"
+export AUTO_UPDATE_INTERVAL="${AUTO_UPDATE_INTERVAL:-3600}"
+export AUTO_UPDATE_TIME="${AUTO_UPDATE_TIME:-}"
+export AUTO_UPDATE_RESTART="${AUTO_UPDATE_RESTART:-true}"
+export AUTO_UPDATE_BACKUP="${AUTO_UPDATE_BACKUP:-true}"
+
 # =============================================================================
 # Source Library Scripts
 # =============================================================================
@@ -184,9 +191,6 @@ main() {
     log_section "Hytale Server (TrueNAS)"
     log_info "Version: Enterprise-Modular"
     
-    # Initialize state
-    state_set_server "starting"
-    
     # Pre-flight checks
     # check_architecture
     check_permissions
@@ -194,6 +198,9 @@ main() {
     # Setup
     setup_user
     setup_directories
+    
+    # Initialize state (after directories are created)
+    state_set_server "starting"
     
     # Download server files
     download_server_files || {

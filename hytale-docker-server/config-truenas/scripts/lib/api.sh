@@ -113,16 +113,16 @@ api_generate_config() {
     }
   ],
   "rateLimits": {
-    "defaultRequestsPerMinute": ${API_RATE_LIMIT:-60},
-    "burstSize": ${API_RATE_BURST:-10},
+    "defaultRequestsPerMinute": ${API_RATE_LIMIT:-300},
+    "burstSize": ${API_RATE_BURST:-50},
     "endpoints": {
       "/auth/token": {
-        "requestsPerMinute": 10,
-        "burstSize": 3
+        "requestsPerMinute": ${API_RATE_LIMIT_AUTH:-60},
+        "burstSize": ${API_RATE_BURST_AUTH:-10}
       },
       "/admin/*": {
-        "requestsPerMinute": 30,
-        "burstSize": 5
+        "requestsPerMinute": ${API_RATE_LIMIT_ADMIN:-120},
+        "burstSize": ${API_RATE_BURST_ADMIN:-20}
       }
     }
   },
@@ -157,9 +157,6 @@ EOF
     
     log_info "API config generated at $config_file"
     log_debug "API client ID: ${API_CLIENT_ID:-hyos-manager}"
-    
-    # Store API state
-    state_set "api" "{\"enabled\": true, \"port\": ${API_PORT:-8080}, \"client_id\": \"${API_CLIENT_ID:-hyos-manager}\"}"
     
     return 0
 }

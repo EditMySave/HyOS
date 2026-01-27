@@ -1,42 +1,33 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAdapter } from '@/lib/adapters';
+import { NextResponse } from "next/server";
+import { apiRequest } from "@/lib/hytale-api";
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ uuid: string }> }
+  request: Request,
+  { params }: { params: Promise<{ uuid: string }> },
 ) {
   try {
     const { uuid } = await params;
     const body = await request.json().catch(() => ({}));
     const { reason, duration } = body;
-    
-    const adapter = await getAdapter();
-    await adapter.banPlayer(uuid, reason, duration);
-    
-    return NextResponse.json({ success: true, message: `Player ${uuid} banned` });
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to ban player' },
-      { status: 500 }
-    );
-  }
-}
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ uuid: string }> }
-) {
-  try {
-    const { uuid } = await params;
-    
-    const adapter = await getAdapter();
-    await adapter.unbanPlayer(uuid);
-    
-    return NextResponse.json({ success: true, message: `Player ${uuid} unbanned` });
+    await apiRequest("/admin/ban", {
+      method: "POST",
+      body: JSON.stringify({
+        player: uuid,
+        reason: reason || "Banned by admin",
+        duration: duration,
+        permanent: duration === undefined,
+      }),
+    });
+
+    return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("[ban] Error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to unban player' },
-      { status: 500 }
+      {
+        error: error instanceof Error ? error.message : "Failed to ban player",
+      },
+      { status: 500 },
     );
   }
 }

@@ -1,0 +1,36 @@
+---
+description: Server Manager authentication implementation guidelines
+globs: server-manager/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Auth Rules
+
+## Overview
+
+Authentication for the Server Manager web UI.
+
+## Patterns
+
+- Protect routes requiring authentication
+- Handle auth state in client components
+- Secure API routes with middleware
+
+## Security
+
+- Never expose credentials in client code
+- Use HTTP-only cookies for session tokens
+- Validate auth state server-side
+
+## Implementation
+
+```ts
+// Auth check pattern
+async function requireAuth() {
+  const session = await getSession();
+  if (!session) {
+    redirect('/login');
+  }
+  return session;
+}
+```

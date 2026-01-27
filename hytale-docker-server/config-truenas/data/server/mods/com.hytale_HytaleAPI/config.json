@@ -19,23 +19,23 @@
   "clients": [
     {
       "id": "hyos-manager",
-      "secret": "$2a$12$9G6BqJ9Tw84ueLwi.5PbZebPaqaDImI7DJ2fjjkJHg/1kNlpTLHpW",
+      "secret": "$2a$12$cs5NP4VpEQ2Q0ha8BLN56etS2Ffkv19k3pcoMcYHYVePsjtiEh81W",
       "description": "HyOS Server Manager client",
       "permissions": ["api.*"],
       "enabled": true
     }
   ],
   "rateLimits": {
-    "defaultRequestsPerMinute": 60,
-    "burstSize": 10,
+    "defaultRequestsPerMinute": 300,
+    "burstSize": 50,
     "endpoints": {
       "/auth/token": {
-        "requestsPerMinute": 10,
-        "burstSize": 3
+        "requestsPerMinute": 60,
+        "burstSize": 10
       },
       "/admin/*": {
-        "requestsPerMinute": 30,
-        "burstSize": 5
+        "requestsPerMinute": 120,
+        "burstSize": 20
       }
     }
   },

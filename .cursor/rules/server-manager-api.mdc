@@ -1,0 +1,241 @@
+---
+description: Server Manager API integration and data fetching patterns
+globs: server-manager/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# API Integration Rules
+
+## Data Fetching Strategy
+
+| Context | Approach |
+|---------|----------|
+| Server Components | Direct fetch with Zod validation |
+| Client Components | SWR hooks with Zod validation |
+| Mutations | SWR mutation or server actions |
+
+## Zod Validation
+
+Always validate API responses with Zod schemas:
+
+```ts
+import { z } from 'zod';
+
+// Define schema
+const serverStatusSchema = z.object({
+  status: z.enum(['running', 'stopped', 'starting', 'crashed']),
+  uptime: z.number(),
+  players: z.number().optional(),
+});
+
+type ServerStatus = z.infer<typeof serverStatusSchema>;
+
+// Use safeParse for graceful error handling (no exceptions)
+const result = serverStatusSchema.safeParse(data);
+if (!result.success) {
+  console.error(result.error.issues);
+  return null;
+}
+return result.data;
+
+// Or use parse() with try/catch
+try {
+  return serverStatusSchema.parse(data);
+} catch (e) {
+  if (e instanceof z.ZodError) {
+    console.error(e.issues);
+  }
+  throw e;
+}
+```
+
+## SWR Patterns
+
+SWR hooks should be defined in service files and use service functions:
+
+```ts
+// lib/services/server/server.hooks.ts
+import useSWR from 'swr';
+import useSWRMutation from 'swr/mutation';
+import { getServerStatus, startServer } from './server.service';
+import type { ServerStatus } from './server.types';
+
+// Read data - uses service function
+export function useServerStatus(id: string) {
+  return useSWR<ServerStatus>(
+    id ? `server-status-${id}` : null,
+    () => getServerStatus(id),
+    { refreshInterval: 5000 }
+  );
+}
+
+// Mutations - uses service function
+export function useStartServer(id: string) {
+  return useSWRMutation(
+    `start-server-${id}`,
+    () => startServer(id)
+  );
+}
+```
+
+## API Route Handlers
+
+```ts
+// /app/api/servers/[id]/route.ts
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const paramsSchema = z.object({ id: z.string().uuid() });
+
+export async function GET(req: Request, { params }: { params: { id: string } }) {
+  const { id } = paramsSchema.parse(params);
+  // ...fetch and return data
+  return NextResponse.json(data);
+}
+```
+
+## Error Handling
+
+- Validate all inputs with Zod (throws on invalid data)
+- Use SWR's built-in error state for UI feedback
+- Log errors with context for debugging
+
+## SWR Performance Tips
+
+```ts
+// Request deduplication - multiple components, one request
+// All these components share the same cached data via service hooks:
+function ComponentA() { useUser(userId); }
+function ComponentB() { useUser(userId); }
+
+// Create reusable data hooks in service files
+// lib/services/user/user.hooks.ts
+export function useUser(id: string) {
+  return useSWR(
+    id ? `user-${id}` : null,
+    () => getUser(id)
+  );
+}
+
+// Conditional fetching
+const { data } = useSWR(
+  shouldFetch ? `item-${id}` : null,
+  () => getItem(id)
+);
+
+// Optimistic updates
+const { trigger } = useSWRMutation(
+  `update-item-${id}`,
+  (_, { arg }) => updateItem(id, arg),
+  {
+    optimisticData: newData,
+    rollbackOnError: true,
+  }
+);
+```
+
+## Service Layer Pattern
+
+All API interactions must go through a service layer. Components and pages should **always** import and use services, never call API routes directly.
+
+### Service Structure
+
+Services should be organized in `lib/services/` with types stored in separate files alongside services:
+
+```
+lib/services/
+  server/
+    server.service.ts      # Service implementation
+    server.types.ts        # Type definitions
+  player/
+    player.service.ts
+    player.types.ts
+```
+
+### Service Implementation
+
+```ts
+// lib/services/server/server.service.ts
+import { z } from 'zod';
+import { serverStatusSchema } from './server.types';
+
+export async function getServerStatus(id: string) {
+  const response = await fetch(`/api/servers/${id}/status`);
+  if (!response.ok) throw new Error('Failed to fetch server status');
+  const data = await response.json();
+  return serverStatusSchema.parse(data);
+}
+
+export async function startServer(id: string) {
+  const response = await fetch(`/api/servers/${id}/start`, {
+    method: 'POST',
+  });
+  if (!response.ok) throw new Error('Failed to start server');
+  return response.json();
+}
+```
+
+### Types in Separate Files
+
+```ts
+// lib/services/server/server.types.ts
+import { z } from 'zod';
+
+export const serverStatusSchema = z.object({
+  status: z.enum(['running', 'stopped', 'starting', 'crashed']),
+  uptime: z.number(),
+  players: z.number().optional(),
+});
+
+export type ServerStatus = z.infer<typeof serverStatusSchema>;
+```
+
+### Component Usage
+
+Components and pages must import services, never call fetch directly:
+
+```ts
+// ✅ Correct - Import service
+import { getServerStatus } from '@/lib/services/server/server.service';
+import { useServerStatus } from '@/lib/services/server/server.hooks';
+
+function ServerStatus({ id }: { id: string }) {
+  const { data } = useServerStatus(id);
+  return <div>{data?.status}</div>;
+}
+
+// ❌ Wrong - Direct fetch in component
+function ServerStatus({ id }: { id: string }) {
+  const { data } = useSWR(`/api/servers/${id}/status`, fetcher);
+  return <div>{data?.status}</div>;
+}
+```
+
+### Service Hooks
+
+Create SWR hooks in service files for client components:
+
+```ts
+// lib/services/server/server.hooks.ts
+import useSWR from 'swr';
+import { getServerStatus } from './server.service';
+import type { ServerStatus } from './server.types';
+
+export function useServerStatus(id: string) {
+  return useSWR<ServerStatus>(
+    id ? `server-status-${id}` : null,
+    () => getServerStatus(id),
+    { refreshInterval: 5000 }
+  );
+}
+```
+
+## bcrypt for Passwords
+
+Use bcryptjs (not Python bcrypt):
+
+```ts
+import bcrypt from 'bcryptjs';
+const hash = bcrypt.hashSync(password, 12);
+const valid = bcrypt.compareSync(password, hash);
+```

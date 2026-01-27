@@ -149,14 +149,22 @@ state_get_version() {
 # =============================================================================
 
 # Set auth status (no secrets stored here!)
-# Usage: state_set_auth "authenticated" ["profile_name"] ["expires_at"]
+# Usage: state_set_auth "authenticated" ["profile_name"] ["expires_at"] ["auth_url"] ["auth_code"]
 state_set_auth() {
     local status="$1"
     local profile="${2:-}"
     local expires_at="${3:-}"
+    local auth_url="${4:-}"
+    local auth_code="${5:-}"
     
     local authenticated="false"
     [[ "$status" == "authenticated" ]] && authenticated="true"
+    
+    # Clear auth URL/code if not pending
+    if [[ "$status" != "pending" ]]; then
+        auth_url=""
+        auth_code=""
+    fi
     
     local json
     json=$(json_object \
@@ -164,6 +172,8 @@ state_set_auth() {
         "authenticated" "$authenticated" \
         "profile" "${profile:-null}" \
         "expires_at" "${expires_at:-null}" \
+        "auth_url" "${auth_url:-null}" \
+        "auth_code" "${auth_code:-null}" \
         "updated_at" "$(date -Iseconds)"
     )
     
@@ -232,17 +242,60 @@ state_get_health() {
 }
 
 # =============================================================================
+# Auto-Update State
+# =============================================================================
+
+STATE_UPDATE="${STATE_DIR}/update.json"
+
+# Set auto-update status
+# Usage: state_set_update "checking"|"downloading"|"updating"|"idle"|"failed" ["message"]
+state_set_update() {
+    local status="$1"
+    local message="${2:-}"
+    local last_check=""
+    local next_check=""
+    
+    # Calculate next check time if interval is set
+    if [[ -n "${AUTO_UPDATE_INTERVAL:-}" ]] && [[ "$status" == "idle" ]]; then
+        next_check=$(date -d "+${AUTO_UPDATE_INTERVAL} seconds" -Iseconds 2>/dev/null || echo "")
+    fi
+    
+    if [[ "$status" == "checking" ]] || [[ "$status" == "idle" ]]; then
+        last_check=$(date -Iseconds)
+    fi
+    
+    local json
+    json=$(json_object \
+        "status" "$status" \
+        "message" "${message:-}" \
+        "last_check" "${last_check:-null}" \
+        "next_check" "${next_check:-null}" \
+        "auto_update_enabled" "$(is_true "${AUTO_UPDATE:-false}" && echo "true" || echo "false")" \
+        "updated_at" "$(date -Iseconds)"
+    )
+    
+    _atomic_write "$STATE_UPDATE" "$json"
+    log_debug "Update state: $status"
+}
+
+# Get auto-update status
+state_get_update() {
+    _safe_read "$STATE_UPDATE"
+}
+
+# =============================================================================
 # Combined State (for status command)
 # =============================================================================
 
 # Get all state as single JSON object
 state_get_all() {
-    local server version auth config health
+    local server version auth config health update
     server=$(_safe_read "$STATE_SERVER")
     version=$(_safe_read "$STATE_VERSION")
     auth=$(_safe_read "$STATE_AUTH")
     config=$(_safe_read "$STATE_CONFIG")
     health=$(_safe_read "$STATE_HEALTH")
+    update=$(_safe_read "$STATE_UPDATE")
     
     json_object \
         "server" "$server" \
@@ -250,6 +303,7 @@ state_get_all() {
         "auth" "$auth" \
         "config" "$config" \
         "health" "$health" \
+        "update" "$update" \
         "timestamp" "$(date -Iseconds)"
 }
 
@@ -259,7 +313,7 @@ state_get_all() {
 
 # Remove all state files (for clean restart)
 state_cleanup() {
-    rm -f "$STATE_SERVER" "$STATE_VERSION" "$STATE_AUTH" "$STATE_CONFIG" "$STATE_HEALTH"
+    rm -f "$STATE_SERVER" "$STATE_VERSION" "$STATE_AUTH" "$STATE_CONFIG" "$STATE_HEALTH" "$STATE_UPDATE"
     log_debug "State files cleaned up"
 }
 
@@ -270,4 +324,5 @@ export -f state_set_version state_get_version
 export -f state_set_auth state_get_auth
 export -f state_set_config state_get_config
 export -f state_set_health state_get_health
+export -f state_set_update state_get_update
 export -f state_get_all state_cleanup

@@ -201,8 +201,8 @@ perform_device_auth() {
     
     log_step_done
     
-    # Update state to show auth pending
-    state_set_auth "pending" "" ""
+    # Update state to show auth pending WITH the URL and code for Web UI
+    state_set_auth "pending" "" "" "$verification_uri" "$user_code"
     
     # Display authentication URL
     echo ""

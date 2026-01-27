@@ -67,7 +67,18 @@ services:
       SERVER_PORT: "5520"
       PATCHLINE: ${PATCHLINE:-release}
       ENABLE_AOT: "true"
-      AUTO_UPDATE: "false"
+
+      # --- Auto-Update Settings ---
+      # Enable automatic updates at container startup
+      AUTO_UPDATE: ${AUTO_UPDATE:-false}
+      # Interval for periodic update checks (seconds, default: 3600 = 1 hour)
+      # AUTO_UPDATE_INTERVAL: "3600"
+      # Specific time to check for updates (HH:MM format, e.g., "04:00")
+      # AUTO_UPDATE_TIME: ""
+      # Automatically restart server after update (default: true)
+      # AUTO_UPDATE_RESTART: "true"
+      # Create backup before updating (default: true)
+      # AUTO_UPDATE_BACKUP: "true"
 
       # --- Config Generation ---
       SKIP_CONFIG_GENERATION: "false"
@@ -149,6 +160,9 @@ services:
 
     # Run as TrueNAS apps user
     user: "568:568"
+    # Add root group for Docker socket access (socket is 0:0 with 660 permissions)
+    group_add:
+      - "0"
 
     restart: unless-stopped
 
@@ -164,10 +178,7 @@ services:
       HYTALE_CONTAINER_NAME: hyos
       HYTALE_STATE_DIR: /data/.state
       HYTALE_SERVER_HOST: hytale
-      HYTALE_SERVER_PORT: "5520"
-
-      # REST API URL
-      REST_API_URL: http://hytale:8080
+      HYTALE_SERVER_PORT: "8080"
 
       # Node environment
       NODE_ENV: production
@@ -178,8 +189,8 @@ services:
 
     # Volume mounts
     volumes:
-      # Shared data directory (for state files)
-      - /mnt/tank/apps/hytale:/data:ro
+      # Shared data directory (for state files and world management)
+      - /mnt/tank/apps/hytale:/data:rw
       # Docker socket for container control
       - /var/run/docker.sock:/var/run/docker.sock:ro
 

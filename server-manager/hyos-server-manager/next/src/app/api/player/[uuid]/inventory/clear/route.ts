@@ -1,22 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAdapter } from '@/lib/adapters';
+import { NextResponse } from "next/server";
+import { apiRequest } from "@/lib/hytale-api";
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ uuid: string }> }
+  request: Request,
+  { params }: { params: Promise<{ uuid: string }> },
 ) {
   try {
     const { uuid } = await params;
     const body = await request.json().catch(() => ({}));
     const { section } = body;
-    
-    const adapter = await getAdapter();
-    await adapter.clearInventory(uuid, section);
-    return NextResponse.json({ success: true, message: `Inventory ${section || 'all'} cleared` });
+
+    await apiRequest(`/players/${uuid}/inventory/clear`, {
+      method: "POST",
+      body: JSON.stringify({ section: section || null }),
+    });
+
+    return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("[clear] Error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to clear inventory' },
-      { status: 500 }
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to clear inventory",
+      },
+      { status: 500 },
     );
   }
 }

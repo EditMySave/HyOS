@@ -15,6 +15,7 @@ Enterprise-grade Hytale server configuration optimized for TrueNAS SCALE Custom 
     - [JVM Memory Settings](#jvm-memory-settings)
     - [Garbage Collector Settings](#garbage-collector-settings)
     - [Server Settings](#server-settings)
+    - [Auto-Update Settings](#auto-update-settings)
     - [Config Generation](#config-generation)
     - [Whitelist Configuration](#whitelist-configuration)
     - [Hytale Server Options](#hytale-server-options)
@@ -33,10 +34,12 @@ Enterprise-grade Hytale server configuration optimized for TrueNAS SCALE Custom 
     - [auth.json](#authjson)
     - [config.json (state)](#configjson-state)
     - [health.json](#healthjson)
+    - [update.json](#updatejson)
   - [Command Scripts](#command-scripts)
     - [status.sh](#statussh)
     - [update.sh](#updatesh)
     - [auth-init.sh](#auth-initsh)
+    - [auto-update.sh](#auto-updatesh)
   - [Health Checks](#health-checks)
   - [Architecture](#architecture)
     - [Script Structure](#script-structure)
@@ -169,7 +172,6 @@ environment:
 | `SERVER_PORT` | `integer` | `5520` | UDP port for the server. Must match exposed port. |
 | `PATCHLINE` | `string` | `release` | Server version: `release`, `staging`, or `nightly`. |
 | `ENABLE_AOT` | `boolean` | `true` | Use AOT (Ahead-of-Time) compilation cache for faster startup. |
-| `AUTO_UPDATE` | `boolean` | `false` | Automatically update server on container start. |
 
 **Example:**
 
@@ -178,7 +180,51 @@ environment:
   - SERVER_PORT=5520
   - PATCHLINE=release
   - ENABLE_AOT=true
-  - AUTO_UPDATE=false
+```
+
+### Auto-Update Settings
+
+Automatic server updates can be enabled to keep the server up-to-date with the latest Hytale releases.
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `AUTO_UPDATE` | `boolean` | `false` | Enable automatic updates at container startup. |
+| `AUTO_UPDATE_INTERVAL` | `integer` | `3600` | Interval between update checks in seconds (for background mode). |
+| `AUTO_UPDATE_TIME` | `string` | - | Specific time to check for updates (HH:MM format, e.g., "04:00"). |
+| `AUTO_UPDATE_RESTART` | `boolean` | `true` | Automatically restart the server after applying an update. |
+| `AUTO_UPDATE_BACKUP` | `boolean` | `true` | Create a backup before applying updates. |
+
+**Startup Auto-Update:**
+
+When `AUTO_UPDATE=true`, the container checks for updates at startup and applies them before starting the server.
+
+```yaml
+environment:
+  - AUTO_UPDATE=true
+  - AUTO_UPDATE_BACKUP=true
+```
+
+**Scheduled Updates (Background Mode):**
+
+For scheduled updates while the server is running, use the auto-update command:
+
+```bash
+# Run update check once
+docker exec hyos /opt/scripts/cmd/auto-update.sh --once
+
+# Or schedule via cron on the host
+# Checks every hour, updates and restarts if needed
+0 * * * * docker exec hyos /opt/scripts/cmd/auto-update.sh --once
+```
+
+**Specific Time Updates:**
+
+To check for updates at a specific time (e.g., 4:00 AM):
+
+```yaml
+environment:
+  - AUTO_UPDATE=true
+  - AUTO_UPDATE_TIME=04:00
 ```
 
 ### Config Generation
@@ -393,7 +439,8 @@ volumes:
     ├── version.json
     ├── auth.json
     ├── config.json
-    └── health.json
+    ├── health.json
+    └── update.json
 ```
 
 ---
@@ -526,6 +573,32 @@ interface HealthCheck {
 }
 ```
 
+### update.json
+
+```typescript
+interface UpdateState {
+  status: "idle" | "checking" | "downloading" | "updating" | "failed";
+  message: string;
+  last_check: string | null;     // ISO 8601
+  next_check: string | null;     // ISO 8601
+  auto_update_enabled: boolean;
+  updated_at: string;            // ISO 8601
+}
+```
+
+**Example:**
+
+```json
+{
+  "status": "idle",
+  "message": "Server is up to date",
+  "last_check": "2026-01-19T12:00:00+00:00",
+  "next_check": "2026-01-19T13:00:00+00:00",
+  "auto_update_enabled": true,
+  "updated_at": "2026-01-19T12:00:00+00:00"
+}
+```
+
 ---
 
 ## Command Scripts
@@ -594,6 +667,25 @@ Re-run authentication flow.
 docker exec -it hyos /opt/scripts/cmd/auth-init.sh
 ```
 
+### auto-update.sh
+
+Automatic server update script for scheduled or manual use.
+
+```bash
+# Run single update check (for cron jobs)
+docker exec hyos /opt/scripts/cmd/auto-update.sh --once
+
+# View update logs
+docker exec hyos cat /data/logs/auto-update.log
+```
+
+**Environment variables for auto-update:**
+
+- `AUTO_UPDATE_INTERVAL` - Check interval in seconds (default: 3600)
+- `AUTO_UPDATE_TIME` - Specific time to check (HH:MM format)
+- `AUTO_UPDATE_RESTART` - Restart server after update (default: true)
+- `AUTO_UPDATE_BACKUP` - Create backup before update (default: true)
+
 ---
 
 ## Health Checks
@@ -644,6 +736,7 @@ docker inspect --format='{{.State.Health.Status}}' hyos
 └── cmd/                   # Standalone commands
     ├── status.sh          # Server status
     ├── update.sh          # Manual updates
+    ├── auto-update.sh     # Automatic updates
     └── auth-init.sh       # Re-authenticate
 ```
 
