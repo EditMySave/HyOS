@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { z } from "zod";
 
 function getBasePath(): string {
   const stateDir = process.env.HYTALE_STATE_DIR;
@@ -43,6 +44,59 @@ async function saveMetadata(metadata: SlotMetadata): Promise<void> {
   const metadataPath = getMetadataPath();
   await fs.mkdir(path.dirname(metadataPath), { recursive: true });
   await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+}
+
+const renameSlotRequestSchema = z.object({
+  name: z.string().min(1).max(100),
+});
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const parsed = renameSlotRequestSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid request body", issues: parsed.error.issues },
+        { status: 400 },
+      );
+    }
+
+    const { name } = parsed.data;
+    const metadata = await loadMetadata();
+
+    // Find the slot
+    const slot = metadata.slots.find((s) => s.id === id);
+    if (!slot) {
+      return NextResponse.json(
+        { error: "Slot not found" },
+        { status: 404 },
+      );
+    }
+
+    // Update the slot name
+    slot.name = name;
+    await saveMetadata(metadata);
+
+    return NextResponse.json({
+      success: true,
+      message: `Successfully renamed to ${name}`,
+      slot,
+    });
+  } catch (error) {
+    console.error("[worlds/slots] Error renaming slot:", error);
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to rename slot",
+      },
+      { status: 500 },
+    );
+  }
 }
 
 export async function DELETE(

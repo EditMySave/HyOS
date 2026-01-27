@@ -5,6 +5,7 @@ import {
   commandResultSchema,
   whitelistInfoSchema,
   updateCheckResultSchema,
+  scheduledUpdateStatusSchema,
   type ServerStatus,
   type VersionInfo,
   type AuthState,
@@ -12,6 +13,7 @@ import {
   type WhitelistInfo,
   type WhitelistAction,
   type UpdateCheckResult,
+  type ScheduledUpdateStatus,
 } from "./server.types";
 
 /**
@@ -161,4 +163,46 @@ export async function checkForUpdates(): Promise<UpdateCheckResult> {
   }
   const data = await response.json();
   return updateCheckResultSchema.parse(data);
+}
+
+/**
+ * Get scheduled update status
+ */
+export async function getScheduledUpdate(): Promise<ScheduledUpdateStatus> {
+  const response = await fetch("/api/server/schedule-update");
+  if (!response.ok) {
+    throw new Error(
+      `Failed to get scheduled update status: ${response.statusText}`,
+    );
+  }
+  const data = await response.json();
+  return scheduledUpdateStatusSchema.parse(data);
+}
+
+/**
+ * Schedule update for next restart
+ */
+export async function scheduleUpdate(): Promise<ScheduledUpdateStatus> {
+  const response = await fetch("/api/server/schedule-update", {
+    method: "POST",
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to schedule update: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return scheduledUpdateStatusSchema.parse(data);
+}
+
+/**
+ * Cancel scheduled update
+ */
+export async function cancelScheduledUpdate(): Promise<ScheduledUpdateStatus> {
+  const response = await fetch("/api/server/schedule-update", {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to cancel scheduled update: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return scheduledUpdateStatusSchema.parse(data);
 }

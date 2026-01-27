@@ -120,3 +120,19 @@ export const updateCheckResultSchema = z.object({
 });
 
 export type UpdateCheckResult = z.infer<typeof updateCheckResultSchema>;
+
+// ============================================================================
+// Scheduled Update Types
+// ============================================================================
+
+export const scheduledUpdateStatusSchema = z.object({
+  scheduled: z.boolean(),
+  scheduledAt: z.string().nullable(),
+  targetVersion: z.string().nullable(),
+  scheduledBy: z.string().nullable(),
+  success: z.boolean().optional(),
+  message: z.string().optional(),
+  output: z.string().optional(),
+});
+
+export type ScheduledUpdateStatus = z.infer<typeof scheduledUpdateStatusSchema>;

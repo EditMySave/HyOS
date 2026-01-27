@@ -202,11 +202,36 @@ main() {
     # Initialize state (after directories are created)
     state_set_server "starting"
     
+    # Check for scheduled update flag
+    local was_scheduled=false
+    if state_is_update_scheduled; then
+        log_info "Scheduled update detected - will update on this restart"
+        local scheduled_info
+        scheduled_info=$(state_get_update_scheduled)
+        local target_version
+        target_version=$(echo "$scheduled_info" | jq -r '.target_version // empty' 2>/dev/null || echo "")
+        if [[ -n "$target_version" ]] && [[ "$target_version" != "null" ]]; then
+            log_info "Target version: $target_version"
+        fi
+        
+        # Temporarily enable AUTO_UPDATE for this restart
+        export AUTO_UPDATE="true"
+        was_scheduled=true
+        
+        # Clear the flag (will be re-created if update fails)
+        state_clear_update_scheduled
+    fi
+    
     # Download server files
     download_server_files || {
         state_set_server "crashed"
         exit 1
     }
+    
+    # If scheduled update was applied, log success
+    if [[ "$was_scheduled" == "true" ]]; then
+        log_success "Scheduled update completed successfully"
+    fi
     
     # Install plugins (from /opt/plugins)
     api_install_plugins || {

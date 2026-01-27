@@ -13,6 +13,8 @@ import {
   createSlotResponseSchema,
   type ActivateResponse,
   activateResponseSchema,
+  type RenameSlotResponse,
+  renameSlotResponseSchema,
 } from "./worlds.types";
 
 /**
@@ -158,4 +160,29 @@ export async function deleteSlot(slotId: string): Promise<{ success: boolean; me
   }
 
   return await response.json();
+}
+
+/**
+ * Rename a slot
+ */
+export async function renameSlot(
+  slotId: string,
+  newName: string,
+): Promise<RenameSlotResponse> {
+  const response = await fetch(`/api/worlds/slots/${slotId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: newName }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(
+      (error as { error?: string })?.error ??
+        `Failed to rename slot: ${response.statusText}`,
+    );
+  }
+
+  const data = await response.json();
+  return renameSlotResponseSchema.parse(data);
 }

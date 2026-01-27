@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { useUniverseFiles, useSlots, useCreateSlot, useActivateSlot, useDeleteSlot } from "@/lib/services/worlds";
+import { useUniverseFiles, useSlots, useCreateSlot, useActivateSlot, useDeleteSlot, useRenameSlot } from "@/lib/services/worlds";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FileInfo, SlotInfo } from "@/lib/services/worlds/worlds.types";
 
@@ -90,9 +92,14 @@ export default function WorldsPage() {
   const { trigger: createSlot, isMutating: isCreatingSlot } = useCreateSlot();
   const { trigger: activateSlot, isMutating: isActivating } = useActivateSlot();
   const { trigger: deleteSlot, isMutating: isDeleting } = useDeleteSlot();
+  const { trigger: renameSlot, isMutating: isRenaming } = useRenameSlot();
   
   const [activatingSlotId, setActivatingSlotId] = useState<string | null>(null);
   const [deletingSlotId, setDeletingSlotId] = useState<string | null>(null);
+  const [renamingSlotId, setRenamingSlotId] = useState<string | null>(null);
+  const [renamingSlotName, setRenamingSlotName] = useState<string>("");
+  const [newSlotName, setNewSlotName] = useState<string>("");
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -184,6 +191,36 @@ export default function WorldsPage() {
       setDeletingSlotId(null);
     }
   }, [deleteSlot, refreshSlots]);
+
+  const handleRenameClick = useCallback((slotId: string, currentName: string) => {
+    setRenamingSlotId(slotId);
+    setRenamingSlotName(currentName);
+    setNewSlotName(currentName);
+    setShowRenameDialog(true);
+  }, []);
+
+  const handleRenameSlot = useCallback(async () => {
+    if (!renamingSlotId || !newSlotName.trim()) {
+      return;
+    }
+
+    if (newSlotName.trim().length > 100) {
+      alert("Slot name must be 100 characters or less");
+      return;
+    }
+
+    try {
+      await renameSlot({ slotId: renamingSlotId, newName: newSlotName.trim() });
+      setShowRenameDialog(false);
+      setRenamingSlotId(null);
+      setRenamingSlotName("");
+      setNewSlotName("");
+      await refreshSlots();
+    } catch (error) {
+      console.error("Rename failed:", error);
+      alert(error instanceof Error ? error.message : "Failed to rename slot");
+    }
+  }, [renamingSlotId, newSlotName, renameSlot, refreshSlots]);
 
   return (
     <div className="min-h-screen p-6 space-y-6">
@@ -334,6 +371,14 @@ export default function WorldsPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-foreground">{slot.name}</span>
+                      <button
+                        onClick={() => handleRenameClick(slot.id, slot.name)}
+                        disabled={isRenaming || renamingSlotId === slot.id}
+                        className="p-1 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Rename slot"
+                      >
+                        <Pencil className="size-4" />
+                      </button>
                       {slot.autoSaved && (
                         <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground">
                           Auto-saved
@@ -405,6 +450,59 @@ export default function WorldsPage() {
               disabled={uploading || isCreatingSlot}
             >
               {uploading || isCreatingSlot ? "Uploading..." : "Create Slot"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rename Dialog */}
+      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Slot</DialogTitle>
+            <DialogDescription>
+              Enter a new name for this slot (1-100 characters)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              type="text"
+              value={newSlotName}
+              onChange={(e) => setNewSlotName(e.target.value)}
+              placeholder="Slot name"
+              maxLength={100}
+              disabled={isRenaming}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newSlotName.trim()) {
+                  handleRenameSlot();
+                }
+              }}
+            />
+            {newSlotName.trim().length > 100 && (
+              <p className="text-xs text-destructive mt-2">
+                Name must be 100 characters or less
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRenameDialog(false);
+                setRenamingSlotId(null);
+                setRenamingSlotName("");
+                setNewSlotName("");
+              }}
+              disabled={isRenaming}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              onClick={handleRenameSlot}
+              disabled={isRenaming || !newSlotName.trim() || newSlotName.trim().length > 100}
+            >
+              {isRenaming ? "Renaming..." : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>

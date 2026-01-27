@@ -3,6 +3,7 @@
 import {
   AlertCircle,
   ArrowDownToLine,
+  Calendar,
   Loader2,
   MessageSquare,
   Play,
@@ -10,6 +11,7 @@ import {
   RotateCw,
   Save,
   Square,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 import { mutate } from "swr";
@@ -32,6 +34,9 @@ import {
   useStopServer,
   useUpdateStatus,
   useCheckForUpdates,
+  useScheduledUpdate,
+  useScheduleUpdate,
+  useCancelScheduledUpdate,
 } from "@/lib/services/server";
 import { useBroadcast, useSave } from "@/lib/services/world";
 
@@ -53,6 +58,16 @@ export function QuickActions() {
   } = useUpdateStatus();
   const { trigger: checkForUpdates, isMutating: isCheckingUpdates } =
     useCheckForUpdates();
+  const {
+    data: scheduledUpdate,
+    mutate: mutateScheduledUpdate,
+  } = useScheduledUpdate();
+  const { trigger: scheduleUpdate, isMutating: isSchedulingUpdate } =
+    useScheduleUpdate();
+  const {
+    trigger: cancelScheduledUpdate,
+    isMutating: isCancellingUpdate,
+  } = useCancelScheduledUpdate();
 
   const [broadcastOpen, setBroadcastOpen] = useState(false);
   const [broadcastMessage, setBroadcastMessage] = useState("");
@@ -121,6 +136,25 @@ export function QuickActions() {
       void mutateUpdateStatus();
     } catch (error) {
       console.error("Failed to check for updates:", error);
+    }
+  };
+
+  const handleScheduleUpdate = async () => {
+    try {
+      await scheduleUpdate();
+      void mutateScheduledUpdate();
+      void mutateUpdateStatus();
+    } catch (error) {
+      console.error("Failed to schedule update:", error);
+    }
+  };
+
+  const handleCancelScheduledUpdate = async () => {
+    try {
+      await cancelScheduledUpdate();
+      void mutateScheduledUpdate();
+    } catch (error) {
+      console.error("Failed to cancel scheduled update:", error);
     }
   };
 
@@ -286,6 +320,52 @@ export function QuickActions() {
                   {updateStatus.needsUpdate && ` → v${updateStatus.latestVersion}`}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Schedule Update Section */}
+          {updateStatus?.needsUpdate && (
+            <div className="space-y-2">
+              {scheduledUpdate?.scheduled ? (
+                <div className="flex items-center gap-2 rounded border border-info/50 bg-info/10 px-3 py-2 text-sm text-info">
+                  <Calendar className="size-4 shrink-0" />
+                  <div className="flex-1">
+                    <div className="font-medium">Update Scheduled</div>
+                    <div className="text-xs opacity-80">
+                      Will update on next restart
+                      {scheduledUpdate.targetVersion &&
+                        ` to v${scheduledUpdate.targetVersion}`}
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handleCancelScheduledUpdate}
+                    disabled={isCancellingUpdate}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                  >
+                    {isCancellingUpdate ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <X className="size-3" />
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  onClick={handleScheduleUpdate}
+                  disabled={isSchedulingUpdate || hasError}
+                  className="w-full justify-start"
+                  variant="outline"
+                >
+                  {isSchedulingUpdate ? (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  ) : (
+                    <Calendar className="mr-2 size-4" />
+                  )}
+                  Schedule Update on Restart
+                </Button>
+              )}
             </div>
           )}
         </div>

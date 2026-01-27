@@ -92,6 +92,16 @@ export const createSlotResponseSchema = z.object({
   filesModified: z.number(),
 });
 
+export const renameSlotRequestSchema = z.object({
+  name: z.string().min(1).max(100),
+});
+
+export const renameSlotResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  slot: slotInfoSchema,
+});
+
 export type FileInfo = z.infer<typeof fileInfoSchema>;
 export type FilesResponse = z.infer<typeof filesResponseSchema>;
 export type BackupInfo = z.infer<typeof backupInfoSchema>;
@@ -102,3 +112,5 @@ export type SlotInfo = z.infer<typeof slotInfoSchema>;
 export type SlotsResponse = z.infer<typeof slotsResponseSchema>;
 export type ActivateResponse = z.infer<typeof activateResponseSchema>;
 export type CreateSlotResponse = z.infer<typeof createSlotResponseSchema>;
+export type RenameSlotRequest = z.infer<typeof renameSlotRequestSchema>;
+export type RenameSlotResponse = z.infer<typeof renameSlotResponseSchema>;

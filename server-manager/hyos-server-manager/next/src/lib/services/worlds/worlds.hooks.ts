@@ -1,17 +1,20 @@
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
+import { mutate } from "swr";
 import {
   getUniverseFiles,
   getSlots,
   createSlot,
   activateSlot,
   deleteSlot,
+  renameSlot,
 } from "./worlds.service";
 import type {
   FilesResponse,
   SlotsResponse,
   CreateSlotResponse,
   ActivateResponse,
+  RenameSlotResponse,
 } from "./worlds.types";
 
 /**
@@ -70,5 +73,25 @@ export function useDeleteSlot() {
   return useSWRMutation<{ success: boolean; message: string }, Error, string, string>(
     "delete-slot",
     async (_, { arg }) => deleteSlot(arg),
+  );
+}
+
+/**
+ * Hook to rename a slot
+ */
+export function useRenameSlot() {
+  return useSWRMutation<
+    RenameSlotResponse,
+    Error,
+    string,
+    { slotId: string; newName: string }
+  >(
+    "rename-slot",
+    async (_, { arg }) => {
+      const result = await renameSlot(arg.slotId, arg.newName);
+      // Invalidate slots cache to refresh the list
+      await mutate("universe-slots");
+      return result;
+    },
   );
 }

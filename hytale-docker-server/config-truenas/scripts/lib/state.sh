@@ -284,18 +284,66 @@ state_get_update() {
 }
 
 # =============================================================================
+# Scheduled Update Flag
+# =============================================================================
+
+STATE_SCHEDULED_UPDATE="${STATE_DIR}/.update-on-restart"
+
+# Set scheduled update flag
+# Usage: state_set_update_scheduled ["target_version"]
+state_set_update_scheduled() {
+    local target_version="${1:-}"
+    local version_info
+    version_info=$(_safe_read "$STATE_VERSION")
+    
+    # Get target version from state if not provided
+    if [[ -z "$target_version" ]]; then
+        target_version=$(echo "$version_info" | jq -r '.latest // empty' 2>/dev/null || echo "")
+    fi
+    
+    local json
+    json=$(json_object \
+        "scheduled_at" "$(date -Iseconds)" \
+        "target_version" "${target_version:-null}" \
+        "scheduled_by" "hyos-manager"
+    )
+    
+    _atomic_write "$STATE_SCHEDULED_UPDATE" "$json"
+    log_debug "Update scheduled for next restart (target: ${target_version:-latest})"
+}
+
+# Get scheduled update status
+state_get_update_scheduled() {
+    _safe_read "$STATE_SCHEDULED_UPDATE"
+}
+
+# Check if update is scheduled
+state_is_update_scheduled() {
+    [[ -f "$STATE_SCHEDULED_UPDATE" ]]
+}
+
+# Clear scheduled update flag
+state_clear_update_scheduled() {
+    if [[ -f "$STATE_SCHEDULED_UPDATE" ]]; then
+        rm -f "$STATE_SCHEDULED_UPDATE"
+        log_debug "Scheduled update cancelled"
+    fi
+}
+
+# =============================================================================
 # Combined State (for status command)
 # =============================================================================
 
 # Get all state as single JSON object
 state_get_all() {
-    local server version auth config health update
+    local server version auth config health update scheduled_update
     server=$(_safe_read "$STATE_SERVER")
     version=$(_safe_read "$STATE_VERSION")
     auth=$(_safe_read "$STATE_AUTH")
     config=$(_safe_read "$STATE_CONFIG")
     health=$(_safe_read "$STATE_HEALTH")
     update=$(_safe_read "$STATE_UPDATE")
+    scheduled_update=$(_safe_read "$STATE_SCHEDULED_UPDATE")
     
     json_object \
         "server" "$server" \
@@ -304,6 +352,7 @@ state_get_all() {
         "config" "$config" \
         "health" "$health" \
         "update" "$update" \
+        "scheduled_update" "$scheduled_update" \
         "timestamp" "$(date -Iseconds)"
 }
 
@@ -313,7 +362,7 @@ state_get_all() {
 
 # Remove all state files (for clean restart)
 state_cleanup() {
-    rm -f "$STATE_SERVER" "$STATE_VERSION" "$STATE_AUTH" "$STATE_CONFIG" "$STATE_HEALTH" "$STATE_UPDATE"
+    rm -f "$STATE_SERVER" "$STATE_VERSION" "$STATE_AUTH" "$STATE_CONFIG" "$STATE_HEALTH" "$STATE_UPDATE" "$STATE_SCHEDULED_UPDATE"
     log_debug "State files cleaned up"
 }
 
@@ -325,4 +374,5 @@ export -f state_set_auth state_get_auth
 export -f state_set_config state_get_config
 export -f state_set_health state_get_health
 export -f state_set_update state_get_update
+export -f state_set_update_scheduled state_get_update_scheduled state_is_update_scheduled state_clear_update_scheduled
 export -f state_get_all state_cleanup

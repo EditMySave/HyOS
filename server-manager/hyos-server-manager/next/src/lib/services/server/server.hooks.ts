@@ -12,6 +12,9 @@ import {
   manageWhitelist,
   getUpdateStatus,
   checkForUpdates,
+  getScheduledUpdate,
+  scheduleUpdate,
+  cancelScheduledUpdate,
 } from "./server.service";
 import type {
   ServerStatus,
@@ -21,6 +24,7 @@ import type {
   WhitelistInfo,
   WhitelistAction,
   UpdateCheckResult,
+  ScheduledUpdateStatus,
 } from "./server.types";
 
 /**
@@ -125,5 +129,38 @@ export function useCheckForUpdates() {
   return useSWRMutation<UpdateCheckResult, Error, string>(
     "check-updates",
     async () => checkForUpdates(),
+  );
+}
+
+/**
+ * Hook to get scheduled update status
+ */
+export function useScheduledUpdate() {
+  return useSWR<ScheduledUpdateStatus>(
+    "scheduled-update",
+    getScheduledUpdate,
+    {
+      refreshInterval: 30000, // Refresh every 30 seconds
+    },
+  );
+}
+
+/**
+ * Hook to schedule update for next restart
+ */
+export function useScheduleUpdate() {
+  return useSWRMutation<ScheduledUpdateStatus, Error, string>(
+    "schedule-update",
+    async () => scheduleUpdate(),
+  );
+}
+
+/**
+ * Hook to cancel scheduled update
+ */
+export function useCancelScheduledUpdate() {
+  return useSWRMutation<ScheduledUpdateStatus, Error, string>(
+    "cancel-scheduled-update",
+    async () => cancelScheduledUpdate(),
   );
 }
