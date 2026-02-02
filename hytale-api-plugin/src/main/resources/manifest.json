@@ -1,0 +1,18 @@
+{
+  "Group": "com.hytale",
+  "Name": "HytaleAPI",
+  "Version": "1.0.0",
+  "Description": "Secure REST and WebSocket API for Hytale server management",
+  "Authors": [
+    {
+      "Name": "HytaleAPI Team",
+      "Contact": "api@hytale.local"
+    }
+  ],
+  "Website": "https://github.com/hytale/api",
+  "Main": "com.hytale.api.ApiPlugin",
+  "ServerVersion": ">=0.0.0",
+  "Dependencies": {},
+  "OptionalDependencies": {},
+  "LoadBefore": {}
+}

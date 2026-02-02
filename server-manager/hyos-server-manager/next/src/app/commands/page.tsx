@@ -2,17 +2,27 @@
 
 import {
   Globe,
+  History,
   Loader2,
   RefreshCw,
   Server,
   ShieldAlert,
+  Terminal,
+  Trash2,
   Users,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { mutate } from "swr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  getActiveParam,
+  HYTALE_COMMANDS,
+  loadRecentCommands,
+  saveRecentCommands,
+} from "@/lib/data/hytale-commands";
+import type { HytaleCommand } from "@/lib/data/hytale-commands";
 import { cn } from "@/lib/utils";
 import {
   useAddToGroup,
@@ -51,6 +61,9 @@ export default function CommandsPage() {
   const [selectedWorldId, setSelectedWorldId] = useState<string>("");
 
   const [rawCommand, setRawCommand] = useState("");
+  const [recentCommands, setRecentCommands] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSuggestion, setSelectedSuggestion] = useState(0);
   const [kickReason, setKickReason] = useState("");
   const [banReason, setBanReason] = useState("");
   const [banDuration, setBanDuration] = useState("");
@@ -130,22 +143,114 @@ export default function CommandsPage() {
     }
   }, [worlds, selectedWorldId]);
 
-  const handleRawCommand = async () => {
+  useEffect(() => {
+    setRecentCommands(loadRecentCommands());
+  }, []);
+
+  const normalizedInput = rawCommand.replace(/^\//, "").trim().toLowerCase();
+  const filteredCommands = useMemo(
+    () =>
+      HYTALE_COMMANDS.filter((cmd) =>
+        cmd.name.toLowerCase().startsWith(normalizedInput)
+      ).slice(0, 12),
+    [normalizedInput]
+  );
+  const matchedCommand: HytaleCommand | undefined =
+    filteredCommands[0] ?? undefined;
+
+  const commandForHelp = useMemo(() => {
+    const n = rawCommand.replace(/^\//, "").trim();
+    if (!n) return undefined;
+    const matched = HYTALE_COMMANDS.filter(
+      (cmd) => n === cmd.name || n.startsWith(`${cmd.name} `)
+    ).sort((a, b) => b.name.length - a.name.length)[0];
+    return matched ?? undefined;
+  }, [rawCommand]);
+
+  const activeParam =
+    commandForHelp ? getActiveParam(commandForHelp, rawCommand) : null;
+
+  const selectSuggestion = useCallback((cmd: HytaleCommand) => {
+    setRawCommand(cmd.syntax.split(" ")[0] ?? cmd.syntax);
+    setShowSuggestions(false);
+    setSelectedSuggestion(0);
+  }, []);
+
+  const handleRawCommand = useCallback(async () => {
     if (!rawCommand.trim()) return;
+    const trimmed = rawCommand.trim();
     try {
-      const res = await execCommand(rawCommand.trim());
+      const res = await execCommand(trimmed);
       showResult(
         res.success,
         res.output || res.error || "Command executed"
       );
+      setRecentCommands((prev) => {
+        const next = [trimmed, ...prev.filter((c) => c !== trimmed)].slice(
+          0,
+          10
+        );
+        saveRecentCommands(next);
+        return next;
+      });
       setRawCommand("");
+      setShowSuggestions(false);
     } catch (e) {
       showResult(
         false,
         e instanceof Error ? e.message : "Failed to execute command"
       );
     }
-  };
+  }, [rawCommand, execCommand, showResult]);
+
+  const handleTypeaheadKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        if (showSuggestions && filteredCommands.length > 0) {
+          const idx = selectedSuggestion % filteredCommands.length;
+          selectSuggestion(filteredCommands[idx]);
+          e.preventDefault();
+          return;
+        }
+        e.preventDefault();
+        void handleRawCommand();
+        return;
+      }
+      if (e.key === "Escape") {
+        setShowSuggestions(false);
+        setSelectedSuggestion(0);
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedSuggestion((i) =>
+          filteredCommands.length ? (i + 1) % filteredCommands.length : 0
+        );
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedSuggestion((i) =>
+          filteredCommands.length
+            ? (i - 1 + filteredCommands.length) % filteredCommands.length
+            : 0
+        );
+        return;
+      }
+    },
+    [
+      showSuggestions,
+      filteredCommands,
+      selectedSuggestion,
+      selectSuggestion,
+      handleRawCommand,
+    ]
+  );
+
+  const clearHistory = useCallback(() => {
+    setRecentCommands([]);
+    saveRecentCommands([]);
+  }, []);
 
   const handleKick = async () => {
     if (!selectedPlayer) return;
@@ -506,6 +611,146 @@ export default function CommandsPage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Terminal className="size-5" />
+            Execute Raw Command
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            {(commandForHelp ?? matchedCommand) &&
+              normalizedInput.length > 0 && (
+                <div className="text-muted-foreground mb-1 text-sm">
+                  <span className="font-mono">
+                    {(commandForHelp ?? matchedCommand).syntax}
+                  </span>{" "}
+                  — {(commandForHelp ?? matchedCommand).description}
+                  {activeParam && (
+                    <div className="border-accent mt-1 border-l-2 pl-2">
+                      <span className="text-foreground font-medium">
+                        {activeParam.param.name}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {" "}
+                        ({activeParam.param.type}
+                        {activeParam.param.required ? ", required" : ""})
+                      </span>
+                      <div>{activeParam.param.description}</div>
+                      {activeParam.param.examples?.length ? (
+                        <div className="mt-0.5">
+                          Examples:{" "}
+                          <span className="font-mono">
+                            {activeParam.param.examples.join(", ")}
+                          </span>
+                        </div>
+                      ) : null}
+                      {activeParam.param.enumValues?.length ? (
+                        <div className="mt-0.5">
+                          Values:{" "}
+                          <span className="font-mono">
+                            {activeParam.param.enumValues.join(", ")}
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              )}
+            <div className="relative flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  value={rawCommand}
+                  onChange={(e) => {
+                    setRawCommand(e.target.value);
+                    setShowSuggestions(true);
+                    setSelectedSuggestion(0);
+                  }}
+                  onKeyDown={handleTypeaheadKeyDown}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() =>
+                    setTimeout(() => setShowSuggestions(false), 150)
+                  }
+                  placeholder="e.g., /help, /time set 12, /give stone 64"
+                  className="font-mono w-full"
+                />
+                {showSuggestions && filteredCommands.length > 0 && (
+                  <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto border border-border bg-card">
+                    {filteredCommands.map((cmd, i) => (
+                      <button
+                        key={cmd.name}
+                        type="button"
+                        className={cn(
+                          "w-full px-3 py-2 text-left",
+                          i === selectedSuggestion && "bg-accent"
+                        )}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          selectSuggestion(cmd);
+                        }}
+                      >
+                        <div className="font-mono text-sm">{cmd.syntax}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {cmd.description}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <Button
+                onClick={() => void handleRawCommand()}
+                disabled={isExecCommand || !rawCommand.trim()}
+              >
+                {isExecCommand ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  "Run"
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <div className="border-border border-t pt-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-muted-foreground flex items-center gap-2 text-sm">
+                <History className="size-4" />
+                Recent Commands
+              </span>
+              {recentCommands.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={clearHistory}
+                  title="Clear history"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              )}
+            </div>
+            {recentCommands.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                No recent commands
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {recentCommands.map((cmd, i) => (
+                  <button
+                    key={`${i}-${cmd}`}
+                    type="button"
+                    onClick={() => setRawCommand(cmd)}
+                    className="hover:bg-accent w-full px-2 py-1 text-left font-mono text-sm"
+                  >
+                    {cmd}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -515,36 +760,6 @@ export default function CommandsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-muted-foreground text-sm">
-                Execute Raw Command
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  value={rawCommand}
-                  onChange={(e) => setRawCommand(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleRawCommand();
-                    }
-                  }}
-                  placeholder="e.g., help, list, time query daytime"
-                  className="font-mono flex-1"
-                />
-                <Button
-                  onClick={handleRawCommand}
-                  disabled={isExecCommand || !rawCommand.trim()}
-                >
-                  {isExecCommand ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    "Run"
-                  )}
-                </Button>
-              </div>
-            </div>
-
             <div className="space-y-2">
               <label className="text-muted-foreground text-sm">
                 Kick Player

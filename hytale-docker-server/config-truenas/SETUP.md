@@ -193,6 +193,8 @@ Automatic server updates can be enabled to keep the server up-to-date with the l
 | `AUTO_UPDATE_TIME` | `string` | - | Specific time to check for updates (HH:MM format, e.g., "04:00"). |
 | `AUTO_UPDATE_RESTART` | `boolean` | `true` | Automatically restart the server after applying an update. |
 | `AUTO_UPDATE_BACKUP` | `boolean` | `true` | Create a backup before applying updates. |
+| `VERSION_CHECK_ENABLED` | `boolean` | `true` | Refresh version state after auth and periodically (for manager UI). |
+| `VERSION_CHECK_INTERVAL` | `integer` | `3600` | Seconds between version checks (1 hour). |
 
 **Startup Auto-Update:**
 
@@ -685,6 +687,8 @@ docker exec hyos cat /data/logs/auto-update.log
 - `AUTO_UPDATE_TIME` - Specific time to check (HH:MM format)
 - `AUTO_UPDATE_RESTART` - Restart server after update (default: true)
 - `AUTO_UPDATE_BACKUP` - Create backup before update (default: true)
+- `VERSION_CHECK_ENABLED` - Refresh version.json after auth and periodically (default: true)
+- `VERSION_CHECK_INTERVAL` - Seconds between version checks (default: 3600)
 
 ---
 

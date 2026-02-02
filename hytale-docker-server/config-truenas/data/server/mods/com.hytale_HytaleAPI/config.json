@@ -19,7 +19,7 @@
   "clients": [
     {
       "id": "hyos-manager",
-      "secret": "$2a$12$iwvln7cOEZ2d0Jsi1anNCuK9wINrymNIqCufZ00vUvOMjVQSumWwi",
+      "secret": "$2a$12$8DUvQkfstZz0yDNzh3X0h.I0CoPWZUn35RVSNXL4e7nTIJ.U/h006",
       "description": "HyOS Server Manager client",
       "permissions": ["api.*"],
       "enabled": true

@@ -55,11 +55,28 @@ docker compose -f docker-compose.yml build --no-cache
 
 If build fails with missing symbols (Netty, Gson, etc.), ensure HytaleServer.jar is present. All runtime deps are bundled in it.
 
-## Threading: World Operations
+## Threading: World Execution Context
 
-Server operations that modify game state must run on the world's thread:
+**Source**: [Hytale Task Scheduling and Async System](https://hytale-docs.pages.dev/modding/plugins/tasks/), [Player Management & Persistence](https://hytale-docs.pages.dev/modding/ecs/player-persistence/).
+
+### Architecture
+
+- **World** extends `TickingThread` and implements `Executor`; runs at ~30 TPS. Use `world.execute(Runnable)` to run code on the world thread.
+- **HTTP handlers** run on **Netty I/O threads**, not the world thread. Any access to world state (entities, Store, components) must be dispatched via `world.execute()` or another safe path.
+- **Universe.getPlayer(uuid)** may be a map lookup (often safe from other threads). **Universe.getPlayer(name, NameMatching)** and **getPlayerByUsername** use `NameMatching.find`, which calls into `PlayerRef.getComponent(PlayerRef)` and **must run on the world thread**; calling from Netty causes `PlayerRef.getComponent(PlayerRef) called async with player in world` (SkipSentryException).
+
+### Rules
+
+1. **Modify game state only on world thread**: ECS Store, components, entities — use `world.execute(() -> { ... })`.
+2. **Do not call Universe.getPlayer(identifier, NameMatching)** from HTTP handlers — it touches world/component state. For usernames from the API, use server commands (e.g. `op add <name>`) or resolve UUID elsewhere and use PermissionsModule; or dispatch a task to the world thread and respond asynchronously.
+3. **Scheduled executor** (`HytaleServer.SCHEDULED_EXECUTOR`) runs on a separate thread; if work needs world state, submit it with `world.execute()`.
+
+### Example (wrong vs right)
 
 ```java
+// WRONG - called from Netty thread, can throw
+Universe.get().getPlayer("Ricehead", NameMatching.EXACT);
+
 // WRONG - will throw IllegalStateException
 playerReference.getStore().putComponent(...);
 

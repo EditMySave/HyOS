@@ -1,0 +1,64 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.hytale'
+version = '1.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Hytale Server (compile-only - provided at runtime)
+    compileOnly files('../hytale-docker-server/config-truenas/data/server/HytaleServer.jar')
+
+    // All other dependencies are bundled in HytaleServer.jar:
+    // - Netty (io.netty)
+    // - Nimbus JOSE JWT (com.nimbusds)
+    // - Bouncy Castle (org.bouncycastle)
+    // - Gson (com.google.gson)
+    
+    // jBCrypt - standard bcrypt implementation compatible with htpasswd/bcryptjs
+    implementation 'org.mindrot:jbcrypt:0.4'
+}
+
+jar {
+    from('src/main/resources') {
+        include 'plugin.json'
+    }
+    
+    // Bundle jbcrypt dependency
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    manifest {
+        attributes(
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version
+        )
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    // Enable preview features and common lint checks
+    // Excluding: deprecation (SDK uses deprecated methods), removal (SDK deprecated APIs)
+    options.compilerArgs += [
+        '--enable-preview',
+        '-Xlint:all',
+        '-Xlint:-deprecation',
+        '-Xlint:-removal',
+        '-Xlint:-preview',
+        '-Werror'
+    ]
+}

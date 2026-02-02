@@ -1,0 +1,1727 @@
+openapi: 3.1.0
+info:
+  title: Hytale Server API
+  description: REST and WebSocket API for Hytale server management
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ==================== Public Endpoints ====================
+  /health:
+    get:
+      summary: Health check
+      security: []
+      tags: [Public]
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /auth/token:
+    post:
+      summary: Obtain JWT token
+      security: []
+      tags: [Public]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Token generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                required:
+                  - token
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ==================== Server Endpoints ====================
+  /server/status:
+    get:
+      summary: Get server status
+      tags: [Server]
+      responses:
+        '200':
+          description: Server status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /server/stats:
+    get:
+      summary: Get detailed server statistics
+      tags: [Server]
+      responses:
+        '200':
+          description: Server statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerStatsResponse'
+
+  /server/version:
+    get:
+      summary: Get server version information
+      tags: [Server]
+      responses:
+        '200':
+          description: Version information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+
+  /server/metrics:
+    get:
+      summary: Get server metrics
+      tags: [Server]
+      responses:
+        '200':
+          description: Server metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
+
+  /server/plugins:
+    get:
+      summary: Get loaded plugins
+      tags: [Server]
+      responses:
+        '200':
+          description: Plugins list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginsResponse'
+
+  /server/whitelist:
+    post:
+      summary: Manage server whitelist
+      tags: [Server]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WhitelistRequest'
+      responses:
+        '200':
+          description: Whitelist updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WhitelistResponse'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
+
+  /server/save:
+    post:
+      summary: Save server state
+      tags: [Server]
+      responses:
+        '200':
+          description: Server saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
+
+  # ==================== Player Endpoints ====================
+  /players:
+    get:
+      summary: List online players
+      tags: [Players]
+      responses:
+        '200':
+          description: Players list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayersResponse'
+
+  /players/{uuid}:
+    get:
+      summary: Get player details
+      tags: [Players]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      responses:
+        '200':
+          description: Player details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /players/{uuid}/stats:
+    get:
+      summary: Get player stats
+      tags: [Players]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      responses:
+        '200':
+          description: Player stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerStatsResponse'
+
+  /players/{uuid}/location:
+    get:
+      summary: Get player location
+      tags: [Players]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      responses:
+        '200':
+          description: Player location
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerLocationResponse'
+
+  /players/{uuid}/teleport:
+    post:
+      summary: Teleport player
+      tags: [Players]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeleportRequest'
+      responses:
+        '200':
+          description: Player teleported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeleportResponse'
+
+  /players/{uuid}/gamemode:
+    get:
+      summary: Get player game mode
+      tags: [Players]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      responses:
+        '200':
+          description: Player game mode
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameModeResponse'
+    post:
+      summary: Set player game mode
+      tags: [Players]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetGameModeRequest'
+      responses:
+        '200':
+          description: Game mode updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameModeResponse'
+
+  /players/{uuid}/permissions:
+    get:
+      summary: Get player permissions
+      tags: [Players]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      responses:
+        '200':
+          description: Player permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionsResponse'
+    post:
+      summary: Grant permission to player
+      tags: [Players]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantPermissionRequest'
+      responses:
+        '200':
+          description: Permission granted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionsResponse'
+
+  /players/{uuid}/permissions/{permission}:
+    delete:
+      summary: Revoke permission from player
+      tags: [Players]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+        - name: permission
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permission revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionsResponse'
+
+  /players/{uuid}/groups:
+    get:
+      summary: Get player groups
+      tags: [Players]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      responses:
+        '200':
+          description: Player groups
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupsResponse'
+    post:
+      summary: Add player to group
+      tags: [Players]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddToGroupRequest'
+      responses:
+        '200':
+          description: Added to group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupsResponse'
+
+  /players/{uuid}/message:
+    post:
+      summary: Send message to player
+      tags: [Players]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '200':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ==================== Player Inventory Endpoints ====================
+  /players/{uuid}/inventory:
+    get:
+      summary: Get player inventory
+      tags: [Inventory]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      responses:
+        '200':
+          description: Player inventory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryResponse'
+
+  /players/{uuid}/inventory/hotbar:
+    get:
+      summary: Get player hotbar
+      tags: [Inventory]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      responses:
+        '200':
+          description: Player hotbar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HotbarResponse'
+
+  /players/{uuid}/inventory/armor:
+    get:
+      summary: Get player armor
+      tags: [Inventory]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      responses:
+        '200':
+          description: Player armor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArmorResponse'
+
+  /players/{uuid}/inventory/storage:
+    get:
+      summary: Get player storage
+      tags: [Inventory]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      responses:
+        '200':
+          description: Player storage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageResponse'
+
+  /players/{uuid}/inventory/give:
+    post:
+      summary: Give item to player
+      tags: [Inventory]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GiveItemRequest'
+      responses:
+        '200':
+          description: Item given
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /players/{uuid}/inventory/clear:
+    post:
+      summary: Clear player inventory
+      tags: [Inventory]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClearInventoryRequest'
+      responses:
+        '200':
+          description: Inventory cleared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ==================== World Endpoints ====================
+  /worlds:
+    get:
+      summary: List worlds
+      tags: [Worlds]
+      responses:
+        '200':
+          description: Worlds list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldsResponse'
+
+  /worlds/{id}:
+    get:
+      summary: Get world details
+      tags: [Worlds]
+      parameters:
+        - $ref: '#/components/parameters/WorldId'
+      responses:
+        '200':
+          description: World details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldDetailResponse'
+
+  /worlds/{id}/stats:
+    get:
+      summary: Get world statistics
+      tags: [Worlds]
+      parameters:
+        - $ref: '#/components/parameters/WorldId'
+      responses:
+        '200':
+          description: World statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldStatsResponse'
+
+  /worlds/{id}/time:
+    get:
+      summary: Get world time
+      tags: [Worlds]
+      parameters:
+        - $ref: '#/components/parameters/WorldId'
+      responses:
+        '200':
+          description: World time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldTimeResponse'
+    post:
+      summary: Set world time
+      tags: [Worlds]
+      parameters:
+        - $ref: '#/components/parameters/WorldId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetTimeRequest'
+      responses:
+        '200':
+          description: Time updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldTimeResponse'
+
+  /worlds/{id}/weather:
+    get:
+      summary: Get world weather
+      tags: [Worlds]
+      parameters:
+        - $ref: '#/components/parameters/WorldId'
+      responses:
+        '200':
+          description: World weather
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldWeatherResponse'
+    post:
+      summary: Set world weather
+      tags: [Worlds]
+      parameters:
+        - $ref: '#/components/parameters/WorldId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetWeatherRequest'
+      responses:
+        '200':
+          description: Weather updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldWeatherResponse'
+
+  /worlds/{id}/entities:
+    get:
+      summary: Get world entities
+      tags: [Worlds]
+      parameters:
+        - $ref: '#/components/parameters/WorldId'
+      responses:
+        '200':
+          description: World entities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitiesResponse'
+
+  /worlds/{id}/blocks/{x}/{y}/{z}:
+    get:
+      summary: Get block at coordinates
+      tags: [Worlds]
+      parameters:
+        - $ref: '#/components/parameters/WorldId'
+        - name: x
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: y
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: z
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Block info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockResponse'
+    post:
+      summary: Set block at coordinates
+      tags: [Worlds]
+      parameters:
+        - $ref: '#/components/parameters/WorldId'
+        - name: x
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: y
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: z
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetBlockRequest'
+      responses:
+        '200':
+          description: Block updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockResponse'
+
+  # ==================== Admin Endpoints ====================
+  /admin/command:
+    post:
+      summary: Execute server command
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandRequest'
+      responses:
+        '200':
+          description: Command executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandResponse'
+
+  /admin/kick:
+    post:
+      summary: Kick a player
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KickRequest'
+      responses:
+        '200':
+          description: Player kicked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminActionResponse'
+
+  /admin/ban:
+    post:
+      summary: Ban a player
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BanRequest'
+      responses:
+        '200':
+          description: Player banned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminActionResponse'
+
+  /admin/broadcast:
+    post:
+      summary: Broadcast message to all players
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BroadcastRequest'
+      responses:
+        '200':
+          description: Message broadcast
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminActionResponse'
+
+  # ==================== Chat Endpoints ====================
+  /chat/mute/{uuid}:
+    post:
+      summary: Mute a player
+      tags: [Chat]
+      parameters:
+        - $ref: '#/components/parameters/PlayerUuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MuteRequest'
+      responses:
+        '200':
+          description: Player muted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MuteResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    PlayerUuid:
+      name: uuid
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    WorldId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotImplemented:
+      description: Endpoint not yet implemented
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # ==================== Request Schemas ====================
+    AuthRequest:
+      type: object
+      required: [clientId, secret]
+      properties:
+        clientId:
+          type: string
+        secret:
+          type: string
+
+    CommandRequest:
+      type: object
+      required: [command]
+      properties:
+        command:
+          type: string
+
+    KickRequest:
+      type: object
+      required: [player]
+      properties:
+        player:
+          type: string
+        reason:
+          type: string
+          nullable: true
+
+    BanRequest:
+      type: object
+      required: [player]
+      properties:
+        player:
+          type: string
+        reason:
+          type: string
+          nullable: true
+        durationMinutes:
+          type: integer
+          format: int64
+          nullable: true
+
+    BroadcastRequest:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    GiveItemRequest:
+      type: object
+      required: [itemId, amount]
+      properties:
+        itemId:
+          type: string
+        amount:
+          type: integer
+        slot:
+          type: string
+          nullable: true
+
+    ClearInventoryRequest:
+      type: object
+      properties:
+        section:
+          type: string
+          nullable: true
+          enum: [all, hotbar, armor, storage, utility, tools]
+
+    TeleportRequest:
+      type: object
+      properties:
+        x:
+          type: number
+          format: double
+          nullable: true
+        y:
+          type: number
+          format: double
+          nullable: true
+        z:
+          type: number
+          format: double
+          nullable: true
+        world:
+          type: string
+          nullable: true
+        yaw:
+          type: number
+          format: float
+          nullable: true
+        pitch:
+          type: number
+          format: float
+          nullable: true
+
+    SetGameModeRequest:
+      type: object
+      required: [gameMode]
+      properties:
+        gameMode:
+          type: string
+
+    GrantPermissionRequest:
+      type: object
+      required: [permission]
+      properties:
+        permission:
+          type: string
+
+    AddToGroupRequest:
+      type: object
+      required: [group]
+      properties:
+        group:
+          type: string
+
+    SendMessageRequest:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    WhitelistRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [add, remove, enable, disable]
+        players:
+          type: array
+          items:
+            type: string
+          nullable: true
+
+    MuteRequest:
+      type: object
+      properties:
+        durationMinutes:
+          type: integer
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+
+    SetTimeRequest:
+      type: object
+      required: [time]
+      properties:
+        time:
+          type: integer
+          format: int64
+        relative:
+          type: boolean
+          nullable: true
+
+    SetWeatherRequest:
+      type: object
+      required: [weather]
+      properties:
+        weather:
+          type: string
+          enum: [clear, rain, thunder]
+        duration:
+          type: integer
+          nullable: true
+
+    SetBlockRequest:
+      type: object
+      required: [blockId]
+      properties:
+        blockId:
+          type: string
+        nbt:
+          type: string
+          nullable: true
+
+    # ==================== Response Schemas ====================
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    HealthResponse:
+      type: object
+      required: [status, timestamp]
+      properties:
+        status:
+          type: string
+        timestamp:
+          type: integer
+          format: int64
+
+    StatusResponse:
+      type: object
+      required: [name, motd, playerCount, maxPlayers, uptime, memory, online]
+      properties:
+        name:
+          type: string
+        motd:
+          type: string
+        playerCount:
+          type: integer
+        maxPlayers:
+          type: integer
+        uptime:
+          type: integer
+          format: int64
+        memory:
+          $ref: '#/components/schemas/MemoryInfo'
+        online:
+          type: boolean
+
+    MemoryInfo:
+      type: object
+      required: [used, max, free]
+      properties:
+        used:
+          type: integer
+          format: int64
+        max:
+          type: integer
+          format: int64
+        free:
+          type: integer
+          format: int64
+
+    PlayersResponse:
+      type: object
+      required: [count, players]
+      properties:
+        count:
+          type: integer
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerInfo'
+
+    PlayerInfo:
+      type: object
+      required: [uuid, name, world, position, connectedAt]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        world:
+          type: string
+        position:
+          $ref: '#/components/schemas/Position'
+        connectedAt:
+          type: integer
+          format: int64
+
+    Position:
+      type: object
+      required: [x, y, z]
+      properties:
+        x:
+          type: number
+          format: double
+        y:
+          type: number
+          format: double
+        z:
+          type: number
+          format: double
+
+    PlayerDetailResponse:
+      type: object
+      required: [uuid, name, world, position, connectedAt, stats, gameMode]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        world:
+          type: string
+        position:
+          $ref: '#/components/schemas/Position'
+        connectedAt:
+          type: integer
+          format: int64
+        stats:
+          $ref: '#/components/schemas/PlayerDetailStats'
+        gameMode:
+          type: string
+
+    PlayerDetailStats:
+      type: object
+      required: [health, mana, stamina]
+      properties:
+        health:
+          type: integer
+        mana:
+          type: integer
+        stamina:
+          type: integer
+
+    WorldsResponse:
+      type: object
+      required: [count, worlds]
+      properties:
+        count:
+          type: integer
+        worlds:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorldInfo'
+
+    WorldInfo:
+      type: object
+      required: [uuid, name, playerCount, type]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        playerCount:
+          type: integer
+        type:
+          type: string
+
+    WorldDetailResponse:
+      type: object
+      required: [uuid, name, playerCount, type, players, spawn]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        playerCount:
+          type: integer
+        type:
+          type: string
+        players:
+          type: array
+          items:
+            type: string
+        spawn:
+          $ref: '#/components/schemas/SpawnPosition'
+
+    SpawnPosition:
+      type: object
+      required: [x, y, z]
+      properties:
+        x:
+          type: number
+          format: double
+        y:
+          type: number
+          format: double
+        z:
+          type: number
+          format: double
+
+    CommandResponse:
+      type: object
+      required: [success, output]
+      properties:
+        success:
+          type: boolean
+        output:
+          type: string
+
+    AdminActionResponse:
+      type: object
+      required: [success, action, target, message]
+      properties:
+        success:
+          type: boolean
+        action:
+          type: string
+        target:
+          type: string
+        message:
+          type: string
+
+    SuccessResponse:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    ServerStatsResponse:
+      type: object
+      required: [name, uptime, playerCount, maxPlayers, worldCount, totalEntities, totalChunksLoaded, memory, worlds]
+      properties:
+        name:
+          type: string
+        uptime:
+          type: integer
+          format: int64
+        playerCount:
+          type: integer
+        maxPlayers:
+          type: integer
+        worldCount:
+          type: integer
+        totalEntities:
+          type: integer
+        totalChunksLoaded:
+          type: integer
+        memory:
+          $ref: '#/components/schemas/MemoryStats'
+        worlds:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorldStats'
+
+    MemoryStats:
+      type: object
+      required: [used, max, free, usedPercent]
+      properties:
+        used:
+          type: integer
+          format: int64
+        max:
+          type: integer
+          format: int64
+        free:
+          type: integer
+          format: int64
+        usedPercent:
+          type: number
+          format: double
+
+    WorldStats:
+      type: object
+      required: [name, playerCount, entityCount, chunksLoaded, chunksGenerated]
+      properties:
+        name:
+          type: string
+        playerCount:
+          type: integer
+        entityCount:
+          type: integer
+        chunksLoaded:
+          type: integer
+        chunksGenerated:
+          type: integer
+
+    WorldStatsResponse:
+      type: object
+      required: [name, playerCount, entityCount, chunks, entityTypes]
+      properties:
+        name:
+          type: string
+        playerCount:
+          type: integer
+        entityCount:
+          type: integer
+        chunks:
+          $ref: '#/components/schemas/ChunkStats'
+        entityTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityTypeCount'
+
+    ChunkStats:
+      type: object
+      required: [loaded, generated, total]
+      properties:
+        loaded:
+          type: integer
+        generated:
+          type: integer
+        total:
+          type: integer
+
+    EntityTypeCount:
+      type: object
+      required: [type, count]
+      properties:
+        type:
+          type: string
+        count:
+          type: integer
+
+    VersionResponse:
+      type: object
+      required: [gameVersion, revisionId, patchline, protocolVersion, protocolHash, pluginVersion]
+      properties:
+        gameVersion:
+          type: string
+        revisionId:
+          type: string
+        patchline:
+          type: string
+        protocolVersion:
+          type: integer
+        protocolHash:
+          type: string
+        pluginVersion:
+          type: string
+
+    InventoryResponse:
+      type: object
+      required: [playerUuid, playerName, totalSlots, items]
+      properties:
+        playerUuid:
+          type: string
+          format: uuid
+        playerName:
+          type: string
+        totalSlots:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemSlot'
+
+    ItemSlot:
+      type: object
+      required: [section, slot, itemId, amount, displayName]
+      properties:
+        section:
+          type: string
+        slot:
+          type: integer
+        itemId:
+          type: string
+        amount:
+          type: integer
+        displayName:
+          type: string
+        durability:
+          type: number
+          format: double
+          nullable: true
+        maxDurability:
+          type: number
+          format: double
+          nullable: true
+
+    HotbarResponse:
+      type: object
+      required: [playerUuid, playerName, activeSlot, slots]
+      properties:
+        playerUuid:
+          type: string
+          format: uuid
+        playerName:
+          type: string
+        activeSlot:
+          type: integer
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/HotbarSlot'
+
+    HotbarSlot:
+      type: object
+      required: [slot, itemId, amount, displayName, isActive]
+      properties:
+        slot:
+          type: integer
+        itemId:
+          type: string
+        amount:
+          type: integer
+        displayName:
+          type: string
+        isActive:
+          type: boolean
+
+    ArmorResponse:
+      type: object
+      required: [playerUuid, playerName, helmet, chestplate, leggings, boots]
+      properties:
+        playerUuid:
+          type: string
+          format: uuid
+        playerName:
+          type: string
+        helmet:
+          $ref: '#/components/schemas/ArmorSlot'
+        chestplate:
+          $ref: '#/components/schemas/ArmorSlot'
+        leggings:
+          $ref: '#/components/schemas/ArmorSlot'
+        boots:
+          $ref: '#/components/schemas/ArmorSlot'
+
+    ArmorSlot:
+      type: object
+      required: [itemId, amount, displayName]
+      properties:
+        itemId:
+          type: string
+          nullable: true
+        amount:
+          type: integer
+        displayName:
+          type: string
+          nullable: true
+        durability:
+          type: number
+          format: double
+          nullable: true
+        maxDurability:
+          type: number
+          format: double
+          nullable: true
+
+    StorageResponse:
+      type: object
+      required: [playerUuid, playerName, capacity, usedSlots, items]
+      properties:
+        playerUuid:
+          type: string
+          format: uuid
+        playerName:
+          type: string
+        capacity:
+          type: integer
+        usedSlots:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemSlot'
+
+    PlayerStatsResponse:
+      type: object
+      required: [uuid, name, health, maxHealth, mana, maxMana, stamina, maxStamina, oxygen, maxOxygen]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        health:
+          type: number
+          format: double
+        maxHealth:
+          type: number
+          format: double
+        mana:
+          type: number
+          format: double
+        maxMana:
+          type: number
+          format: double
+        stamina:
+          type: number
+          format: double
+        maxStamina:
+          type: number
+          format: double
+        oxygen:
+          type: number
+          format: double
+        maxOxygen:
+          type: number
+          format: double
+
+    PlayerLocationResponse:
+      type: object
+      required: [uuid, name, world, position, rotation]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        world:
+          type: string
+        position:
+          $ref: '#/components/schemas/Position'
+        rotation:
+          $ref: '#/components/schemas/Rotation'
+
+    Rotation:
+      type: object
+      required: [yaw, pitch]
+      properties:
+        yaw:
+          type: number
+          format: float
+        pitch:
+          type: number
+          format: float
+
+    GameModeResponse:
+      type: object
+      required: [uuid, name, gameMode]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        gameMode:
+          type: string
+
+    PermissionsResponse:
+      type: object
+      required: [uuid, name, permissions]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+
+    GroupsResponse:
+      type: object
+      required: [uuid, name, groups]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        groups:
+          type: array
+          items:
+            type: string
+
+    WorldTimeResponse:
+      type: object
+      required: [world, time, dayTime, phase]
+      properties:
+        world:
+          type: string
+        time:
+          type: integer
+          format: int64
+        dayTime:
+          type: integer
+          format: int64
+        phase:
+          type: string
+
+    WorldWeatherResponse:
+      type: object
+      required: [world, weather, remainingTicks, isThundering]
+      properties:
+        world:
+          type: string
+        weather:
+          type: string
+        remainingTicks:
+          type: integer
+        isThundering:
+          type: boolean
+
+    EntitiesResponse:
+      type: object
+      required: [world, count, entities]
+      properties:
+        world:
+          type: string
+        count:
+          type: integer
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityInfo'
+
+    EntityInfo:
+      type: object
+      required: [uuid, type, name, position, isAlive]
+      properties:
+        uuid:
+          type: string
+        type:
+          type: string
+        name:
+          type: string
+        position:
+          $ref: '#/components/schemas/Position'
+        isAlive:
+          type: boolean
+
+    BlockResponse:
+      type: object
+      required: [world, x, y, z, blockId, properties]
+      properties:
+        world:
+          type: string
+        x:
+          type: integer
+        y:
+          type: integer
+        z:
+          type: integer
+        blockId:
+          type: string
+        properties:
+          type: object
+          additionalProperties:
+            type: string
+
+    MetricsResponse:
+      type: object
+      required: [tps, tickTimeMs, avgTickTimeMs, memory, totalPlayers, totalEntities, totalChunks, worlds]
+      properties:
+        tps:
+          type: number
+          format: double
+        tickTimeMs:
+          type: integer
+          format: int64
+        avgTickTimeMs:
+          type: integer
+          format: int64
+        memory:
+          $ref: '#/components/schemas/MemoryMetrics'
+        totalPlayers:
+          type: integer
+        totalEntities:
+          type: integer
+        totalChunks:
+          type: integer
+        worlds:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorldMetrics'
+
+    MemoryMetrics:
+      type: object
+      required: [used, max, free, usedPercent]
+      properties:
+        used:
+          type: integer
+          format: int64
+        max:
+          type: integer
+          format: int64
+        free:
+          type: integer
+          format: int64
+        usedPercent:
+          type: number
+          format: double
+
+    WorldMetrics:
+      type: object
+      required: [name, players, entities, chunks, tickTimeMs]
+      properties:
+        name:
+          type: string
+        players:
+          type: integer
+        entities:
+          type: integer
+        chunks:
+          type: integer
+        tickTimeMs:
+          type: integer
+          format: int64
+
+    PluginsResponse:
+      type: object
+      required: [count, plugins]
+      properties:
+        count:
+          type: integer
+        plugins:
+          type: array
+          items:
+            $ref: '#/components/schemas/PluginInfo'
+
+    PluginInfo:
+      type: object
+      required: [name, version, description, state, authors]
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        state:
+          type: string
+        authors:
+          type: array
+          items:
+            type: string
+
+    WhitelistResponse:
+      type: object
+      required: [enabled, playerCount, players]
+      properties:
+        enabled:
+          type: boolean
+        playerCount:
+          type: integer
+        players:
+          type: array
+          items:
+            type: string
+
+    TeleportResponse:
+      type: object
+      required: [success, uuid, name, world, position]
+      properties:
+        success:
+          type: boolean
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        world:
+          type: string
+        position:
+          $ref: '#/components/schemas/Position'
+
+    MuteResponse:
+      type: object
+      required: [success, uuid, name, reason, expiresAt]
+      properties:
+        success:
+          type: boolean
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        durationMinutes:
+          type: integer
+          nullable: true
+        reason:
+          type: string
+        expiresAt:
+          type: integer
+          format: int64

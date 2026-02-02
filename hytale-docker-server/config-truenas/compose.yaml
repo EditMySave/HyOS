@@ -80,6 +80,12 @@ services:
       # Create backup before updating (default: true)
       # AUTO_UPDATE_BACKUP: "true"
 
+      # --- Version Check (manager UI) ---
+      # Refresh version.json after auth and periodically (default: true)
+      VERSION_CHECK_ENABLED: ${VERSION_CHECK_ENABLED:-true}
+      # Seconds between version checks (default: 3600 = 1 hour)
+      VERSION_CHECK_INTERVAL: ${VERSION_CHECK_INTERVAL:-3600}
+
       # --- Config Generation ---
       SKIP_CONFIG_GENERATION: "false"
       SERVER_NAME: ${SERVER_NAME:-Hytale Server}

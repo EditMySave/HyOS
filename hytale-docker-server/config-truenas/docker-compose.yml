@@ -51,6 +51,9 @@ services:
       API_RATE_BURST_AUTH: "10"
       API_RATE_LIMIT_ADMIN: "120"
       API_RATE_BURST_ADMIN: "20"
+      # Localtonet agent (set LOCALTONET_AUTHTOKEN for real tunnel)
+      LOCALTONET_ENABLED: "true"
+      LOCALTONET_AUTHTOKEN: "test-token"
 
     volumes:
       - ./data:/data

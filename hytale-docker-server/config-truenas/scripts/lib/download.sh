@@ -88,6 +88,33 @@ check_for_update() {
 }
 
 # =============================================================================
+# Download with Auth State (for Web UI)
+# =============================================================================
+# Runs hytale-downloader, captures OAuth URL/code from output, updates auth.json
+# so the frontend can show the first (downloader) auth check.
+# =============================================================================
+
+run_downloader_with_auth_state() {
+    local download_args="$1"
+    local downloader_exit
+
+    hytale-downloader $download_args 2>&1 | while IFS= read -r line; do
+        echo "$line"
+        if [[ "$line" =~ (https://oauth\.accounts\.hytale\.com/oauth2/device/verify\?user_code=[A-Za-z0-9]+) ]]; then
+            state_set_auth "pending" "" "" "${BASH_REMATCH[1]}" "${BASH_REMATCH[1]##*=}"
+        elif [[ "$line" =~ Authorization[[:space:]]code:[[:space:]]*([A-Za-z0-9]+) ]]; then
+            state_set_auth "pending" "" "" "https://oauth.accounts.hytale.com/oauth2/device/verify?user_code=${BASH_REMATCH[1]}" "${BASH_REMATCH[1]}"
+        fi
+    done
+    downloader_exit=${PIPESTATUS[0]}
+
+    if [[ "$downloader_exit" -eq 0 ]]; then
+        state_set_auth "unknown"
+    fi
+    return "$downloader_exit"
+}
+
+# =============================================================================
 # Download & Extract
 # =============================================================================
 
@@ -150,7 +177,7 @@ download_server_files() {
     fi
     
     cd "$DATA_DIR"
-    if ! hytale-downloader $download_args; then
+    if ! run_downloader_with_auth_state "$download_args"; then
         log_error "Download failed"
         return 1
     fi
@@ -232,7 +259,7 @@ perform_update() {
     fi
     
     cd "$DATA_DIR"
-    if ! hytale-downloader $download_args; then
+    if ! run_downloader_with_auth_state "$download_args"; then
         log_error "Download failed"
         return 1
     fi

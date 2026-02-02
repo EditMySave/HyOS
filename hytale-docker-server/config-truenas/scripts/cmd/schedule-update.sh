@@ -12,6 +12,9 @@
 
 set -eo pipefail
 
+# Exit 0 on SIGPIPE so Docker exec / piped contexts don't get 141
+trap 'exit 0' SIGPIPE
+
 SCRIPTS_DIR="${SCRIPTS_DIR:-/opt/scripts}"
 DATA_DIR="${DATA_DIR:-/data}"
 
@@ -59,29 +62,31 @@ fi
 # =============================================================================
 # Schedule Mode (default)
 # =============================================================================
+# Don't exit on 141 (SIGPIPE in subshells e.g. command substitution under Docker exec)
+set +e
 
-log_section "Schedule Update on Restart"
+# Set flag first so any later SIGPIPE doesn't lose the schedule
+state_set_update_scheduled ""
 
-# Get current version info
+# Then resolve version for display and optional flag update
 detect_existing_files
 current_version=$(get_current_version)
-log_info "Current version: $current_version"
-
-# Get latest version
-log_step "Checking latest version"
 latest_version=$(get_latest_version)
-log_step_status "$latest_version" "$GREEN"
-
-# Determine target version
 target_version="$latest_version"
 if [[ "$latest_version" == "unknown" ]] || [[ -z "$latest_version" ]]; then
     target_version=""
-    log_warn "Could not determine latest version, will update to latest available on restart"
+else
+    state_set_update_scheduled "$target_version"
 fi
 
-# Schedule the update
-state_set_update_scheduled "$target_version"
-
+# Then log (if stdout is closed we already succeeded)
+log_section "Schedule Update on Restart"
+log_info "Current version: $current_version"
+log_step "Checking latest version"
+log_step_status "$latest_version" "$GREEN"
+if [[ -z "$target_version" ]]; then
+    log_warn "Could not determine latest version, will update to latest available on restart"
+fi
 log_separator
 log_success "Update scheduled for next restart"
 if [[ -n "$target_version" ]]; then
@@ -89,3 +94,4 @@ if [[ -n "$target_version" ]]; then
 fi
 log_info "Restart the container to apply the update:"
 log_info "  docker restart <container>"
+exit 0

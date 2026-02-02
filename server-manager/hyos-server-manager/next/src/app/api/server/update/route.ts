@@ -58,59 +58,82 @@ export async function GET() {
 }
 
 /**
- * POST /api/server/update - Trigger an update check
+ * POST /api/server/update - Trigger an update check (or return cached state when Docker unavailable)
  */
 export async function POST() {
   try {
-    // Check if Docker is available
-    const dockerAvailable = await isDockerAvailable();
-    if (!dockerAvailable) {
-      return NextResponse.json(
-        { error: "Docker not available - cannot check for updates" },
-        { status: 503 },
-      );
-    }
-
-    console.log("[update] Running update check...");
-
-    // Execute auto-update.sh --once in the container
-    const result = await execInContainer([
-      "/opt/scripts/cmd/auto-update.sh",
-      "--once",
-    ]);
-
-    console.log("[update] Check complete, exit code:", result.exitCode);
-
-    // Read the updated state file
     const config = await loadConfig();
     const stateDir = config.stateDir || "/data/.state";
     const versionPath = join(stateDir, "version.json");
 
-    try {
-      const content = await readFile(versionPath, "utf-8");
-      const versionState = JSON.parse(content);
+    const dockerAvailable = await isDockerAvailable();
 
-      return NextResponse.json({
-        success: result.exitCode === 0,
-        currentVersion: versionState.current || "unknown",
-        latestVersion: versionState.latest || "unknown",
-        needsUpdate: versionState.needs_update || false,
-        lastCheck: versionState.checked_at || null,
-        message: versionState.needs_update
-          ? `Update available: ${versionState.current} → ${versionState.latest}`
-          : "Server is up to date",
-        output: result.output,
-      });
-    } catch {
-      return NextResponse.json({
-        success: result.exitCode === 0,
-        currentVersion: "unknown",
-        latestVersion: "unknown",
-        needsUpdate: false,
-        lastCheck: new Date().toISOString(),
-        message: "Check completed but could not read version state",
-        output: result.output,
-      });
+    if (dockerAvailable) {
+      // Run live check in container
+      console.log("[update] Running update check...");
+
+      const result = await execInContainer([
+        "/opt/scripts/cmd/auto-update.sh",
+        "--once",
+      ]);
+
+      console.log("[update] Check complete, exit code:", result.exitCode);
+
+      try {
+        const content = await readFile(versionPath, "utf-8");
+        const versionState = JSON.parse(content);
+
+        return NextResponse.json({
+          success: result.exitCode === 0,
+          currentVersion: versionState.current || "unknown",
+          latestVersion: versionState.latest || "unknown",
+          needsUpdate: versionState.needs_update || false,
+          lastCheck: versionState.checked_at || null,
+          message: versionState.needs_update
+            ? `Update available: ${versionState.current} → ${versionState.latest}`
+            : "Server is up to date",
+          output: result.output,
+        });
+      } catch {
+        return NextResponse.json({
+          success: result.exitCode === 0,
+          currentVersion: "unknown",
+          latestVersion: "unknown",
+          needsUpdate: false,
+          lastCheck: new Date().toISOString(),
+          message: "Check completed but could not read version state",
+          output: result.output,
+        });
+      }
+    } else {
+      // TrueNAS / no Docker: return cached version state from shared volume
+      console.log("[update] Docker not available, returning cached version state...");
+
+      try {
+        const content = await readFile(versionPath, "utf-8");
+        const versionState = JSON.parse(content);
+
+        return NextResponse.json({
+          success: true,
+          currentVersion: versionState.current || "unknown",
+          latestVersion: versionState.latest || "unknown",
+          needsUpdate: versionState.needs_update || false,
+          lastCheck: versionState.checked_at || null,
+          message: versionState.needs_update
+            ? `Update available: ${versionState.current} → ${versionState.latest}`
+            : "Server is up to date (cached state; live check requires Docker)",
+        });
+      } catch {
+        return NextResponse.json({
+          success: true,
+          currentVersion: "unknown",
+          latestVersion: "unknown",
+          needsUpdate: false,
+          lastCheck: null,
+          message:
+            "No version data available. The server may need to be authenticated to check for updates.",
+        });
+      }
     }
   } catch (error) {
     console.error("[update] Error:", error);

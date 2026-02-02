@@ -254,6 +254,25 @@ main() {
         exit 1
     }
     
+    # Refresh version info after authentication
+    log_info "Refreshing version check..."
+    current=$(get_current_version)
+    latest=$(get_latest_version)
+    state_set_version "$current" "$latest"
+    
+    # Start background version checker (checks every hour by default)
+    if is_true "${VERSION_CHECK_ENABLED:-true}"; then
+        VERSION_CHECK_INTERVAL="${VERSION_CHECK_INTERVAL:-3600}"
+        (
+            while true; do
+                sleep "$VERSION_CHECK_INTERVAL"
+                current=$(get_current_version)
+                latest=$(get_latest_version)
+                state_set_version "$current" "$latest"
+            done
+        ) &
+    fi
+    
     # Start server
     # If running as root, drop privileges first
     if [[ "$(id -u)" == "0" ]]; then
@@ -278,6 +297,7 @@ main() {
 # =============================================================================
 cleanup() {
     log_info "Received shutdown signal"
+    stop_localtonet || true
     state_set_server "stopped"
     exit 0
 }

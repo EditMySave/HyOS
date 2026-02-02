@@ -1,0 +1,31 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Claude
+.claude/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Plugin runtime files
+config.json
+jwt-keypair.pem
+*.pem
+*.key
+*.crt
+
+# Logs
+*.log
+logs/
+
+# Temp files
+tmpclaude-*
