@@ -2,3 +2,7 @@ reference-implementations/
 docker-server/
 server-api/
 server-manager/hytale_server_manager/
+hytale-docker-server/config-truenas/data/**/*
+hytale-docker-server/config-truenas/plugins/**/*
+saves/**/*
+reference-implementations/**/*
