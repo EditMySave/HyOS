@@ -72,10 +72,7 @@ export async function PATCH(
     // Find the slot
     const slot = metadata.slots.find((s) => s.id === id);
     if (!slot) {
-      return NextResponse.json(
-        { error: "Slot not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Slot not found" }, { status: 404 });
     }
 
     // Update the slot name
@@ -91,8 +88,7 @@ export async function PATCH(
     console.error("[worlds/slots] Error renaming slot:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to rename slot",
+        error: error instanceof Error ? error.message : "Failed to rename slot",
       },
       { status: 500 },
     );
@@ -110,10 +106,7 @@ export async function DELETE(
     // Find the slot
     const slot = metadata.slots.find((s) => s.id === id);
     if (!slot) {
-      return NextResponse.json(
-        { error: "Slot not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Slot not found" }, { status: 404 });
     }
 
     const slotsPath = getSlotsPath();
@@ -139,8 +132,7 @@ export async function DELETE(
     console.error("[worlds/slots] Error deleting slot:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to delete slot",
+        error: error instanceof Error ? error.message : "Failed to delete slot",
       },
       { status: 500 },
     );

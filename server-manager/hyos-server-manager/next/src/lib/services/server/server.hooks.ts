@@ -136,13 +136,9 @@ export function useCheckForUpdates() {
  * Hook to get scheduled update status
  */
 export function useScheduledUpdate() {
-  return useSWR<ScheduledUpdateStatus>(
-    "scheduled-update",
-    getScheduledUpdate,
-    {
-      refreshInterval: 30000, // Refresh every 30 seconds
-    },
-  );
+  return useSWR<ScheduledUpdateStatus>("scheduled-update", getScheduledUpdate, {
+    refreshInterval: 30000, // Refresh every 30 seconds
+  });
 }
 
 /**

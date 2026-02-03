@@ -384,7 +384,7 @@ export const HYTALE_COMMANDS: HytaleCommand[] = [
 
 export function getActiveParam(
   command: HytaleCommand,
-  input: string
+  input: string,
 ): { param: CommandParam; index: number } | null {
   if (!command.params?.length) return null;
 
@@ -416,7 +416,9 @@ export function loadRecentCommands(): string[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     return Array.isArray(parsed)
-      ? parsed.filter((x): x is string => typeof x === "string").slice(0, MAX_RECENT)
+      ? parsed
+          .filter((x): x is string => typeof x === "string")
+          .slice(0, MAX_RECENT)
       : [];
   } catch {
     return [];
@@ -428,7 +430,7 @@ export function saveRecentCommands(commands: string[]): void {
   try {
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify(commands.slice(0, MAX_RECENT))
+      JSON.stringify(commands.slice(0, MAX_RECENT)),
     );
   } catch {
     // ignore

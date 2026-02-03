@@ -13,7 +13,7 @@ export function SubNav() {
         <span
           className={cn(
             "size-2 rounded-none",
-            isOnline ? "bg-status-online" : "bg-status-offline"
+            isOnline ? "bg-status-online" : "bg-status-offline",
           )}
         />
         <span>{isOnline ? "Server Online" : "Server Offline"}</span>

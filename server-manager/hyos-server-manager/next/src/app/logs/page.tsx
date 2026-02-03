@@ -32,7 +32,10 @@ const fetcher = async (url: string): Promise<LogsResponse> => {
   return response.json();
 };
 
-const LEVEL_COLORS: Record<string, { text: string; bg: string; border: string }> = {
+const LEVEL_COLORS: Record<
+  string,
+  { text: string; bg: string; border: string }
+> = {
   INFO: {
     text: "text-chart-1",
     bg: "bg-chart-1/10",
@@ -72,22 +75,26 @@ const LEVEL_COLORS: Record<string, { text: string; bg: string; border: string }>
 
 function parseLogLine(line: string): ParsedLogLine {
   // Match: [YYYY/MM/DD HH:MM:SS   LEVEL] message
-  const match = line.match(/^\[(\d{4}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s+(\w+)\]\s+(.*)$/);
+  const match = line.match(
+    /^\[(\d{4}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s+(\w+)\]\s+(.*)$/,
+  );
   if (match) {
     const dateStr = match[1]; // YYYY/MM/DD
     const timeStr = match[2]; // HH:MM:SS
     const level = match[3]; // INFO, WARN, ERROR, etc.
     const message = match[4];
-    
+
     // Parse timestamp for time filtering
     let timestamp = 0;
     try {
       // Convert YYYY/MM/DD HH:MM:SS to Date
-      timestamp = new Date(`${dateStr.replace(/\//g, '-')} ${timeStr}`).getTime();
+      timestamp = new Date(
+        `${dateStr.replace(/\//g, "-")} ${timeStr}`,
+      ).getTime();
     } catch {
       // If parsing fails, timestamp remains 0
     }
-    
+
     return {
       date: dateStr,
       time: timeStr,
@@ -137,8 +144,7 @@ export default function LogsPage() {
   // Auto-scroll to bottom when new logs arrive
   useEffect(() => {
     if (autoScroll && logContainerRef.current && displayedLogs) {
-      logContainerRef.current.scrollTop =
-        logContainerRef.current.scrollHeight;
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [displayedLogs, autoScroll]);
 
@@ -295,7 +301,7 @@ export default function LogsPage() {
               className={cn(
                 "px-4 py-2 text-sm font-medium border border-border",
                 "bg-input hover:bg-accent text-foreground",
-                "transition-colors"
+                "transition-colors",
               )}
             >
               {isPaused ? "Resume" : "Pause"}
@@ -305,7 +311,7 @@ export default function LogsPage() {
               className={cn(
                 "px-4 py-2 text-sm font-medium border border-border",
                 "bg-input hover:bg-accent text-foreground",
-                "transition-colors"
+                "transition-colors",
               )}
             >
               Clear
@@ -320,7 +326,7 @@ export default function LogsPage() {
           ref={logContainerRef}
           className={cn(
             "bg-background-secondary border border-border p-4",
-            "font-mono text-xs overflow-auto h-[600px]"
+            "font-mono text-xs overflow-auto h-[600px]",
           )}
         >
           {isLoading && (
@@ -354,7 +360,7 @@ export default function LogsPage() {
                     };
 
                 // Create unique key using timestamp, index, and first chars of message
-                const uniqueKey = `${log.timestamp}-${index}-${log.raw.slice(0, 30).replace(/\s/g, '')}`;
+                const uniqueKey = `${log.timestamp}-${index}-${log.raw.slice(0, 30).replace(/\s/g, "")}`;
 
                 return (
                   <div
@@ -363,7 +369,7 @@ export default function LogsPage() {
                       "flex gap-3 px-3 py-2 border-l-4",
                       levelStyles.bg,
                       levelStyles.border,
-                      "border-b border-border/50"
+                      "border-b border-border/50",
                     )}
                   >
                     {log.time && (
@@ -376,7 +382,7 @@ export default function LogsPage() {
                         className={cn(
                           "flex-shrink-0 px-2 py-0.5 font-semibold text-xs uppercase",
                           levelStyles.text,
-                          "bg-background/50"
+                          "bg-background/50",
                         )}
                       >
                         {log.level}

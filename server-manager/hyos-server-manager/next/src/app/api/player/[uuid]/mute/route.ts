@@ -29,8 +29,7 @@ export async function POST(
     console.error("[mute] Error:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to mute player",
+        error: error instanceof Error ? error.message : "Failed to mute player",
       },
       { status: 500 },
     );

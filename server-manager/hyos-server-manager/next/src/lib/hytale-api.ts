@@ -3,7 +3,7 @@
  *
  * Direct client for communicating with the Hytale server API plugin.
  * Handles authentication and request/response formatting.
- * 
+ *
  * IMPORTANT: Health checks should only be called from the status endpoint,
  * not before every API request. This matches the experiments implementation.
  */
@@ -57,7 +57,7 @@ async function getCredentials(): Promise<{
  */
 export async function checkHealth(): Promise<boolean> {
   const now = Date.now();
-  
+
   // Return cached result if checked recently
   if (now - lastHealthCheck < HEALTH_CACHE_MS) {
     return cachedHealthResult;

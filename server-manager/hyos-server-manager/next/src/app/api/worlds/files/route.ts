@@ -15,7 +15,10 @@ function getUniversePath(): string {
   return "/tmp/hytale-data/Server/universe";
 }
 
-async function getFileInfo(filePath: string, basePath: string): Promise<FileInfo> {
+async function getFileInfo(
+  filePath: string,
+  basePath: string,
+): Promise<FileInfo> {
   const stats = await fs.stat(filePath);
   const relativePath = path.relative(basePath, filePath);
   const name = path.basename(filePath);
@@ -81,8 +84,7 @@ export async function GET() {
     console.error("[worlds/files] Error:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to list files",
+        error: error instanceof Error ? error.message : "Failed to list files",
       },
       { status: 500 },
     );

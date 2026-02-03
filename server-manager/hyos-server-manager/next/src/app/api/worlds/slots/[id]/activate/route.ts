@@ -77,10 +77,7 @@ export async function POST(
     // Find the slot
     const slot = metadata.slots.find((s) => s.id === id);
     if (!slot) {
-      return NextResponse.json(
-        { error: "Slot not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Slot not found" }, { status: 404 });
     }
 
     const slotsPath = getSlotsPath();
@@ -103,7 +100,7 @@ export async function POST(
     try {
       await fs.access(universePath);
       const universeEntries = await fs.readdir(universePath);
-      
+
       // Only create auto-save if universe has content
       if (universeEntries.length > 0) {
         const autoSlotNumber = metadata.nextSlotNumber;

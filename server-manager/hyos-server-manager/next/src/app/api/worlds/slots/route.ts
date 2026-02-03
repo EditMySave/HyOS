@@ -69,7 +69,10 @@ async function getSlotSize(slotPath: string): Promise<number> {
   return totalSize;
 }
 
-async function extractZip(zipPath: string, extractTo: string): Promise<{
+async function extractZip(
+  zipPath: string,
+  extractTo: string,
+): Promise<{
   filesAdded: number;
   filesModified: number;
 }> {
@@ -77,7 +80,9 @@ async function extractZip(zipPath: string, extractTo: string): Promise<{
   const entries = zip.getEntries();
 
   const hasUniverseRoot = entries.some(
-    (entry) => entry.entryName === "universe/" || entry.entryName.startsWith("universe/")
+    (entry) =>
+      entry.entryName === "universe/" ||
+      entry.entryName.startsWith("universe/"),
   );
 
   const stripPrefix = hasUniverseRoot ? "universe/" : "";
@@ -166,8 +171,7 @@ export async function GET() {
     console.error("[worlds/slots] Error listing slots:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to list slots",
+        error: error instanceof Error ? error.message : "Failed to list slots",
       },
       { status: 500 },
     );
@@ -180,10 +184,7 @@ export async function POST(request: Request) {
     const file = formData.get("file") as File | null;
 
     if (!file) {
-      return NextResponse.json(
-        { error: "No file provided" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     if (!file.name.endsWith(".zip")) {
@@ -218,7 +219,10 @@ export async function POST(request: Request) {
     await fs.writeFile(tempZipPath, Buffer.from(arrayBuffer));
 
     // Extract zip to slot folder
-    const { filesAdded, filesModified } = await extractZip(tempZipPath, slotPath);
+    const { filesAdded, filesModified } = await extractZip(
+      tempZipPath,
+      slotPath,
+    );
 
     // Clean up temp file
     await fs.unlink(tempZipPath).catch(() => {});
@@ -251,8 +255,7 @@ export async function POST(request: Request) {
     console.error("[worlds/slots] Error creating slot:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to create slot",
+        error: error instanceof Error ? error.message : "Failed to create slot",
       },
       { status: 500 },
     );

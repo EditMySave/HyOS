@@ -24,3 +24,22 @@ export {
   useUploadMod,
   useDeleteMod,
 } from "./mods.hooks";
+
+// Browser (aggregated mod search)
+export {
+  useAggregatedSearch,
+  useModInstall,
+  searchAllProviders,
+  installMod,
+  runSearch,
+  getProviders,
+  getProvider,
+} from "./browser";
+export type {
+  AggregatedSearchResult,
+  BrowsedMod,
+  ModProvider,
+  ModVersion,
+  ProviderConfig,
+  SearchParams,
+} from "./browser";

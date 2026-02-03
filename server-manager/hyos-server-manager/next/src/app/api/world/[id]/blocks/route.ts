@@ -59,10 +59,13 @@ export async function POST(
       );
     }
 
-    const data = await apiRequest<BlockInfo>(`/worlds/${id}/blocks/${x}/${y}/${z}`, {
-      method: "POST",
-      body: JSON.stringify({ blockId, nbt: nbt || null }),
-    });
+    const data = await apiRequest<BlockInfo>(
+      `/worlds/${id}/blocks/${x}/${y}/${z}`,
+      {
+        method: "POST",
+        body: JSON.stringify({ blockId, nbt: nbt || null }),
+      },
+    );
 
     return NextResponse.json(data);
   } catch (error) {

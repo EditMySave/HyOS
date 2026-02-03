@@ -31,8 +31,7 @@ export async function GET() {
     console.error("[players] Error:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to get players",
+        error: error instanceof Error ? error.message : "Failed to get players",
       },
       { status: 500 },
     );

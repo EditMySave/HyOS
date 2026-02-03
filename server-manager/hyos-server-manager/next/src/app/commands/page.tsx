@@ -120,8 +120,7 @@ export default function CommandsPage() {
   const { trigger: setTime, isMutating: isSettingTime } = useSetWorldTime();
   const { trigger: setWeather, isMutating: isSettingWeather } =
     useSetWorldWeather();
-  const { trigger: setBlockMutate, isMutating: isSettingBlock } =
-    useSetBlock();
+  const { trigger: setBlockMutate, isMutating: isSettingBlock } = useSetBlock();
   const { trigger: save, isMutating: isSaving } = useSave();
   const { trigger: manageWhitelistMutate, isMutating: isManagingWhitelist } =
     useManageWhitelist();
@@ -151,9 +150,9 @@ export default function CommandsPage() {
   const filteredCommands = useMemo(
     () =>
       HYTALE_COMMANDS.filter((cmd) =>
-        cmd.name.toLowerCase().startsWith(normalizedInput)
+        cmd.name.toLowerCase().startsWith(normalizedInput),
       ).slice(0, 12),
-    [normalizedInput]
+    [normalizedInput],
   );
   const matchedCommand: HytaleCommand | undefined =
     filteredCommands[0] ?? undefined;
@@ -162,13 +161,14 @@ export default function CommandsPage() {
     const n = rawCommand.replace(/^\//, "").trim();
     if (!n) return undefined;
     const matched = HYTALE_COMMANDS.filter(
-      (cmd) => n === cmd.name || n.startsWith(`${cmd.name} `)
+      (cmd) => n === cmd.name || n.startsWith(`${cmd.name} `),
     ).sort((a, b) => b.name.length - a.name.length)[0];
     return matched ?? undefined;
   }, [rawCommand]);
 
-  const activeParam =
-    commandForHelp ? getActiveParam(commandForHelp, rawCommand) : null;
+  const activeParam = commandForHelp
+    ? getActiveParam(commandForHelp, rawCommand)
+    : null;
 
   const selectSuggestion = useCallback((cmd: HytaleCommand) => {
     setRawCommand(cmd.syntax.split(" ")[0] ?? cmd.syntax);
@@ -181,14 +181,11 @@ export default function CommandsPage() {
     const trimmed = rawCommand.trim();
     try {
       const res = await execCommand(trimmed);
-      showResult(
-        res.success,
-        res.output || res.error || "Command executed"
-      );
+      showResult(res.success, res.output || res.error || "Command executed");
       setRecentCommands((prev) => {
         const next = [trimmed, ...prev.filter((c) => c !== trimmed)].slice(
           0,
-          10
+          10,
         );
         saveRecentCommands(next);
         return next;
@@ -198,7 +195,7 @@ export default function CommandsPage() {
     } catch (e) {
       showResult(
         false,
-        e instanceof Error ? e.message : "Failed to execute command"
+        e instanceof Error ? e.message : "Failed to execute command",
       );
     }
   }, [rawCommand, execCommand, showResult]);
@@ -224,7 +221,7 @@ export default function CommandsPage() {
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setSelectedSuggestion((i) =>
-          filteredCommands.length ? (i + 1) % filteredCommands.length : 0
+          filteredCommands.length ? (i + 1) % filteredCommands.length : 0,
         );
         return;
       }
@@ -233,7 +230,7 @@ export default function CommandsPage() {
         setSelectedSuggestion((i) =>
           filteredCommands.length
             ? (i - 1 + filteredCommands.length) % filteredCommands.length
-            : 0
+            : 0,
         );
         return;
       }
@@ -244,7 +241,7 @@ export default function CommandsPage() {
       selectedSuggestion,
       selectSuggestion,
       handleRawCommand,
-    ]
+    ],
   );
 
   const clearHistory = useCallback(() => {
@@ -255,14 +252,17 @@ export default function CommandsPage() {
   const handleKick = async () => {
     if (!selectedPlayer) return;
     try {
-      await kickPlayer({ uuid: selectedPlayer, reason: kickReason || undefined });
+      await kickPlayer({
+        uuid: selectedPlayer,
+        reason: kickReason || undefined,
+      });
       showResult(true, "Player kicked");
       setKickReason("");
       void mutatePlayers();
     } catch (e) {
       showResult(
         false,
-        e instanceof Error ? e.message : "Failed to kick player"
+        e instanceof Error ? e.message : "Failed to kick player",
       );
     }
   };
@@ -282,7 +282,7 @@ export default function CommandsPage() {
     } catch (e) {
       showResult(
         false,
-        e instanceof Error ? e.message : "Failed to ban player"
+        e instanceof Error ? e.message : "Failed to ban player",
       );
     }
   };
@@ -303,7 +303,7 @@ export default function CommandsPage() {
     } catch (e) {
       showResult(
         false,
-        e instanceof Error ? e.message : "Failed to mute player"
+        e instanceof Error ? e.message : "Failed to mute player",
       );
     }
   };
@@ -316,10 +316,7 @@ export default function CommandsPage() {
       setBroadcastMessage("");
       void mutatePlayers();
     } catch (e) {
-      showResult(
-        false,
-        e instanceof Error ? e.message : "Failed to broadcast"
-      );
+      showResult(false, e instanceof Error ? e.message : "Failed to broadcast");
     }
   };
 
@@ -335,10 +332,7 @@ export default function CommandsPage() {
       });
       showResult(true, "Player teleported");
     } catch (e) {
-      showResult(
-        false,
-        e instanceof Error ? e.message : "Failed to teleport"
-      );
+      showResult(false, e instanceof Error ? e.message : "Failed to teleport");
     }
   };
 
@@ -350,7 +344,7 @@ export default function CommandsPage() {
     } catch (e) {
       showResult(
         false,
-        e instanceof Error ? e.message : "Failed to set game mode"
+        e instanceof Error ? e.message : "Failed to set game mode",
       );
     }
   };
@@ -367,10 +361,7 @@ export default function CommandsPage() {
       setGiveItemId("");
       setGiveItemAmount("1");
     } catch (e) {
-      showResult(
-        false,
-        e instanceof Error ? e.message : "Failed to give item"
-      );
+      showResult(false, e instanceof Error ? e.message : "Failed to give item");
     }
   };
 
@@ -385,7 +376,7 @@ export default function CommandsPage() {
     } catch (e) {
       showResult(
         false,
-        e instanceof Error ? e.message : "Failed to clear inventory"
+        e instanceof Error ? e.message : "Failed to clear inventory",
       );
     }
   };
@@ -399,7 +390,7 @@ export default function CommandsPage() {
     } catch (e) {
       showResult(
         false,
-        e instanceof Error ? e.message : "Failed to send message"
+        e instanceof Error ? e.message : "Failed to send message",
       );
     }
   };
@@ -413,7 +404,7 @@ export default function CommandsPage() {
     } catch (e) {
       showResult(
         false,
-        e instanceof Error ? e.message : "Failed to grant permission"
+        e instanceof Error ? e.message : "Failed to grant permission",
       );
     }
   };
@@ -430,7 +421,7 @@ export default function CommandsPage() {
     } catch (e) {
       showResult(
         false,
-        e instanceof Error ? e.message : "Failed to add to group"
+        e instanceof Error ? e.message : "Failed to add to group",
       );
     }
   };
@@ -444,10 +435,7 @@ export default function CommandsPage() {
       });
       showResult(true, "World time set");
     } catch (e) {
-      showResult(
-        false,
-        e instanceof Error ? e.message : "Failed to set time"
-      );
+      showResult(false, e instanceof Error ? e.message : "Failed to set time");
     }
   };
 
@@ -462,19 +450,13 @@ export default function CommandsPage() {
     } catch (e) {
       showResult(
         false,
-        e instanceof Error ? e.message : "Failed to set weather"
+        e instanceof Error ? e.message : "Failed to set weather",
       );
     }
   };
 
   const handleSetBlock = async () => {
-    if (
-      !selectedWorldId ||
-      !blockX ||
-      !blockY ||
-      !blockZ ||
-      !blockId.trim()
-    )
+    if (!selectedWorldId || !blockX || !blockY || !blockZ || !blockId.trim())
       return;
     try {
       await setBlockMutate({
@@ -486,10 +468,7 @@ export default function CommandsPage() {
       });
       showResult(true, "Block set");
     } catch (e) {
-      showResult(
-        false,
-        e instanceof Error ? e.message : "Failed to set block"
-      );
+      showResult(false, e instanceof Error ? e.message : "Failed to set block");
     }
   };
 
@@ -498,10 +477,7 @@ export default function CommandsPage() {
       await save();
       showResult(true, "World saved");
     } catch (e) {
-      showResult(
-        false,
-        e instanceof Error ? e.message : "Failed to save"
-      );
+      showResult(false, e instanceof Error ? e.message : "Failed to save");
     }
   };
 
@@ -510,7 +486,10 @@ export default function CommandsPage() {
       .split(",")
       .map((p) => p.trim())
       .filter(Boolean);
-    if ((whitelistAction === "add" || whitelistAction === "remove") && !playersList.length)
+    if (
+      (whitelistAction === "add" || whitelistAction === "remove") &&
+      !playersList.length
+    )
       return;
     try {
       await manageWhitelistMutate({
@@ -523,7 +502,7 @@ export default function CommandsPage() {
     } catch (e) {
       showResult(
         false,
-        e instanceof Error ? e.message : "Failed to update whitelist"
+        e instanceof Error ? e.message : "Failed to update whitelist",
       );
     }
   };
@@ -565,7 +544,7 @@ export default function CommandsPage() {
             "fixed top-6 right-6 z-50 max-w-md border p-4 shadow-lg",
             result.success
               ? "border-status-online/40 bg-status-online/10 text-status-online"
-              : "border-destructive/40 bg-destructive/10 text-destructive"
+              : "border-destructive/40 bg-destructive/10 text-destructive",
           )}
         >
           <div className="font-medium">
@@ -683,7 +662,7 @@ export default function CommandsPage() {
                         type="button"
                         className={cn(
                           "w-full px-3 py-2 text-left",
-                          i === selectedSuggestion && "bg-accent"
+                          i === selectedSuggestion && "bg-accent",
                         )}
                         onMouseDown={(e) => {
                           e.preventDefault();
@@ -960,9 +939,7 @@ export default function CommandsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-muted-foreground text-sm">
-                Give Item
-              </label>
+              <label className="text-muted-foreground text-sm">Give Item</label>
               <div className="grid grid-cols-3 gap-2">
                 <Input
                   value={giveItemId}
@@ -981,9 +958,7 @@ export default function CommandsPage() {
               <Button
                 className="w-full bg-status-online text-primary-foreground hover:bg-status-online/90"
                 onClick={handleGiveItem}
-                disabled={
-                  isGivingItem || !selectedPlayer || !giveItemId.trim()
-                }
+                disabled={isGivingItem || !selectedPlayer || !giveItemId.trim()}
               >
                 {isGivingItem ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -1153,9 +1128,7 @@ export default function CommandsPage() {
                 <Button
                   variant="outline"
                   onClick={handleSetTime}
-                  disabled={
-                    isSettingTime || !selectedWorldId || !worldTime
-                  }
+                  disabled={isSettingTime || !selectedWorldId || !worldTime}
                 >
                   {isSettingTime ? (
                     <Loader2 className="size-4 animate-spin" />
@@ -1186,9 +1159,7 @@ export default function CommandsPage() {
               <div className="flex gap-2">
                 <select
                   value={worldWeather}
-                  onChange={(e) =>
-                    setWorldWeather(e.target.value as Weather)
-                  }
+                  onChange={(e) => setWorldWeather(e.target.value as Weather)}
                   className="flex-1 border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="clear">Clear</option>
@@ -1210,9 +1181,7 @@ export default function CommandsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-muted-foreground text-sm">
-                Set Block
-              </label>
+              <label className="text-muted-foreground text-sm">Set Block</label>
               <div className="grid grid-cols-3 gap-2">
                 <Input
                   type="number"
@@ -1315,7 +1284,7 @@ export default function CommandsPage() {
                   value={whitelistAction}
                   onChange={(e) =>
                     setWhitelistAction(
-                      e.target.value as "add" | "remove" | "enable" | "disable"
+                      e.target.value as "add" | "remove" | "enable" | "disable",
                     )
                   }
                   className="border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
@@ -1325,8 +1294,7 @@ export default function CommandsPage() {
                   <option value="enable">Enable</option>
                   <option value="disable">Disable</option>
                 </select>
-                {(whitelistAction === "add" ||
-                  whitelistAction === "remove") ? (
+                {whitelistAction === "add" || whitelistAction === "remove" ? (
                   <Input
                     value={whitelistPlayers}
                     onChange={(e) => setWhitelistPlayers(e.target.value)}

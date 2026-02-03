@@ -30,10 +30,7 @@ export async function POST(request: Request) {
     const file = formData.get("file") as File | null;
 
     if (!file) {
-      return NextResponse.json(
-        { error: "No file provided" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     // Validate file type
@@ -47,7 +44,9 @@ export async function POST(request: Request) {
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB` },
+        {
+          error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+        },
         { status: 400 },
       );
     }
@@ -94,8 +93,7 @@ export async function POST(request: Request) {
     console.error("[mods/upload] Error uploading mod:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to upload mod",
+        error: error instanceof Error ? error.message : "Failed to upload mod",
       },
       { status: 500 },
     );

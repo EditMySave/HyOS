@@ -107,7 +107,9 @@ export async function POST() {
       }
     } else {
       // TrueNAS / no Docker: return cached version state from shared volume
-      console.log("[update] Docker not available, returning cached version state...");
+      console.log(
+        "[update] Docker not available, returning cached version state...",
+      );
 
       try {
         const content = await readFile(versionPath, "utf-8");

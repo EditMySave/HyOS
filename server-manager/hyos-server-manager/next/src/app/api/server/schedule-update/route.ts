@@ -170,9 +170,7 @@ export async function POST() {
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to schedule update",
+          error instanceof Error ? error.message : "Failed to schedule update",
       },
       { status: 500 },
     );
@@ -193,7 +191,9 @@ export async function DELETE() {
 
     if (dockerAvailable) {
       // Use Docker exec method (preferred when available)
-      console.log("[schedule-update] Cancelling scheduled update via Docker...");
+      console.log(
+        "[schedule-update] Cancelling scheduled update via Docker...",
+      );
 
       const result = await execInContainer([
         "/opt/scripts/cmd/schedule-update.sh",
@@ -208,9 +208,10 @@ export async function DELETE() {
       return NextResponse.json({
         success: result.exitCode === 0,
         scheduled: false,
-        message: result.exitCode === 0
-          ? "Scheduled update cancelled"
-          : "No scheduled update to cancel",
+        message:
+          result.exitCode === 0
+            ? "Scheduled update cancelled"
+            : "No scheduled update to cancel",
         output: result.output,
       });
     } else {

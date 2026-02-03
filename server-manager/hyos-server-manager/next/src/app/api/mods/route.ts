@@ -68,8 +68,7 @@ export async function GET() {
     console.error("[mods] Error listing mods:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to list mods",
+        error: error instanceof Error ? error.message : "Failed to list mods",
       },
       { status: 500 },
     );

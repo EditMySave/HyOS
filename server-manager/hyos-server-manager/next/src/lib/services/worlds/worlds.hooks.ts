@@ -21,29 +21,20 @@ import type {
  * Hook to fetch universe files
  */
 export function useUniverseFiles() {
-  return useSWR<FilesResponse>(
-    "universe-files",
-    () => getUniverseFiles(),
-    {
-      refreshInterval: 0, // Manual refresh only
-      revalidateOnFocus: false,
-    },
-  );
+  return useSWR<FilesResponse>("universe-files", () => getUniverseFiles(), {
+    refreshInterval: 0, // Manual refresh only
+    revalidateOnFocus: false,
+  });
 }
-
 
 /**
  * Hook to fetch slots
  */
 export function useSlots() {
-  return useSWR<SlotsResponse>(
-    "universe-slots",
-    () => getSlots(),
-    {
-      refreshInterval: 0, // Manual refresh only
-      revalidateOnFocus: false,
-    },
-  );
+  return useSWR<SlotsResponse>("universe-slots", () => getSlots(), {
+    refreshInterval: 0, // Manual refresh only
+    revalidateOnFocus: false,
+  });
 }
 
 /**
@@ -70,10 +61,12 @@ export function useActivateSlot() {
  * Hook to delete a slot
  */
 export function useDeleteSlot() {
-  return useSWRMutation<{ success: boolean; message: string }, Error, string, string>(
-    "delete-slot",
-    async (_, { arg }) => deleteSlot(arg),
-  );
+  return useSWRMutation<
+    { success: boolean; message: string },
+    Error,
+    string,
+    string
+  >("delete-slot", async (_, { arg }) => deleteSlot(arg));
 }
 
 /**
@@ -85,13 +78,10 @@ export function useRenameSlot() {
     Error,
     string,
     { slotId: string; newName: string }
-  >(
-    "rename-slot",
-    async (_, { arg }) => {
-      const result = await renameSlot(arg.slotId, arg.newName);
-      // Invalidate slots cache to refresh the list
-      await mutate("universe-slots");
-      return result;
-    },
-  );
+  >("rename-slot", async (_, { arg }) => {
+    const result = await renameSlot(arg.slotId, arg.newName);
+    // Invalidate slots cache to refresh the list
+    await mutate("universe-slots");
+    return result;
+  });
 }

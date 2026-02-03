@@ -23,8 +23,7 @@ export async function POST(
     console.error("[kick] Error:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to kick player",
+        error: error instanceof Error ? error.message : "Failed to kick player",
       },
       { status: 500 },
     );

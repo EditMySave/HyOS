@@ -39,7 +39,7 @@ export function TopNav() {
                     "border-l border-dashed border-border first:border-l-0",
                     active
                       ? "text-foreground border-b-2 border-b-[#2d6cff]"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {item.label}

@@ -33,19 +33,13 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     try {
       await fs.access(filePath);
     } catch {
-      return NextResponse.json(
-        { error: "Mod not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Mod not found" }, { status: 404 });
     }
 
     // Verify it's a file (not a directory)
     const stats = await fs.stat(filePath);
     if (!stats.isFile()) {
-      return NextResponse.json(
-        { error: "Invalid mod path" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Invalid mod path" }, { status: 400 });
     }
 
     // Delete the file
@@ -59,8 +53,7 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     console.error("[mods/delete] Error deleting mod:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to delete mod",
+        error: error instanceof Error ? error.message : "Failed to delete mod",
       },
       { status: 500 },
     );

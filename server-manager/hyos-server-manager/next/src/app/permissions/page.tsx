@@ -31,9 +31,7 @@ type TabId = "operators" | "groups" | "users";
 function getOperators(data: PermissionsData | undefined): string[] {
   if (!data?.users) return [];
   return Object.entries(data.users)
-    .filter(([, entry]) =>
-      entry.groups?.some((g) => g.toLowerCase() === "op"),
-    )
+    .filter(([, entry]) => entry.groups?.some((g) => g.toLowerCase() === "op"))
     .map(([uuid]) => uuid);
 }
 

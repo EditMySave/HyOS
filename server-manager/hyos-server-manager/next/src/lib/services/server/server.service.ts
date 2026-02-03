@@ -201,7 +201,9 @@ export async function cancelScheduledUpdate(): Promise<ScheduledUpdateStatus> {
     method: "DELETE",
   });
   if (!response.ok) {
-    throw new Error(`Failed to cancel scheduled update: ${response.statusText}`);
+    throw new Error(
+      `Failed to cancel scheduled update: ${response.statusText}`,
+    );
   }
   const data = await response.json();
   return scheduledUpdateStatusSchema.parse(data);

@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  isDockerAvailable,
-  startServerContainer,
-} from "@/lib/docker";
+import { isDockerAvailable, startServerContainer } from "@/lib/docker";
 import { clearCache } from "@/lib/hytale-api";
 
 export async function POST() {

@@ -43,8 +43,9 @@ export function AuthNotification() {
                 Authentication Required
               </h3>
               <p className="text-sm text-foreground-secondary">
-                The Hytale server needs to authenticate with your Hytale account.
-                Complete this within 15 minutes or the code will expire.
+                The Hytale server needs to authenticate with your Hytale
+                account. Complete this within 15 minutes or the code will
+                expire.
               </p>
             </div>
 

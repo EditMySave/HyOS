@@ -32,9 +32,7 @@ export async function getUniverseFiles(): Promise<FilesResponse> {
 /**
  * Upload a zip file to import into the universe folder
  */
-export async function uploadUniverseZip(
-  file: File,
-): Promise<UploadResponse> {
+export async function uploadUniverseZip(file: File): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append("file", file);
 
@@ -146,7 +144,9 @@ export async function activateSlot(slotId: string): Promise<ActivateResponse> {
 /**
  * Delete a slot
  */
-export async function deleteSlot(slotId: string): Promise<{ success: boolean; message: string }> {
+export async function deleteSlot(
+  slotId: string,
+): Promise<{ success: boolean; message: string }> {
   const response = await fetch(`/api/worlds/slots/${slotId}`, {
     method: "DELETE",
   });

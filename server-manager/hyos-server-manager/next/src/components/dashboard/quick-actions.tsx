@@ -52,22 +52,15 @@ export function QuickActions() {
     useRestartServer();
   const { trigger: save, isMutating: isSaving } = useSave();
   const { trigger: broadcast, isMutating: isBroadcasting } = useBroadcast();
-  const {
-    data: updateStatus,
-    mutate: mutateUpdateStatus,
-  } = useUpdateStatus();
+  const { data: updateStatus, mutate: mutateUpdateStatus } = useUpdateStatus();
   const { trigger: checkForUpdates, isMutating: isCheckingUpdates } =
     useCheckForUpdates();
-  const {
-    data: scheduledUpdate,
-    mutate: mutateScheduledUpdate,
-  } = useScheduledUpdate();
+  const { data: scheduledUpdate, mutate: mutateScheduledUpdate } =
+    useScheduledUpdate();
   const { trigger: scheduleUpdate, isMutating: isSchedulingUpdate } =
     useScheduleUpdate();
-  const {
-    trigger: cancelScheduledUpdate,
-    isMutating: isCancellingUpdate,
-  } = useCancelScheduledUpdate();
+  const { trigger: cancelScheduledUpdate, isMutating: isCancellingUpdate } =
+    useCancelScheduledUpdate();
 
   const [broadcastOpen, setBroadcastOpen] = useState(false);
   const [broadcastMessage, setBroadcastMessage] = useState("");
@@ -317,7 +310,8 @@ export function QuickActions() {
                 </div>
                 <div className="text-xs opacity-80">
                   v{updateStatus.currentVersion}
-                  {updateStatus.needsUpdate && ` → v${updateStatus.latestVersion}`}
+                  {updateStatus.needsUpdate &&
+                    ` → v${updateStatus.latestVersion}`}
                 </div>
               </div>
             </div>

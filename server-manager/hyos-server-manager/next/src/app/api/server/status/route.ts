@@ -20,7 +20,9 @@ interface ApiStatusResponse {
 }
 
 // Response for when server is stopped/unreachable
-function stoppedResponse(state: "stopped" | "starting" | "running" = "stopped") {
+function stoppedResponse(
+  state: "stopped" | "starting" | "running" = "stopped",
+) {
   return {
     online: state === "running",
     name: "",
@@ -117,7 +119,10 @@ export async function GET() {
     });
   } catch (error) {
     // Connection errors - check Docker state to determine if starting or stopped
-    console.log("[status] API request failed, checking container state:", error);
+    console.log(
+      "[status] API request failed, checking container state:",
+      error,
+    );
     clearCache();
     const state = await getOfflineState();
     return NextResponse.json(stoppedResponse(state));

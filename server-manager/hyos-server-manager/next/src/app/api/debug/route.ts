@@ -4,9 +4,11 @@ import { loadConfig } from "@/lib/services/config/config.loader";
 export async function GET() {
   const config = await loadConfig();
   const baseUrl = `http://${config.serverHost}:${config.serverPort}`;
-  
+
   // Try to reach the health endpoint
-  let healthResult: { ok: boolean; status?: number; error?: string } = { ok: false };
+  let healthResult: { ok: boolean; status?: number; error?: string } = {
+    ok: false,
+  };
   try {
     const response = await fetch(`${baseUrl}/health`, {
       method: "GET",
@@ -14,9 +16,9 @@ export async function GET() {
     });
     healthResult = { ok: response.ok, status: response.status };
   } catch (error) {
-    healthResult = { 
-      ok: false, 
-      error: error instanceof Error ? error.message : String(error) 
+    healthResult = {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 
@@ -41,7 +43,9 @@ export async function GET() {
       HYTALE_SERVER_PORT: process.env.HYTALE_SERVER_PORT || "(not set)",
       HYTALE_STATE_DIR: process.env.HYTALE_STATE_DIR || "(not set)",
       REST_API_CLIENT_ID: process.env.REST_API_CLIENT_ID || "(not set)",
-      REST_API_CLIENT_SECRET: process.env.REST_API_CLIENT_SECRET ? "(set)" : "(not set)",
+      REST_API_CLIENT_SECRET: process.env.REST_API_CLIENT_SECRET
+        ? "(set)"
+        : "(not set)",
       API_CLIENT_SECRET: process.env.API_CLIENT_SECRET ? "(set)" : "(not set)",
       NODE_ENV: process.env.NODE_ENV || "(not set)",
     },

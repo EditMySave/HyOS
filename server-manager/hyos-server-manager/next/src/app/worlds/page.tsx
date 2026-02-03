@@ -1,10 +1,30 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { useUniverseFiles, useSlots, useCreateSlot, useActivateSlot, useDeleteSlot, useRenameSlot } from "@/lib/services/worlds";
+import {
+  useUniverseFiles,
+  useSlots,
+  useCreateSlot,
+  useActivateSlot,
+  useDeleteSlot,
+  useRenameSlot,
+} from "@/lib/services/worlds";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -87,13 +107,21 @@ export default function WorldsPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: filesData, error: filesError, mutate: refreshFiles } = useUniverseFiles();
-  const { data: slotsData, error: slotsError, mutate: refreshSlots } = useSlots();
+  const {
+    data: filesData,
+    error: filesError,
+    mutate: refreshFiles,
+  } = useUniverseFiles();
+  const {
+    data: slotsData,
+    error: slotsError,
+    mutate: refreshSlots,
+  } = useSlots();
   const { trigger: createSlot, isMutating: isCreatingSlot } = useCreateSlot();
   const { trigger: activateSlot, isMutating: isActivating } = useActivateSlot();
   const { trigger: deleteSlot, isMutating: isDeleting } = useDeleteSlot();
   const { trigger: renameSlot, isMutating: isRenaming } = useRenameSlot();
-  
+
   const [activatingSlotId, setActivatingSlotId] = useState<string | null>(null);
   const [deletingSlotId, setDeletingSlotId] = useState<string | null>(null);
   const [renamingSlotId, setRenamingSlotId] = useState<string | null>(null);
@@ -111,14 +139,24 @@ export default function WorldsPage() {
     }
   }, []);
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setDragActive(false);
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
 
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        const file = e.dataTransfer.files[0];
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.name.endsWith(".zip")) {
+        setSelectedFile(file);
+        setShowConfirmDialog(true);
+      }
+    }
+  }, []);
+
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
         if (file.name.endsWith(".zip")) {
           setSelectedFile(file);
           setShowConfirmDialog(true);
@@ -127,16 +165,6 @@ export default function WorldsPage() {
     },
     [],
   );
-
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (file.name.endsWith(".zip")) {
-        setSelectedFile(file);
-        setShowConfirmDialog(true);
-      }
-    }
-  }, []);
 
   const handleUpload = useCallback(async () => {
     if (!selectedFile) return;
@@ -158,46 +186,61 @@ export default function WorldsPage() {
     }
   }, [selectedFile, createSlot, refreshFiles, refreshSlots]);
 
-  const handleActivateSlot = useCallback(async (slotId: string, slotName: string) => {
-    if (!confirm(`Activate ${slotName}? The current universe will be auto-saved to a new slot before switching.`)) {
-      return;
-    }
+  const handleActivateSlot = useCallback(
+    async (slotId: string, slotName: string) => {
+      if (
+        !confirm(
+          `Activate ${slotName}? The current universe will be auto-saved to a new slot before switching.`,
+        )
+      ) {
+        return;
+      }
 
-    try {
-      setActivatingSlotId(slotId);
-      await activateSlot(slotId);
-      await Promise.all([refreshFiles(), refreshSlots()]);
-    } catch (error) {
-      console.error("Activation failed:", error);
-      alert(error instanceof Error ? error.message : "Failed to activate slot");
-    } finally {
-      setActivatingSlotId(null);
-    }
-  }, [activateSlot, refreshFiles, refreshSlots]);
+      try {
+        setActivatingSlotId(slotId);
+        await activateSlot(slotId);
+        await Promise.all([refreshFiles(), refreshSlots()]);
+      } catch (error) {
+        console.error("Activation failed:", error);
+        alert(
+          error instanceof Error ? error.message : "Failed to activate slot",
+        );
+      } finally {
+        setActivatingSlotId(null);
+      }
+    },
+    [activateSlot, refreshFiles, refreshSlots],
+  );
 
-  const handleDeleteSlot = useCallback(async (slotId: string, slotName: string) => {
-    if (!confirm(`Delete ${slotName}? This action cannot be undone.`)) {
-      return;
-    }
+  const handleDeleteSlot = useCallback(
+    async (slotId: string, slotName: string) => {
+      if (!confirm(`Delete ${slotName}? This action cannot be undone.`)) {
+        return;
+      }
 
-    try {
-      setDeletingSlotId(slotId);
-      await deleteSlot(slotId);
-      await refreshSlots();
-    } catch (error) {
-      console.error("Deletion failed:", error);
-      alert(error instanceof Error ? error.message : "Failed to delete slot");
-    } finally {
-      setDeletingSlotId(null);
-    }
-  }, [deleteSlot, refreshSlots]);
+      try {
+        setDeletingSlotId(slotId);
+        await deleteSlot(slotId);
+        await refreshSlots();
+      } catch (error) {
+        console.error("Deletion failed:", error);
+        alert(error instanceof Error ? error.message : "Failed to delete slot");
+      } finally {
+        setDeletingSlotId(null);
+      }
+    },
+    [deleteSlot, refreshSlots],
+  );
 
-  const handleRenameClick = useCallback((slotId: string, currentName: string) => {
-    setRenamingSlotId(slotId);
-    setRenamingSlotName(currentName);
-    setNewSlotName(currentName);
-    setShowRenameDialog(true);
-  }, []);
+  const handleRenameClick = useCallback(
+    (slotId: string, currentName: string) => {
+      setRenamingSlotId(slotId);
+      setRenamingSlotName(currentName);
+      setNewSlotName(currentName);
+      setShowRenameDialog(true);
+    },
+    [],
+  );
 
   const handleRenameSlot = useCallback(async () => {
     if (!renamingSlotId || !newSlotName.trim()) {
@@ -370,7 +413,9 @@ export default function WorldsPage() {
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground">{slot.name}</span>
+                      <span className="font-medium text-foreground">
+                        {slot.name}
+                      </span>
                       <button
                         onClick={() => handleRenameClick(slot.id, slot.name)}
                         disabled={isRenaming || renamingSlotId === slot.id}
@@ -386,7 +431,8 @@ export default function WorldsPage() {
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
-                      {slot.size !== undefined && `${formatBytes(slot.size)} • `}
+                      {slot.size !== undefined &&
+                        `${formatBytes(slot.size)} • `}
                       {formatDate(slot.created)}
                       {slot.sourceFile && ` • ${slot.sourceFile}`}
                     </div>
@@ -398,7 +444,9 @@ export default function WorldsPage() {
                       onClick={() => handleActivateSlot(slot.id, slot.name)}
                       disabled={isActivating || activatingSlotId === slot.id}
                     >
-                      {isActivating && activatingSlotId === slot.id ? "Activating..." : "Activate"}
+                      {isActivating && activatingSlotId === slot.id
+                        ? "Activating..."
+                        : "Activate"}
                     </Button>
                     <Button
                       variant="destructive"
@@ -406,7 +454,9 @@ export default function WorldsPage() {
                       onClick={() => handleDeleteSlot(slot.id, slot.name)}
                       disabled={isDeleting || deletingSlotId === slot.id}
                     >
-                      {isDeleting && deletingSlotId === slot.id ? "Deleting..." : "Delete"}
+                      {isDeleting && deletingSlotId === slot.id
+                        ? "Deleting..."
+                        : "Delete"}
                     </Button>
                   </div>
                 </div>
@@ -422,7 +472,8 @@ export default function WorldsPage() {
           <DialogHeader>
             <DialogTitle>Confirm Upload</DialogTitle>
             <DialogDescription>
-              This will create a new world slot from the uploaded file. You can activate it later to make it the active universe.
+              This will create a new world slot from the uploaded file. You can
+              activate it later to make it the active universe.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -500,7 +551,11 @@ export default function WorldsPage() {
             <Button
               variant="default"
               onClick={handleRenameSlot}
-              disabled={isRenaming || !newSlotName.trim() || newSlotName.trim().length > 100}
+              disabled={
+                isRenaming ||
+                !newSlotName.trim() ||
+                newSlotName.trim().length > 100
+              }
             >
               {isRenaming ? "Renaming..." : "Save"}
             </Button>

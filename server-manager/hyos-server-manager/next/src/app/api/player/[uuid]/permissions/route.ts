@@ -58,9 +58,7 @@ export async function POST(
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to grant permission",
+          error instanceof Error ? error.message : "Failed to grant permission",
       },
       { status: 500 },
     );
