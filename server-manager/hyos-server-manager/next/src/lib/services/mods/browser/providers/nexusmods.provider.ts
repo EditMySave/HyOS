@@ -77,7 +77,11 @@ export class NexusModsProvider implements ModProviderAdapter {
       throw new Error("No download link available");
     }
 
-    const buffer = await downloadNexusFile(downloadUrl);
+    if (!this.apiKey) {
+      throw new Error("NexusMods API key not configured");
+    }
+
+    const buffer = await downloadNexusFile(downloadUrl, this.apiKey);
     return {
       fileName: version.fileName,
       data: Buffer.from(buffer),
@@ -95,7 +99,15 @@ export class NexusModsProvider implements ModProviderAdapter {
       categories: [],
       iconUrl: mod.picture_url,
       websiteUrl: `https://www.nexusmods.com/${mod.domain_name}/mods/${mod.mod_id}`,
-      latestVersion: null,
+      latestVersion: {
+        fileId: `${mod.mod_id}-0`,
+        fileName: "mod.jar",
+        displayName: mod.version ?? "Latest",
+        downloadUrl: null,
+        gameVersions: [],
+        releaseType: "release",
+        fileSize: 0,
+      },
       updatedAt: new Date(mod.updated_timestamp * 1000).toISOString(),
     };
   }

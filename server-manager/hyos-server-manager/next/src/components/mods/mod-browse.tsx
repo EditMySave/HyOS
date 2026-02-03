@@ -46,7 +46,7 @@ function ModCard({
   isInstalled: boolean;
 }) {
   const canInstall =
-    mod.latestVersion?.downloadUrl != null && !isInstalling && !isInstalled;
+    mod.latestVersion != null && !isInstalling && !isInstalled;
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border p-4">
@@ -155,6 +155,9 @@ export function ModBrowse({ className }: { className?: string }) {
   const { trigger: installMod } = useModInstall();
   const { data: installedMods, mutate: refreshInstalled } = useInstalledMods();
   const [installingModKey, setInstallingModKey] = useState<string | null>(null);
+  const [justInstalledKeys, setJustInstalledKeys] = useState<Set<string>>(
+    new Set(),
+  );
 
   const handleSearch = useCallback(() => {
     setPage(0);
@@ -169,7 +172,7 @@ export function ModBrowse({ className }: { className?: string }) {
 
   const handleInstall = useCallback(
     async (mod: BrowsedMod) => {
-      if (!mod.latestVersion?.downloadUrl) return;
+      if (!mod.latestVersion) return;
       const key = `${mod.provider}-${mod.id}`;
       setInstallingModKey(key);
       try {
@@ -177,6 +180,7 @@ export function ModBrowse({ className }: { className?: string }) {
           provider: mod.provider,
           version: mod.latestVersion,
         });
+        setJustInstalledKeys((prev) => new Set(prev).add(key));
         mutate();
         refreshInstalled();
       } catch (e) {
@@ -284,6 +288,7 @@ export function ModBrowse({ className }: { className?: string }) {
                   onInstall={handleInstall}
                   isInstalling={installingModKey === `${mod.provider}-${mod.id}`}
                   isInstalled={
+                    justInstalledKeys.has(`${mod.provider}-${mod.id}`) ||
                     !!installedMods?.mods.some(
                       (m) => m.name === mod.latestVersion?.fileName,
                     )

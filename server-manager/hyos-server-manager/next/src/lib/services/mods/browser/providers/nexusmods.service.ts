@@ -130,8 +130,11 @@ export async function getNexusDownloadLinks(
 
 export async function downloadNexusFile(
   downloadUrl: string,
+  apiKey: string,
 ): Promise<ArrayBuffer> {
-  const response = await fetch(downloadUrl);
+  const response = await fetch(downloadUrl, {
+    headers: nexusHeaders(apiKey),
+  });
 
   if (!response.ok) {
     throw new Error(`Download failed: ${response.status}`);
