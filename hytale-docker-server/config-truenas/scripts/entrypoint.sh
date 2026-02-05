@@ -153,6 +153,153 @@ setup_directories() {
 }
 
 # =============================================================================
+# Mod Validation (Pre-flight)
+# =============================================================================
+validate_mods() {
+    local mods_dir="${DATA_DIR}/mods"
+    [[ ! -d "$mods_dir" ]] && return 0
+
+    local jar_count=0
+    local warn_count=0
+
+    for jar in "$mods_dir"/*.jar; do
+        [[ -f "$jar" ]] || continue
+        jar_count=$((jar_count + 1))
+
+        local name
+        name=$(basename "$jar")
+
+        # Extract manifest.json from JAR (it's a zip file)
+        local manifest
+        manifest=$(unzip -p "$jar" manifest.json 2>/dev/null) || {
+            log_warn "Mod $name: no manifest.json found — may fail to load"
+            warn_count=$((warn_count + 1))
+            continue
+        }
+
+        # Check required fields
+        local main_class group mod_name
+        main_class=$(echo "$manifest" | jq -r '.Main // empty' 2>/dev/null)
+        group=$(echo "$manifest" | jq -r '.Group // empty' 2>/dev/null)
+        mod_name=$(echo "$manifest" | jq -r '.Name // empty' 2>/dev/null)
+
+        if [[ -z "$main_class" ]]; then
+            log_warn "Mod $name: content-only mod (no Main class) — patch via Server Manager UI"
+            warn_count=$((warn_count + 1))
+        fi
+
+        if [[ -z "$group" ]] || [[ -z "$mod_name" ]]; then
+            log_warn "Mod $name: missing 'Group' or 'Name' in manifest.json"
+            warn_count=$((warn_count + 1))
+        fi
+
+        log_debug "Mod $name: ${group:-?}:${mod_name:-?} -> ${main_class:-(no Main class)}"
+    done
+
+    if [[ $jar_count -gt 0 ]]; then
+        local summary="$jar_count mod(s) scanned"
+        [[ $warn_count -gt 0 ]] && summary="$summary, $warn_count warning(s)"
+        if [[ $warn_count -gt 0 ]]; then
+            log_warn "Mod validation: $summary"
+        else
+            log_info "Mod validation: $summary"
+        fi
+    fi
+}
+
+# =============================================================================
+# Mod Monitor (Background)
+# =============================================================================
+monitor_mod_loading() {
+    local server_version="$1"
+    (
+        sleep 30
+
+        # Find most recent server log
+        local log_file
+        log_file=$(ls -t "$SERVER_DIR/logs/"*_server.log 2>/dev/null | head -1)
+        [[ -z "$log_file" ]] && exit 0
+
+        # Parse failed mods (BusyBox grep — no -P support)
+        local failed_mods=()
+        while IFS= read -r line; do
+            local jar_name
+            jar_name=$(echo "$line" | sed -n 's|.*Failed to load plugin /data/mods/\([^ ]*\.jar\).*|\1|p')
+            [[ -n "$jar_name" ]] && failed_mods+=("$jar_name")
+        done < <(grep "Failed to load plugin" "$log_file" 2>/dev/null)
+
+        # Parse loaded mods (from /data/mods only, not built-in plugins)
+        local loaded_mods=()
+        while IFS= read -r line; do
+            local jar_name
+            jar_name=$(echo "$line" | sed -n 's|.*from path \([^ ]*\.jar\).*|\1|p')
+            [[ -n "$jar_name" ]] && loaded_mods+=("$jar_name")
+        done < <(grep "from path" "$log_file" 2>/dev/null)
+
+        # Filter loaded_mods to remove any that also appear in failed_mods
+        local actually_loaded=()
+        for mod in "${loaded_mods[@]}"; do
+            local is_failed=false
+            for failed in "${failed_mods[@]}"; do
+                [[ "$mod" == "$failed" ]] && is_failed=true && break
+            done
+            $is_failed || actually_loaded+=("$mod")
+        done
+
+        # Build JSON and update state
+        local loaded_json failed_json
+        loaded_json=$(json_array "${actually_loaded[@]}")
+
+        # Build failed array with error info
+        local failed_entries=()
+        for mod in "${failed_mods[@]}"; do
+            failed_entries+=($(json_object "file" "$mod" "error" "NullPointerException in PluginClassLoader"))
+            state_add_broken_mod "$mod" "$server_version"
+        done
+        failed_json=$(json_array "${failed_entries[@]}")
+
+        state_set_mods "$loaded_json" "$failed_json"
+
+        if [[ ${#failed_mods[@]} -gt 0 ]]; then
+            log_warn "Mod loading: ${#actually_loaded[@]} loaded, ${#failed_mods[@]} failed"
+            log_warn "Failed mods: ${failed_mods[*]}"
+        fi
+    ) &
+}
+
+# =============================================================================
+# Auto-Skip Broken Mods
+# =============================================================================
+skip_broken_mods() {
+    if ! is_true "${SKIP_BROKEN_MODS:-false}"; then
+        return 0
+    fi
+
+    local server_version
+    server_version=$(get_current_version)
+
+    local broken_mods
+    broken_mods=$(state_get_broken_mods "$server_version")
+    [[ -z "$broken_mods" ]] && return 0
+
+    mkdir -p "${DATA_DIR}/mods/.disabled"
+
+    local count=0
+    while IFS= read -r mod_file; do
+        [[ -z "$mod_file" ]] && continue
+        if [[ -f "${DATA_DIR}/mods/${mod_file}" ]]; then
+            mv "${DATA_DIR}/mods/${mod_file}" "${DATA_DIR}/mods/.disabled/${mod_file}"
+            log_warn "Quarantined broken mod: $mod_file (moved to mods/.disabled/)"
+            count=$((count + 1))
+        fi
+    done <<< "$broken_mods"
+
+    if [[ $count -gt 0 ]]; then
+        log_info "Quarantined $count broken mod(s). Re-enable: move from mods/.disabled/ back to mods/ and set SKIP_BROKEN_MODS=false"
+    fi
+}
+
+# =============================================================================
 # Server Launch
 # =============================================================================
 start_server() {
@@ -180,7 +327,10 @@ start_server() {
     # Execute server
     log_info "Starting Java process..."
     state_set_server "running" "$$"
-    
+
+    # Start mod loading monitor in background
+    monitor_mod_loading "$(get_current_version)"
+
     exec java $java_args -jar "$SERVER_JAR" $server_args
 }
 
@@ -232,7 +382,13 @@ main() {
     if [[ "$was_scheduled" == "true" ]]; then
         log_success "Scheduled update completed successfully"
     fi
-    
+
+    # Auto-skip broken mods (before server launch)
+    skip_broken_mods
+
+    # Validate mod JARs (check manifests before server tries to load them)
+    validate_mods
+
     # Install plugins (from /opt/plugins)
     api_install_plugins || {
         log_warn "Plugin installation failed, continuing without plugins"
@@ -285,7 +441,10 @@ main() {
         
         cd "$SERVER_DIR"
         state_set_server "running" "$$"
-        
+
+        # Start mod loading monitor in background
+        monitor_mod_loading "$(get_current_version)"
+
         exec su-exec hytale:hytale java $java_args -jar "$SERVER_JAR" $server_args
     else
         start_server

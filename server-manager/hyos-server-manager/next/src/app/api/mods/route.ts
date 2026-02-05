@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { InstalledMod } from "@/lib/services/mods/mods.types";
+import { inspectJar } from "@/lib/services/mods/jar-inspector";
 
 function getModsPath(): string {
   // Use HYTALE_STATE_DIR to derive base path, default to /data in containers
@@ -47,6 +48,19 @@ export async function GET() {
       // Remove .jar extension for ID
       const id = entry.name.slice(0, -4);
 
+      // Inspect JAR manifest for patch status
+      let needsPatch = false;
+      let isPatched = false;
+      let manifestInfo: InstalledMod["manifestInfo"];
+      try {
+        const inspection = inspectJar(filePath);
+        needsPatch = inspection.needsPatch;
+        isPatched = inspection.isPatched;
+        manifestInfo = inspection.manifestInfo;
+      } catch (e) {
+        console.error(`[mods] Error inspecting ${entry.name}:`, e);
+      }
+
       mods.push({
         id,
         name: entry.name,
@@ -54,6 +68,9 @@ export async function GET() {
         size: stats.size,
         modified: stats.mtime.toISOString(),
         path: filePath,
+        needsPatch,
+        isPatched,
+        manifestInfo,
       });
     }
 

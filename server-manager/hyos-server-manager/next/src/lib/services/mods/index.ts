@@ -6,6 +6,8 @@ export type {
   LoadedPluginsResponse,
   UploadModResponse,
   DeleteModResponse,
+  PatchModResponse,
+  ManifestInfo,
   ModStatus,
 } from "./mods.types";
 
@@ -15,6 +17,7 @@ export {
   getLoadedPlugins,
   uploadMod,
   deleteMod,
+  patchMod,
 } from "./mods.service";
 
 // Hooks
@@ -23,6 +26,7 @@ export {
   useLoadedPlugins,
   useUploadMod,
   useDeleteMod,
+  usePatchMod,
 } from "./mods.hooks";
 
 // Browser (aggregated mod search)

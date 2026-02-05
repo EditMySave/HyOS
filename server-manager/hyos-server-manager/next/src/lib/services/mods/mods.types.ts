@@ -4,6 +4,15 @@ import { z } from "zod";
 // Installed Mod Types (from filesystem)
 // ============================================================================
 
+export const manifestInfoSchema = z.object({
+  hasManifest: z.boolean(),
+  main: z.string().nullable(),
+  group: z.string().nullable(),
+  name: z.string().nullable(),
+});
+
+export type ManifestInfo = z.infer<typeof manifestInfoSchema>;
+
 export const installedModSchema = z.object({
   id: z.string(), // filename without extension
   name: z.string(), // filename with extension
@@ -11,6 +20,9 @@ export const installedModSchema = z.object({
   size: z.number(),
   modified: z.string(), // ISO date string
   path: z.string(),
+  needsPatch: z.boolean(),
+  isPatched: z.boolean(),
+  manifestInfo: manifestInfoSchema.optional(),
 });
 
 export const installedModsResponseSchema = z.object({
@@ -63,6 +75,17 @@ export const deleteModResponseSchema = z.object({
 });
 
 export type DeleteModResponse = z.infer<typeof deleteModResponseSchema>;
+
+// ============================================================================
+// Patch Types
+// ============================================================================
+
+export const patchModResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+
+export type PatchModResponse = z.infer<typeof patchModResponseSchema>;
 
 // ============================================================================
 // Combined Mod Status

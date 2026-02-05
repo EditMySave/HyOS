@@ -79,14 +79,7 @@ docker compose down
 
 ## Deploy to TrueNAS SCALE
 
-### 1. Create Dataset
-
-```bash
-zfs create tank/apps/hytale
-chown -R 568:568 /mnt/tank/apps/hytale
-```
-
-### 2. Deploy via Custom App
+### 1. Deploy via Custom App
 
 1. Go to **Apps → Discover Apps → Custom App → Install via YAML**
 2. Paste contents of `compose.yaml`
@@ -94,7 +87,7 @@ chown -R 568:568 /mnt/tank/apps/hytale
 4. Set `API_CLIENT_SECRET` to a secure password (min 8 chars)
 5. Deploy
 
-### 3. Complete OAuth
+### 2. Complete OAuth
 
 Monitor logs for the OAuth URL and complete authentication within 15 minutes.
 

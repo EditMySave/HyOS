@@ -7,6 +7,8 @@ import {
   uploadModResponseSchema,
   type DeleteModResponse,
   deleteModResponseSchema,
+  type PatchModResponse,
+  patchModResponseSchema,
 } from "./mods.types";
 
 /**
@@ -75,4 +77,24 @@ export async function deleteMod(modId: string): Promise<DeleteModResponse> {
 
   const data = await response.json();
   return deleteModResponseSchema.parse(data);
+}
+
+/**
+ * Patch a content-only mod by injecting a stub Main class
+ */
+export async function patchMod(modId: string): Promise<PatchModResponse> {
+  const response = await fetch(`/api/mods/${modId}/patch`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(
+      (error as { error?: string })?.error ??
+        `Failed to patch mod: ${response.statusText}`,
+    );
+  }
+
+  const data = await response.json();
+  return patchModResponseSchema.parse(data);
 }

@@ -5,6 +5,7 @@ import {
   getLoadedPlugins,
   uploadMod,
   deleteMod,
+  patchMod,
 } from "./mods.service";
 
 // ============================================================================
@@ -65,6 +66,22 @@ export function useDeleteMod() {
     onSuccess: () => {
       // Revalidate installed mods list after delete
       // This is handled by SWR's cache revalidation
+    },
+  });
+}
+
+/**
+ * Hook to patch a content-only mod
+ */
+export function usePatchMod() {
+  return useSWRMutation<
+    Awaited<ReturnType<typeof patchMod>>,
+    Error,
+    string,
+    string
+  >("patch-mod", async (_, { arg }) => patchMod(arg), {
+    onSuccess: () => {
+      // Revalidate installed mods list after patch
     },
   });
 }

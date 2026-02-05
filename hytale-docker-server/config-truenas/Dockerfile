@@ -76,6 +76,10 @@ ENV API_ENABLED=true \
     API_CLIENT_SECRET="" \
     API_WEBSOCKET_ENABLED=true
 
+# Mod diagnostics
+ENV DEBUG_CLASSLOADING=false \
+    SKIP_BROKEN_MODS=false
+
 # Auto-update configuration
 ENV AUTO_UPDATE=false \
     AUTO_UPDATE_INTERVAL=3600 \
@@ -96,6 +100,7 @@ RUN apk add --no-cache \
     # Utilities
     curl \
     jq \
+    zip \
     unzip \
     bash \
     coreutils \
@@ -120,6 +125,9 @@ COPY --from=builder --chown=root:root /build/scripts/ /opt/scripts/
 
 # Copy plugins (pre-built JARs) if available
 COPY --chown=root:root plugins/ /opt/plugins/
+
+# Copy stub plugin class for auto-patching content-only mods
+COPY --chown=root:root stub/ /opt/stub/
 
 # Ensure all scripts are executable
 RUN chmod -R +x /opt/scripts/

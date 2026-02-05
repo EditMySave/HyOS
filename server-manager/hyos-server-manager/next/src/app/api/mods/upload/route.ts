@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { InstalledMod } from "@/lib/services/mods/mods.types";
+import { inspectJar } from "@/lib/services/mods/jar-inspector";
 
 function getModsPath(): string {
   const stateDir = process.env.HYTALE_STATE_DIR;
@@ -73,6 +74,19 @@ export async function POST(request: Request) {
     const stats = await fs.stat(filePath);
     const id = safeFileName.slice(0, -4); // Remove .jar extension
 
+    // Inspect JAR manifest for patch status
+    let needsPatch = false;
+    let isPatched = false;
+    let manifestInfo: InstalledMod["manifestInfo"];
+    try {
+      const inspection = inspectJar(filePath);
+      needsPatch = inspection.needsPatch;
+      isPatched = inspection.isPatched;
+      manifestInfo = inspection.manifestInfo;
+    } catch (e) {
+      console.error(`[mods/upload] Error inspecting ${safeFileName}:`, e);
+    }
+
     const mod: InstalledMod = {
       id,
       name: safeFileName,
@@ -80,6 +94,9 @@ export async function POST(request: Request) {
       size: stats.size,
       modified: stats.mtime.toISOString(),
       path: filePath,
+      needsPatch,
+      isPatched,
+      manifestInfo,
     };
 
     return NextResponse.json({

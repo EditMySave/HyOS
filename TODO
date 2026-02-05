@@ -1,5 +1,239 @@
-Mod Management
+
 Mod Search
 Truenas Catalog
 Pipelines
 Documentation
+File manager
+More logs scrollback
+Better installed mods button detection
+visit website button on mods
+Config.json confifurator winternode.com
+Recommended mods
+Check for mod loading in logs and load failures
+Better Mod Management
+Create new world
+Logs filtering on plugins
+Better restart tracking on installed mods / loading
+Fix running state of truenas image
+
+
+
+  1. Mod Search (Improvements)              
+  Current state: Multi-provider search exists across CurseForge, Modtale, and NexusMods with aggregation, sorting, and pagination.   
+  What to flesh out:                                                                                                                                     
+  - Category/tag filtering - Add filters for mod categories (e.g., gameplay, building, utility) alongside the existing sort dropdown                     
+  - Game version filtering - Filter by Hytale server version compatibility                                                                               
+  - Provider toggle chips - Inline toggle buttons to enable/disable providers directly in the search bar (instead of opening settings dialog)            
+  - Search result caching - Cache previous search results in Zustand so back-navigation doesn't re-fetch                                                 
+  - Debounced live search - Auto-search as user types (with debounce) instead of requiring Enter/button click                                            
+  - Result count per provider - Show "3 from CurseForge, 7 from Modtale" breakdown in results header                                                     
+  - Recommended / Start page
+
+  ---                                                                                                                                                    
+  2. TrueNAS Catalog                                                                                                                                     
+                                                                                                                                                         
+  Current state: TrueNAS deployment works via config-truenas with shell scripts and state files. No catalog entry exists.                                
+                                                                                                                                                         
+  What to build:                                                                                                                                         
+  - TrueNAS SCALE catalog format - A catalog.json or ix-chart structure following TrueNAS custom app catalog spec (chart metadata, questions.yaml, app   
+  version, icon)                                                                                                                                         
+  - Questions schema - Defines all configurable env vars as TrueNAS UI form fields (server host, ports, JVM memory, mod paths, API credentials)          
+  - Values defaults - Sensible defaults for TrueNAS deployment (volume mounts for /data, networking, resource limits)                                    
+  - Upgrade strategy - Chart versioning that maps to hyOS Docker image tags                                                                              
+  - Documentation page - In-catalog description, screenshots, and setup instructions                                                                     
+  - Repository structure - Separate truenas-catalog/ directory at repo root with the standard stable/hyos/ chart hierarchy                               
+                                                                                                                                                         
+                                                                                                                                            
+  ---                                                                                                                                                    
+  1. Documentation                                                                                                                                       
+                                                                                                                                                         
+  Current state: SETUP.md exists for TrueNAS config. No in-app docs.                                                                                     
+                                                                                                                                                         
+  What to build:                                                                                                                                         
+  - In-app docs page - New /docs route with searchable documentation                                                                                     
+  - Sections:                                                                                                                                            
+    - Getting Started (first setup, Docker deployment, TrueNAS deployment)                                                                               
+    - Server Management (start/stop/restart, environment variables, JVM tuning)                                                                          
+    - Mod Management (providers, API keys, installing, troubleshooting load failures)                                                                    
+    - World Management (slots, backups, creating worlds)                                                                                                 
+    - Commands Reference (auto-generated from hytale-commands.ts data)                                                                                   
+    - Permissions (operators, groups, per-player permissions)                                                                                            
+    - Pipelines (how to create and use)                                                                                                                  
+    - API Reference (all REST endpoints)                                                                                                                 
+    - Troubleshooting (common issues, log interpretation)                                                                                                
+  - MDX-based - Write docs as MDX files in a /docs directory, rendered with @next/mdx or similar                                                         
+  - Sidebar navigation with section hierarchy                                                                                                            
+  - Full-text search across all docs                                                                                                                     
+  - Contextual help links - "?" icons on existing pages that link to relevant doc sections                                                               
+                                                                                                                                                         
+  ---                                                                                                                                                    
+  5. File Manager                                                                                                                                        
+                                                                                                                                                         
+  Current state: FileTree component in worlds page shows universe files read-only. useUniverseFiles() fetches file structure.                            
+                                                                                                                                                         
+  What to build:                                                                                                                                         
+  - Standalone /files page - Full file browser for the entire server data directory (not just universe)                                                  
+  - File operations:                                                                                                                                     
+    - View/read file contents (text files, JSON with syntax highlighting)                                                                                
+    - Edit text/JSON files in-browser (Monaco editor or CodeMirror)                                                                                      
+    - Upload files to any directory                                                                                                                      
+    - Download individual files or directories as ZIP                                                                                                    
+    - Delete files with confirmation                                                                                                                     
+    - Create new files/directories                                                                                                                       
+    - Rename/move files                                                                                                                                  
+  - Breadcrumb navigation - Click path segments to navigate up                                                                                           
+  - Context menu - Right-click for file operations                                                                                                       
+  - API routes - GET /api/files?path=, POST /api/files/upload, DELETE /api/files, PUT /api/files/rename, GET /api/files/download                         
+  - Permission guards - Prevent editing critical files (server binary, state files) or restrict to certain directories                                   
+  - File preview - JSON pretty-print, log file viewer, config syntax highlighting                                                                        
+                                                                                                                                                         
+  ---                                                                                                                                                    
+  6. More Logs Scrollback                                                                                                                                
+                                                                                                                                                         
+  Current state: logsTail is hardcoded at 200 lines. SWR fetches GET /api/server/logs?tail=200 every 5 seconds.                                          
+                                                                                                                                                         
+  What to build:                                                                                                                                         
+  - Configurable tail size - Dropdown or input to set tail count (200, 500, 1000, 5000, all)                                                             
+  - Infinite scroll / load more - As user scrolls up, fetch older logs via offset pagination (?tail=200&before=<timestamp>)                              
+  - Log file access - Read from historical log files in /data/server/logs/ (not just container stdout), with date picker to select which log file        
+  - Virtual scrolling - Use react-window or @tanstack/react-virtual to handle rendering thousands of lines without DOM bloat                             
+  - Export logs - Download filtered logs as .txt or .log file                                                                                            
+  - Persistent scroll position - Remember position when switching tabs                                                                                   
+                                                                                                                                                         
+  ---                                                                                                                                                    
+  7. Better Installed Mods Button Detection                                                                                                              
+                                                                                                                                                         
+  Current state: isModLoaded() in mods/page.tsx:153 matches by stripping .jar and doing a case-insensitive comparison against                            
+  loadedPlugins.plugins[].name. In mod-browse.tsx:292, installed detection compares m.name === mod.latestVersion?.fileName.                              
+                                                                                                                                                         
+  Problems: The matching is fragile - mod filenames often include version strings (e.g., hytale-api-1.0.0.jar) that don't match plugin names (HytaleAPI).
+   Browse page only checks filename exact match.                                                                                                         
+                                                                                                                                                         
+  What to build:                                                                                                                                         
+  - Fuzzy matching - Normalize names by stripping version numbers, hyphens, and casing: hytale-api-1.0.0.jar -> hytaleapi matches plugin HytaleAPI       
+  - Metadata-based matching - Store a manifest (installed-mods.json) when installing from a provider that maps {provider, providerModId, fileName,       
+  installedAt}. Then match browse results against provider+ID rather than filename                                                                       
+  - Plugin ID matching - If the server API returns a plugin ID or namespace (e.g., com.hytale.HytaleAPI), match against that                             
+  - Status indicators in browse results:                                                                                                                 
+    - "Installed" (file exists and loaded)                                                                                                               
+    - "Installed - Not Loaded" (file exists but plugin not in loaded list)                                                                               
+    - "Update Available" (installed version < latest version)                                                                                            
+    - "Install" (not installed)                                                                                                                          
+                                                                                                                                                         
+  ---                                                                                                                                                    
+  8. Visit Website Button on Mods                                                                                                                        
+                                                                                                                                                         
+  Current state: The ModCard component shows a "View on website" link only as a fallback when latestVersion is null (no installable version). When a mod 
+  is installable, only the Install button shows.                                                                                                         
+                                                                                                                                                         
+  What to build:                                                                                                                                         
+  - Always show website link - Add a secondary "Visit" button alongside Install on every mod card                                                        
+  - Layout: Primary Install button on the left, outline "Visit" icon button on the right                                                                 
+  - For installed mods too - On the Installed tab, add a website link per mod (requires storing the websiteUrl in the install manifest)                  
+  - Open in new tab - Already uses target="_blank" and rel="noreferrer"                                                                                  
+                                                                                                                                                         
+  ---                                                                                                                                                    
+  9. Config.json Configurator (winternode.com style)                                                                                                     
+                                                                                                                                                         
+  Current state: Config service reads/writes a manager config. No UI for editing the Hytale server's own config.json (server settings like ports, max    
+  players, game rules).                                                                                                                                  
+                                                                                                                                                         
+  What to build:                                                                                                                                         
+  - Server config editor page - New section on dashboard or dedicated /config route                                                                      
+  - Read server config - API route to read /data/server/mods/com.hytale_HytaleAPI/config.json and the main server config                                 
+  - Form-based editor - Each config field rendered as the appropriate input type:                                                                        
+    - Text inputs for strings (server name, MOTD)                                                                                                        
+    - Number inputs for numerics (max players, port, view distance)                                                                                      
+    - Toggles for booleans (PvP, allow flight, whitelist)                                                                                                
+    - Dropdowns for enums (difficulty, gamemode)                                                                                                         
+    - Textarea for complex fields                                                                                                                        
+  - Schema-driven - Define a JSON schema for known Hytale config fields with labels, descriptions, validation rules, and default values                  
+  - Validation - Client-side and server-side validation before saving                                                                                    
+  - Restart warning - Show which changes require a server restart to take effect                                                                         
+  - Config diff view - Show what changed before applying                                                                                                 
+  - Backup on save - Auto-backup previous config before writing changes                                                                                  
+  - Environment variable overrides - Show which fields are overridden by HYTALE_* env vars (read-only)                                                   
+                                                                                                                                                         
+  ---                                                                                                                                                    
+  10. Recommended Mods                                                                                                                                   
+                                                                                                                                                         
+  Current state: Nothing exists.                                                                                                                         
+                                                                                                                                                         
+  What to build:                                                                                                                                         
+  - Curated mods list - A static or maintainable JSON file (recommended-mods.json) with entries like:                                                    
+  { name, provider, providerModId, description, category, reason }                                                                                       
+  - Categories: Essential, Quality of Life, Admin Tools, Building, Performance                                                                           
+  - UI section - Either a banner/section on the Mods search tab or a dedicated "Recommended" sub-tab                                                     
+  - One-click install - Each recommended mod has an Install button that resolves the latest version and installs                                         
+  - Already installed indicator - Grey out / show checkmark for mods already present                                                                     
+  - Community voting (future) - If you want to crowdsource recommendations later                                                                         
+                                                                                                                                                         
+  ---                                                                                                                                                    
+  11. Check for Mod Loading in Logs and Load Failures                                                                                                    
+                                                                                                                                                         
+  Current state: Logs are fetched and displayed. No parsing for mod-specific events.                                                                     
+                                                                                                                                                         
+  What to build:                                                                                                                                         
+  - Log parser patterns - Regex patterns to detect:                                                                                                      
+    - Plugin loaded: <name> - successful load                                                                                                            
+    - Failed to load plugin: <name> - load failure                                                                                                       
+    - Exception in plugin <name> - runtime error                                                                                                         
+    - Plugin <name> disabled - disable event                                                                                                             
+  - Mod health status API - GET /api/mods/health that scans recent logs and returns per-mod status: { modName, loaded: boolean, errors: string[],        
+  lastSeen: timestamp }                                                                                                                                  
+  - Status badges on installed mods - Replace the simple "Loaded/Restart Required" with:                                                                 
+    - Green: "Loaded" (confirmed in logs)                                                                                                                
+    - Red: "Failed" (load error found in logs) with expandable error detail                                                                              
+    - Yellow: "Restart Required" (not yet loaded)                                                                                                        
+    - Grey: "Unknown" (no log data available)                                                                                                            
+  - Notification on failure - Dashboard alert if any mod failed to load after server start                                                               
+  - Mod error log viewer - Filtered log view showing only entries related to a specific mod                                                              
+                                                                                                                                                         
+  ---                                                                                                                                                    
+  12. Better Mod Management                                                                                                                              
+                                                                                                                                                         
+  Current state: Upload JAR, delete, view installed/loaded. No versioning, updating, or dependency info.                                                 
+                                                                                                                                                         
+  What to build:                                                                                                                                         
+  - Mod manifest - Track installed mods with metadata: { provider, providerModId, version, installedAt, updatedAt, dependencies }                        
+  - Update checking - Periodically check providers for newer versions of installed mods; show "Update Available" badge                                   
+  - One-click update - Download new version, replace old JAR, flag for restart                                                                           
+  - Bulk operations - Select multiple mods for delete/update                                                                                             
+  - Enable/disable - Move mod JAR to a .disabled subdirectory instead of deleting                                                                        
+  - Dependency awareness - If provider APIs expose dependency info, warn when uninstalling a mod that others depend on                                   
+  - Mod profiles - Save/load sets of mods as profiles (e.g., "vanilla+essentials", "creative toolkit")                                                   
+  - Mod load order (if Hytale supports it) - Drag-and-drop reordering                                                                                    
+                                                                                                                                                         
+  ---                                                                                                                                                    
+  13. Create New World                                                                                                                                   
+                                                                                                                                                         
+  Current state: Worlds page supports uploading ZIP files as slots and switching between them. No "create from scratch" option.                          
+                                                                                                                                                         
+  What to build:                                                                                                                                         
+  - "Create New World" button - On the worlds page, alongside the upload zone                                                                            
+  - Creation dialog with fields:                                                                                                                         
+    - World name                                                                                                                                         
+    - Seed (optional, random if blank)                                                                                                                   
+    - World type / preset (if Hytale supports it - e.g., default, flat, custom)                                                                          
+    - Initial gamemode                                                                                                                                   
+    - Any other Hytale world generation options                                                                                                          
+  - API route - POST /api/worlds/create that either:                                                                                                     
+    - Calls a Hytale server command to generate a new world, or                                                                                          
+    - Creates the required directory structure and config files manually, or                                                                             
+    - Copies a template world and modifies config                                                                                                        
+  - Auto-activate option - Checkbox to immediately switch to the new world after creation                                                                
+  - Template worlds - Pre-packaged world templates that users can select from                                                                            
+                                                                                                                                                         
+  ---                                                                                                                                                    
+  14. Logs Filtering on Plugins                                                                                                                          
+                                                                                                                                                         
+  Current state: Level filter (INFO/WARNING/ERROR/PLAYER/SYSTEM), time range filter, and text search exist. No plugin-specific filtering.                
+                                                                                                                                                         
+  What to build:                                                                                                                                         
+  - Plugin source filter - Dropdown populated from loadedPlugins list, showing all active plugins + "Server Core"                                        
+  - Log line source detection - Parse log lines for plugin identifiers (e.g., [HytaleAPI], [MyPlugin] prefixes in messages)                              
+  - Multi-select - Allow selecting multiple plugins to view logs from                                                                                    
+  - Highlight mode - Instead of filtering out, optionally highlight lines from selected plugins with distinct colors                                     
+  - Plugin log summary - Show log count per plugin in the filter dropdown (e.g., "HytaleAPI (47)")                                                       
+  - Quick filter from installed mods - On the mods page, "View Logs" button per mod that navigates to logs page pre-filtered                             
+                      

@@ -34,6 +34,7 @@ Enterprise-grade Hytale server configuration optimized for TrueNAS SCALE Custom 
     - [auth.json](#authjson)
     - [config.json (state)](#configjson-state)
     - [health.json](#healthjson)
+    - [mods.json](#modsjson)
     - [update.json](#updatejson)
   - [Command Scripts](#command-scripts)
     - [status.sh](#statussh)
@@ -50,6 +51,7 @@ Enterprise-grade Hytale server configuration optimized for TrueNAS SCALE Custom 
     - [Authentication Fails](#authentication-fails)
     - [Server Won't Start](#server-wont-start)
     - [Game Files Re-download Every Restart](#game-files-re-download-every-restart)
+    - [Mods Fail to Load (NullPointerException)](#mods-fail-to-load-nullpointerexception)
 
 ---
 
@@ -355,6 +357,8 @@ environment:
 |----------|------|---------|-------------|
 | `HYTALE_MODS` | `string` | - | Path to mods directory. Auto-detects `/data/mods` if present. |
 | `HYTALE_EARLY_PLUGINS` | `string` | - | Path to early plugins. |
+| `DEBUG_CLASSLOADING` | `boolean` | `false` | Enable verbose JVM class loading output for mod diagnostics. |
+| `SKIP_BROKEN_MODS` | `boolean` | `false` | Auto-quarantine mods that failed to load on previous startup. |
 
 #### World & Universe Options
 
@@ -442,7 +446,8 @@ volumes:
     ├── auth.json
     ├── config.json
     ├── health.json
-    └── update.json
+    ├── update.json
+    └── mods.json
 ```
 
 ---
@@ -572,6 +577,39 @@ interface HealthCheck {
     {"name": "memory", "status": "pass", "message": "Memory usage: 45%"}
   ],
   "checked_at": "2026-01-19T12:00:00+00:00"
+}
+```
+
+### mods.json
+
+```typescript
+interface ModsState {
+  loaded: string[];            // Successfully loaded mod filenames
+  failed: ModFailure[];        // Mods that failed to load
+  total: number;               // Total mods attempted
+  loaded_count: number;        // Number successfully loaded
+  failed_count: number;        // Number that failed
+  updated_at: string;          // ISO 8601
+}
+
+interface ModFailure {
+  file: string;                // JAR filename
+  error: string;               // Error description
+}
+```
+
+**Example:**
+
+```json
+{
+  "loaded": ["HyPipes-1.2.1.jar", "HomesPlus-2.1.8.jar"],
+  "failed": [
+    {"file": "YUNGs-HyDungeons.jar", "error": "NullPointerException in PluginClassLoader"}
+  ],
+  "total": 3,
+  "loaded_count": 2,
+  "failed_count": 1,
+  "updated_at": "2026-02-04T01:43:10+00:00"
 }
 ```
 
@@ -752,10 +790,12 @@ docker inspect --format='{{.State.Health.Status}}' hyos
 3. Directory creation
 4. State initialization
 5. Server file download (if needed)
-6. Config generation
-7. OAuth authentication
-8. Drop privileges
-9. Start Java process
+6. Quarantine broken mods (if SKIP_BROKEN_MODS=true)
+7. Config generation
+8. OAuth authentication
+9. Drop privileges
+10. Start mod loading monitor (background)
+11. Start Java process
 ```
 
 ### Base Image
@@ -797,3 +837,23 @@ This should not happen with the latest image. If it does:
 1. Check `/data/server/` or `/data/Server/` exists
 2. Verify `HytaleServer.jar` is present
 3. Check file permissions
+
+### Mods Fail to Load (NullPointerException)
+
+Some mods may fail with `Failed to load plugin` and a `NullPointerException`
+in `PluginClassLoader`. This is a Hytale server bug, not a Docker issue.
+
+**Diagnosis:**
+1. Check which mods failed: `cat /data/.state/mods.json | jq .failed`
+2. Enable verbose diagnostics: set `DEBUG_CLASSLOADING=true`
+
+**Mitigations:**
+1. **Auto-quarantine**: Set `SKIP_BROKEN_MODS=true` to auto-move failing mods
+   to `mods/.disabled/` on next restart
+2. **Manual removal**: Move broken JARs out of `/data/mods/`
+3. **Check for updates**: The mod may need updating for the current server version
+4. **Re-enable quarantined mods**: Move from `mods/.disabled/` back to `mods/`,
+   then restart with `SKIP_BROKEN_MODS=false`
+
+The broken mods list is version-tagged — when the server updates, previously
+broken mods will be retried automatically.

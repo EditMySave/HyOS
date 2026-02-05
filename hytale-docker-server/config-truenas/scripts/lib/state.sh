@@ -23,6 +23,10 @@ STATE_VERSION="${STATE_DIR}/version.json"
 STATE_AUTH="${STATE_DIR}/auth.json"
 STATE_CONFIG="${STATE_DIR}/config.json"
 STATE_HEALTH="${STATE_DIR}/health.json"
+STATE_MODS="${STATE_DIR}/mods.json"
+
+# Persistent broken mods list (version:filename format, one per line)
+STATE_BROKEN_MODS="${STATE_DIR}/.broken-mods"
 
 # =============================================================================
 # Initialization
@@ -242,6 +246,79 @@ state_get_health() {
 }
 
 # =============================================================================
+# Mod State
+# =============================================================================
+
+# Set mod loading state
+# Usage: state_set_mods '["mod1.jar"]' '[{"file":"mod2.jar","error":"..."}]'
+state_set_mods() {
+    local loaded_json="$1"
+    local failed_json="$2"
+
+    # Count entries from JSON arrays
+    local loaded_count failed_count total
+    loaded_count=$(echo "$loaded_json" | jq 'length' 2>/dev/null || echo 0)
+    failed_count=$(echo "$failed_json" | jq 'length' 2>/dev/null || echo 0)
+    total=$((loaded_count + failed_count))
+
+    local json
+    json=$(json_object \
+        "loaded" "$loaded_json" \
+        "failed" "$failed_json" \
+        "total" "$total" \
+        "loaded_count" "$loaded_count" \
+        "failed_count" "$failed_count" \
+        "updated_at" "$(date -Iseconds)"
+    )
+
+    _atomic_write "$STATE_MODS" "$json"
+    log_debug "Mods state: $loaded_count loaded, $failed_count failed"
+}
+
+# Get mod state
+state_get_mods() {
+    _safe_read "$STATE_MODS"
+}
+
+# Add a broken mod to the persistent list (version-tagged)
+# Usage: state_add_broken_mod "ModName.jar" "2026.01.27-abc123"
+state_add_broken_mod() {
+    local filename="$1"
+    local server_version="$2"
+    local entry="${server_version}:${filename}"
+
+    # Don't add duplicates
+    if [[ -f "$STATE_BROKEN_MODS" ]] && grep -qF "$entry" "$STATE_BROKEN_MODS" 2>/dev/null; then
+        return 0
+    fi
+
+    echo "$entry" >> "$STATE_BROKEN_MODS"
+}
+
+# Get broken mod filenames for a specific server version
+# Usage: state_get_broken_mods "2026.01.27-abc123"
+state_get_broken_mods() {
+    local server_version="$1"
+
+    [[ ! -f "$STATE_BROKEN_MODS" ]] && return 0
+
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        local entry_version="${line%%:*}"
+        local entry_file="${line#*:}"
+        if [[ "$entry_version" == "$server_version" ]]; then
+            echo "$entry_file"
+        fi
+    done < "$STATE_BROKEN_MODS"
+}
+
+# Clear all broken mods
+state_clear_broken_mods() {
+    rm -f "$STATE_BROKEN_MODS"
+    log_debug "Broken mods list cleared"
+}
+
+# =============================================================================
 # Auto-Update State
 # =============================================================================
 
@@ -336,7 +413,7 @@ state_clear_update_scheduled() {
 
 # Get all state as single JSON object
 state_get_all() {
-    local server version auth config health update scheduled_update
+    local server version auth config health update scheduled_update mods
     server=$(_safe_read "$STATE_SERVER")
     version=$(_safe_read "$STATE_VERSION")
     auth=$(_safe_read "$STATE_AUTH")
@@ -344,7 +421,8 @@ state_get_all() {
     health=$(_safe_read "$STATE_HEALTH")
     update=$(_safe_read "$STATE_UPDATE")
     scheduled_update=$(_safe_read "$STATE_SCHEDULED_UPDATE")
-    
+    mods=$(_safe_read "$STATE_MODS")
+
     json_object \
         "server" "$server" \
         "version" "$version" \
@@ -353,6 +431,7 @@ state_get_all() {
         "health" "$health" \
         "update" "$update" \
         "scheduled_update" "$scheduled_update" \
+        "mods" "$mods" \
         "timestamp" "$(date -Iseconds)"
 }
 
@@ -362,7 +441,7 @@ state_get_all() {
 
 # Remove all state files (for clean restart)
 state_cleanup() {
-    rm -f "$STATE_SERVER" "$STATE_VERSION" "$STATE_AUTH" "$STATE_CONFIG" "$STATE_HEALTH" "$STATE_UPDATE" "$STATE_SCHEDULED_UPDATE"
+    rm -f "$STATE_SERVER" "$STATE_VERSION" "$STATE_AUTH" "$STATE_CONFIG" "$STATE_HEALTH" "$STATE_UPDATE" "$STATE_SCHEDULED_UPDATE" "$STATE_MODS"
     log_debug "State files cleaned up"
 }
 
@@ -373,6 +452,8 @@ export -f state_set_version state_get_version
 export -f state_set_auth state_get_auth
 export -f state_set_config state_get_config
 export -f state_set_health state_get_health
+export -f state_set_mods state_get_mods
+export -f state_add_broken_mod state_get_broken_mods state_clear_broken_mods
 export -f state_set_update state_get_update
 export -f state_set_update_scheduled state_get_update_scheduled state_is_update_scheduled state_clear_update_scheduled
 export -f state_get_all state_cleanup

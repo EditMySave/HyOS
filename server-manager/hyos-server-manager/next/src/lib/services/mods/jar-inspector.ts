@@ -1,0 +1,119 @@
+import AdmZip from "adm-zip";
+import {
+  CONTENT_MOD_STUB_CLASS_BASE64,
+  CONTENT_MOD_STUB_CLASS_PATH,
+  CONTENT_MOD_STUB_MAIN,
+} from "./content-mod-stub";
+
+export interface ManifestInfo {
+  hasManifest: boolean;
+  main: string | null;
+  group: string | null;
+  name: string | null;
+}
+
+export interface JarInspectionResult {
+  needsPatch: boolean;
+  isPatched: boolean;
+  manifestInfo: ManifestInfo | undefined;
+}
+
+/**
+ * Check whether a manifest has all required content-mod fields.
+ * A fully patched content mod needs Main, IncludesAssetPack, LoadBefore, and SubPlugins.
+ */
+function isFullyPatched(manifest: Record<string, unknown>): boolean {
+  return (
+    manifest.Main === CONTENT_MOD_STUB_MAIN &&
+    manifest.IncludesAssetPack === true &&
+    "LoadBefore" in manifest &&
+    "SubPlugins" in manifest
+  );
+}
+
+/**
+ * Inspect a JAR's manifest.json for Main class presence and content-mod fields.
+ */
+export function inspectJar(jarPath: string): JarInspectionResult {
+  const zip = new AdmZip(jarPath);
+  const entry = zip.getEntry("manifest.json");
+
+  if (!entry) {
+    // No manifest — not a standard Hytale mod, nothing to patch
+    return {
+      needsPatch: false,
+      isPatched: false,
+      manifestInfo: undefined,
+    };
+  }
+
+  const manifest = JSON.parse(zip.readAsText(entry));
+  const main: string | undefined = manifest.Main;
+
+  const manifestInfo: ManifestInfo = {
+    hasManifest: true,
+    main: main ?? null,
+    group: manifest.Group ?? null,
+    name: manifest.Name ?? null,
+  };
+
+  // No Main class at all — needs patch
+  if (!main || main.trim() === "") {
+    return { needsPatch: true, isPatched: false, manifestInfo };
+  }
+
+  // Has stub Main — check if all content-mod fields are present
+  if (main === CONTENT_MOD_STUB_MAIN) {
+    const fullyPatched = isFullyPatched(manifest);
+    return {
+      needsPatch: !fullyPatched,
+      isPatched: fullyPatched,
+      manifestInfo,
+    };
+  }
+
+  return { needsPatch: false, isPatched: false, manifestInfo };
+}
+
+/**
+ * Patch a content-only mod JAR by injecting the stub class and updating manifest.json.
+ */
+export function patchJar(jarPath: string): void {
+  const zip = new AdmZip(jarPath);
+
+  // Inject stub class
+  const stubBytes = Buffer.from(CONTENT_MOD_STUB_CLASS_BASE64, "base64");
+  zip.addFile(CONTENT_MOD_STUB_CLASS_PATH, stubBytes);
+
+  // Update manifest.json with Main field
+  const manifestEntry = zip.getEntry("manifest.json");
+  if (!manifestEntry) {
+    throw new Error("No manifest.json found in JAR");
+  }
+
+  const manifest = JSON.parse(zip.readAsText(manifestEntry));
+
+  // Set Main class
+  manifest.Main = CONTENT_MOD_STUB_MAIN;
+
+  // Ensure all content-mod fields are present (align with working mod format)
+  if (!("IncludesAssetPack" in manifest)) {
+    manifest.IncludesAssetPack = true;
+  }
+  if (!("LoadBefore" in manifest)) {
+    manifest.LoadBefore = {};
+  }
+  if (!("SubPlugins" in manifest)) {
+    manifest.SubPlugins = [];
+  }
+  if (!("ServerVersion" in manifest) || manifest.ServerVersion === "*") {
+    manifest.ServerVersion = "";
+  }
+
+  const updatedManifest = Buffer.from(JSON.stringify(manifest, null, 2));
+
+  zip.deleteFile("manifest.json");
+  zip.addFile("manifest.json", updatedManifest);
+
+  zip.writeZip(jarPath);
+}

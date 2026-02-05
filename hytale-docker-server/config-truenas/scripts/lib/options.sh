@@ -47,6 +47,13 @@ build_java_args() {
         [[ -f "$aot_cache" ]] && args="$args -XX:AOTCache=${aot_cache}"
     fi
     
+    # Class loading diagnostics (writes to separate file to avoid flooding container logs)
+    if is_true "${DEBUG_CLASSLOADING:-false}"; then
+        local classlog_dir="${DATA_DIR:-/data}/logs"
+        mkdir -p "$classlog_dir" 2>/dev/null || true
+        args="$args -Xlog:class+load=info:file=${classlog_dir}/classloading.log:tags,time,level"
+    fi
+
     # Custom JVM options
     [[ -n "${JAVA_OPTS:-}" ]] && args="$args $JAVA_OPTS"
     [[ -n "${JVM_XX_OPTS:-}" ]] && args="$args $JVM_XX_OPTS"
@@ -287,7 +294,8 @@ get_options_json() {
         "backup_frequency" "${HYTALE_BACKUP_FREQUENCY:-${BACKUP_FREQUENCY:-30}}" \
         "allow_op" "${HYTALE_ALLOW_OP:-${ALLOW_OP:-false}}" \
         "accept_early_plugins" "${HYTALE_ACCEPT_EARLY_PLUGINS:-${ACCEPT_EARLY_PLUGINS:-false}}" \
-        "disable_sentry" "${HYTALE_DISABLE_SENTRY:-${DISABLE_SENTRY:-false}}"
+        "disable_sentry" "${HYTALE_DISABLE_SENTRY:-${DISABLE_SENTRY:-false}}" \
+        "debug_classloading" "${DEBUG_CLASSLOADING:-false}"
 }
 
 # Export functions

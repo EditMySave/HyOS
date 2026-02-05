@@ -6,6 +6,7 @@ import {
   useLoadedPlugins,
   useUploadMod,
   useDeleteMod,
+  usePatchMod,
 } from "@/lib/services/mods";
 import { ModBrowse } from "@/components/mods/mod-browse";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import {
   AlertCircle,
   Search,
   FolderOpen,
+  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -81,6 +83,11 @@ export default function ModsPage() {
   // Mutations
   const { trigger: uploadMod, isMutating: isUploading } = useUploadMod();
   const { trigger: deleteMod, isMutating: isDeleting } = useDeleteMod();
+  const { trigger: patchMod, isMutating: isPatching } = usePatchMod();
+
+  // Track which mod is currently being patched
+  const [patchingModId, setPatchingModId] = useState<string | null>(null);
+  const [isPatchingAll, setIsPatchingAll] = useState(false);
 
   // Handle file selection
   const handleFileSelect = useCallback(
@@ -120,6 +127,45 @@ export default function ModsPage() {
     },
     [deleteMod, refreshInstalled],
   );
+
+  // Handle patch
+  const handlePatch = useCallback(
+    async (modId: string) => {
+      setPatchingModId(modId);
+      try {
+        await patchMod(modId);
+        refreshInstalled();
+      } catch (error) {
+        console.error("Patch failed:", error);
+      } finally {
+        setPatchingModId(null);
+      }
+    },
+    [patchMod, refreshInstalled],
+  );
+
+  // Handle patch all
+  const handlePatchAll = useCallback(async () => {
+    if (!installedMods) return;
+    const toPatch = installedMods.mods.filter((m) => m.needsPatch);
+    if (toPatch.length === 0) return;
+
+    setIsPatchingAll(true);
+    try {
+      for (const mod of toPatch) {
+        setPatchingModId(mod.id);
+        try {
+          await patchMod(mod.id);
+        } catch (error) {
+          console.error(`Patch failed for ${mod.name}:`, error);
+        }
+      }
+      refreshInstalled();
+    } finally {
+      setPatchingModId(null);
+      setIsPatchingAll(false);
+    }
+  }, [installedMods, patchMod, refreshInstalled]);
 
   // Handle drag events
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -407,7 +453,16 @@ export default function ModsPage() {
                             <TableCell>{formatBytes(mod.size)}</TableCell>
                             <TableCell>{formatRelativeTime(mod.modified)}</TableCell>
                             <TableCell>
-                              {loaded ? (
+                              {mod.needsPatch ? (
+                                <Badge variant="outline" className="border-amber-500 text-amber-500">
+                                  <AlertCircle className="mr-1 h-3 w-3" />
+                                  Needs Patch
+                                </Badge>
+                              ) : mod.isPatched && !loaded ? (
+                                <Badge variant="outline" className="border-blue-500 text-blue-500">
+                                  Patched
+                                </Badge>
+                              ) : loaded ? (
                                 <Badge className="bg-green-500 hover:bg-green-600">
                                   Loaded
                                 </Badge>
@@ -418,15 +473,32 @@ export default function ModsPage() {
                               )}
                             </TableCell>
                             <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDelete(mod.id)}
-                                disabled={isDeleting}
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <div className="flex gap-1">
+                                {mod.needsPatch && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handlePatch(mod.id)}
+                                    disabled={isPatching || isPatchingAll}
+                                    className="text-amber-500 hover:text-amber-600"
+                                  >
+                                    {patchingModId === mod.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Wrench className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDelete(mod.id)}
+                                  disabled={isDeleting}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         );
@@ -438,7 +510,40 @@ export default function ModsPage() {
             </Card>
           </div>
 
-          {installedMods?.mods.some((m) => !isModLoaded(m.fileName)) && (
+          {(() => {
+            const patchCount = installedMods?.mods.filter((m) => m.needsPatch).length ?? 0;
+            return patchCount > 0 ? (
+              <div className="mt-6 rounded-lg border border-amber-500/50 bg-amber-500/10 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="mt-0.5 h-5 w-5 text-amber-500" />
+                    <div>
+                      <p className="font-medium text-amber-500">Content-Only Mods Detected</p>
+                      <p className="text-sm text-amber-500/80">
+                        {patchCount} mod{patchCount > 1 ? "s are" : " is"} missing a Main class and will crash the server. Use the patch button to fix {patchCount > 1 ? "them" : "it"}.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePatchAll}
+                    disabled={isPatchingAll}
+                    className="shrink-0 border-amber-500 text-amber-500 hover:bg-amber-500/10"
+                  >
+                    {isPatchingAll ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Wrench className="mr-2 h-4 w-4" />
+                    )}
+                    Patch All
+                  </Button>
+                </div>
+              </div>
+            ) : null;
+          })()}
+
+          {installedMods?.mods.some((m) => !m.needsPatch && !isModLoaded(m.fileName)) && (
             <div className="mt-6 rounded-lg border border-amber-500/50 bg-amber-500/10 p-4">
               <div className="flex items-start gap-3">
                 <AlertCircle className="mt-0.5 h-5 w-5 text-amber-500" />
