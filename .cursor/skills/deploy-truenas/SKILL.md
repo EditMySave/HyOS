@@ -60,7 +60,7 @@ chmod 755 ./data
 docker compose up -d
 
 # View server logs
-docker logs -f hyos
+docker logs -f hyos-server
 
 # View manager logs
 docker logs -f hyos-manager
@@ -89,15 +89,15 @@ The compose.yaml deploys two services:
 
 | Service | Image | Ports | Purpose |
 |---------|-------|-------|---------|
-| `hytale` | `ghcr.io/editmysave/hyos/server:latest` | 5520/udp, 8080/tcp | Game server + REST API |
-| `manager` | `ghcr.io/editmysave/hyos/manager:latest` | 3000/tcp | Web UI |
+| `hyos-server` | `ghcr.io/editmysave/hyos/server:latest` | 30520/udp, 30080/tcp | Game server + REST API |
+| `hyos-manager` | `ghcr.io/editmysave/hyos/manager:latest` | 30300/tcp | Web UI |
 
 ### Service Communication
 
 ```
 ┌─────────────┐     REST API      ┌─────────────┐
 │   Manager   │ ───────────────── │   Hytale    │
-│  (port 3000)│   http://hytale:8080  │ (port 5520) │
+│ (port 30300)│   http://hyos-server:8080  │(port 30520) │
 └─────────────┘                   └─────────────┘
        │                                 │
        └──── /data/.state/ (shared) ────┘
@@ -108,7 +108,7 @@ The compose.yaml deploys two services:
 **Critical**: Both services must use matching credentials.
 
 ```yaml
-# In hytale service:
+# In hyos-server service:
 API_CLIENT_ID: hyos-manager
 API_CLIENT_SECRET: your-secure-password  # Plaintext, gets bcrypt hashed
 
@@ -195,23 +195,23 @@ Already configured with `stop_grace_period: 30s` for world save.
 
 ```bash
 # Check server status (JSON output)
-docker exec hyos /opt/scripts/cmd/status.sh --json
+docker exec hyos-server /opt/scripts/cmd/status.sh --json
 
 # Manual health check
-docker exec hyos /opt/scripts/healthcheck.sh
+docker exec hyos-server /opt/scripts/healthcheck.sh
 
 # Re-authenticate
 docker exec -it hyos /opt/scripts/cmd/auth-init.sh
 
 # Check for updates
-docker exec hyos /opt/scripts/cmd/update.sh --check
+docker exec hyos-server /opt/scripts/cmd/update.sh --check
 
 # Force update with backup
-docker exec hyos /opt/scripts/cmd/update.sh --backup --force
+docker exec hyos-server /opt/scripts/cmd/update.sh --backup --force
 
 # View state files
-docker exec hyos cat /data/.state/server.json
-docker exec hyos cat /data/.state/auth.json
+docker exec hyos-server cat /data/.state/server.json
+docker exec hyos-server cat /data/.state/auth.json
 ```
 
 ## Troubleshooting
@@ -220,7 +220,7 @@ docker exec hyos cat /data/.state/auth.json
 
 1. Check permissions: `ls -la /mnt/tank/apps/hytale`
 2. Ensure owner is 568:568: `chown -R 568:568 /mnt/tank/apps/hytale`
-3. Check logs: `docker logs hyos`
+3. Check logs: `docker logs hyos-server`
 4. Verify architecture is x86_64 (ARM not supported)
 
 ### Authentication fails
@@ -229,13 +229,13 @@ docker exec hyos cat /data/.state/auth.json
 2. Clear tokens and restart:
    ```bash
    rm /data/.auth/tokens.json
-   docker restart hyos
+   docker restart hyos-server
    ```
 
 ### Server won't start
 
 1. Check memory: `JAVA_XMX` must fit in available RAM
-2. Check port: UDP 5520 must be free
+2. Check port: UDP 30520 must be free on host (5520 inside container)
 3. View state: `cat /data/.state/server.json`
 
 ### Manager can't connect to server

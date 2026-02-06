@@ -20,10 +20,10 @@ The system deploys two containers that communicate:
 
 ```
 ┌─────────────────┐         REST API          ┌─────────────────┐
-│   hyos-manager  │ ────────────────────────► │      hyos       │
-│   (Next.js UI)  │    http://hyos:8080       │  (Game Server)  │
-│   port 3000     │                           │  port 5520/udp  │
-└────────┬────────┘                           │  port 8080/tcp  │
+│   hyos-manager  │ ────────────────────────► │   hyos-server   │
+│   (Next.js UI)  │  http://hyos-server:8080 │  (Game Server)  │
+│   port 30300    │                           │  port 30520/udp │
+└────────┬────────┘                           │  port 30080/tcp │
          │                                    └────────┬────────┘
          └──── /data/.state/ (shared, read-only) ─────┘
 ```
@@ -90,10 +90,10 @@ Production images are published automatically via GitHub Actions CI on push to `
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ADAPTER_TYPE` | `rest` | How manager connects: `rest` or `console` |
-| `REST_API_URL` | - | Server API URL (e.g., `http://hyos:8080`) |
+| `REST_API_URL` | - | Server API URL (e.g., `http://hyos-server:8080`) |
 | `REST_API_CLIENT_ID` | - | Must match server's `API_CLIENT_ID` |
 | `REST_API_CLIENT_SECRET` | - | Must match server's `API_CLIENT_SECRET` |
-| `HYTALE_CONTAINER_NAME` | `hyos` | Docker container name for control |
+| `HYTALE_CONTAINER_NAME` | `hyos-server` | Docker container name for control |
 | `HYTALE_STATE_DIR` | `/data/.state` | Path to state files |
 
 ### Credential Sync (YAML Anchors)
@@ -106,11 +106,11 @@ x-api-config: &api-config
   API_CLIENT_ID: ${API_CLIENT_ID:-hyos-manager}
 
 services:
-  hytale:
+  hyos-server:
     environment:
       <<: *api-config  # Server uses these
 
-  manager:
+  hyos-manager:
     environment:
       <<: *api-config  # Shared anchor
       REST_API_CLIENT_SECRET: ${API_CLIENT_SECRET:-changeme123}  # Map to manager var
@@ -124,11 +124,11 @@ services:
 1. **Verify credentials match** - `API_CLIENT_SECRET` must be identical in both services
 2. **Check REST API is running**:
    ```bash
-   docker exec hyos curl -s http://localhost:8080/health
+   docker exec hyos-server curl -s http://localhost:8080/health
    ```
 3. **Check network connectivity**:
    ```bash
-   docker exec hyos-manager wget -qO- http://hyos:8080/health
+   docker exec hyos-manager wget -qO- http://hyos-server:8080/health
    ```
 4. **Verify adapter type**:
    ```bash
@@ -147,7 +147,7 @@ The manager reads state files from `/data/.state/`. Check:
    ```
 3. Server is writing state files:
    ```bash
-   docker exec hyos cat /data/.state/server.json
+   docker exec hyos-server cat /data/.state/server.json
    ```
 
 ### Build fails: standalone output missing
@@ -160,15 +160,15 @@ const nextConfig: NextConfig = {
 };
 ```
 
-### Port 3000 already in use
+### Port 30300 already in use
 
 ```bash
 # Find and kill process
-lsof -i :3000
+lsof -i :30300
 kill -9 <PID>
 
 # Or use different port
-docker run -p 3001:3000 hyos-manager:latest
+docker run -p 30301:3000 hyos-manager:latest
 ```
 
 ### Changes not reflected after rebuild
@@ -203,7 +203,7 @@ Connects to the hytale-api REST plugin. Full control over server.
 
 ```bash
 ADAPTER_TYPE=rest
-REST_API_URL=http://hyos:8080
+REST_API_URL=http://hyos-server:8080
 REST_API_CLIENT_ID=hyos-manager
 REST_API_CLIENT_SECRET=your-password
 ```
@@ -213,7 +213,7 @@ Uses Docker exec to send console commands. Limited functionality.
 
 ```bash
 ADAPTER_TYPE=console
-HYTALE_CONTAINER_NAME=hyos
+HYTALE_CONTAINER_NAME=hyos-server
 ```
 
 ## Local Development (No Docker)
@@ -243,7 +243,7 @@ Deployment Checklist:
 - [ ] CI passing on main (images auto-published to GHCR)
 - [ ] API_CLIENT_SECRET set (min 8 chars)
 - [ ] Volume path updated (/mnt/tank/apps/hytale)
-- [ ] Ports available (5520/udp, 8080/tcp, 3000/tcp)
+- [ ] Ports available (30520/udp, 30080/tcp, 30300/tcp)
 - [ ] User 568:568 owns data directory
 ```
 
