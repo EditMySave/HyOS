@@ -63,9 +63,7 @@ All Hytale server CLI options available via `HYTALE_*` environment variables. JV
 
 ### Best Practices Reference
 The `.claude/reference/` directory contains detailed guides:
-- `fastapi-best-practices.md` - For Python backend patterns
 - `react-frontend-best-practices.md` - For React/Vite patterns
-- `sqlite-best-practices.md` - For SQLite database patterns
 - `deployment-best-practices.md` - For Docker and deployment
 - `testing-and-logging.md` - For structlog and testing strategies
 
