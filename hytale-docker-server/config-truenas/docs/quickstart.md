@@ -23,8 +23,8 @@ Create a `compose.yaml` with the following minimal configuration:
 ```yaml
 services:
   hytale:
-    image: riceheadv8/hyos:latest
-    container_name: hyos
+    image: ghcr.io/editmysave/hyos/server:latest
+    container_name: hyos-server
     user: "568:568"
     restart: unless-stopped
     stdin_open: true
@@ -36,7 +36,7 @@ services:
       JAVA_XMX: 8G
       SERVER_NAME: "My Hytale Server"
     ports:
-      - "5520:5520/udp"
+      - "30520:5520/udp"
     volumes:
       - /mnt/tank/apps/hytale:/data:rw
     stop_grace_period: 30s
@@ -55,7 +55,7 @@ docker compose up -d
 On first run, the container will pause and display an OAuth authentication prompt in the logs:
 
 ```bash
-docker logs -f hyos
+docker logs -f hyos-server
 ```
 
 ```
@@ -79,10 +79,10 @@ Once authenticated, the server will download game files (first run only) and sta
 
 ```bash
 # Check container health
-docker inspect --format='{{.State.Health.Status}}' hyos
+docker inspect --format='{{.State.Health.Status}}' hyos-server
 
 # View full status
-docker exec hyos /opt/scripts/cmd/status.sh
+docker exec hyos-server /opt/scripts/cmd/status.sh
 ```
 
 ## What's Next

@@ -18,31 +18,23 @@ Build and deploy the Hytale server Docker image optimized for TrueNAS SCALE.
 
 ## Build Docker Image
 
+Production images are published to GHCR automatically via GitHub Actions CI on push to `main`.
+
 ```bash
 cd hytale-docker-server/config-truenas
 
-# Build for local testing
+# Build for local testing only
 docker build -t hyos:dev .
-
-# Build with version tag
-docker build -t riceheadv8/hyos:truenas-v12 .
-
-# Build and push to Docker Hub
-docker build -t riceheadv8/hyos:latest .
-docker push riceheadv8/hyos:latest
 ```
 
-## Multi-Architecture Publish (buildx)
+### GHCR Images (published by CI)
 
-HyOS server is **amd64 only** (Hytale downloader is amd64). Use buildx for reproducible Hub publish:
+| Image | Registry |
+|-------|----------|
+| Server | `ghcr.io/editmysave/hyos/server:latest` |
+| Manager | `ghcr.io/editmysave/hyos/manager:latest` |
 
-```bash
-cd hytale-docker-server/config-truenas
-docker buildx build --builder multiarch --platform linux/amd64 --no-cache \
-  -t riceheadv8/hyos:latest --push -f Dockerfile .
-```
-
-For **manager** multi-arch (amd64 + arm64), see **deploy-server-manager** skill.
+Tags: `latest` (main branch), `sha-<short>` (every build)
 
 ## Build API Plugin
 
@@ -97,8 +89,8 @@ The compose.yaml deploys two services:
 
 | Service | Image | Ports | Purpose |
 |---------|-------|-------|---------|
-| `hytale` | `riceheadv8/hyos:latest` | 5520/udp, 8080/tcp | Game server + REST API |
-| `manager` | `riceheadv8/hyos-manager:latest` | 3000/tcp | Web UI |
+| `hytale` | `ghcr.io/editmysave/hyos/server:latest` | 5520/udp, 8080/tcp | Game server + REST API |
+| `manager` | `ghcr.io/editmysave/hyos/manager:latest` | 3000/tcp | Web UI |
 
 ### Service Communication
 

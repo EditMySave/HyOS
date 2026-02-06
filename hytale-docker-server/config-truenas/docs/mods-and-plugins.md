@@ -53,7 +53,7 @@ Place `.jar` files in the `/data/mods/` directory:
 cp MyMod-1.0.0.jar /mnt/tank/apps/hytale/mods/
 
 # Restart to load
-docker restart hyos
+docker restart hyos-server
 ```
 
 The entrypoint auto-detects the `/data/mods/` directory and passes `--mods /data/mods` to the server.
@@ -236,7 +236,7 @@ ModTale does not require an API key — it is available by default.
 1. Check server version compatibility (`ServerVersion` in manifest)
 2. Check for missing dependencies
 3. Enable `DEBUG_CLASSLOADING=true` for verbose JVM class loading output
-4. Check logs: `docker logs hyos | grep -i "mod\|plugin"`
+4. Check logs: `docker logs hyos-server | grep -i "mod\|plugin"`
 
 ### Mod quarantined unexpectedly
 

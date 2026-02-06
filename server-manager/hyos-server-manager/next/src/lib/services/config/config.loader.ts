@@ -22,9 +22,9 @@ export function getConfigPath(): string {
 
 function defaults(): ManagerConfig {
   return {
-    serverHost: "hyos",
+    serverHost: "hyos-server",
     serverPort: 8080,
-    containerName: "hyos",
+    containerName: "hyos-server",
     apiClientId: "hyos-manager",
     stateDir: defaultStateDir(),
     setupComplete: false,

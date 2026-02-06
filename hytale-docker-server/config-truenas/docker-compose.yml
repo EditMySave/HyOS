@@ -1,13 +1,22 @@
 # =============================================================================
-# HyOS - Local Build & Test
+# HyOS - Local Development & Testing
 # =============================================================================
-# This file is for BUILDING images locally before pushing to Docker Hub.
+# Uses GHCR images published by CI. For local source builds, uncomment the
+# `build:` blocks and comment out the `image:` lines.
 #
-# Workflow:
-# 1. Build both:  docker compose build
-# 2. Tag server:  docker tag hyos:truenas riceheadv8/hyos:latest
-# 3. Tag manager: docker tag hyos-manager:latest riceheadv8/hyos-manager:latest
-# 4. Push both:   docker push riceheadv8/hyos:latest && docker push riceheadv8/hyos-manager:latest
+# Usage:
+#   docker compose up -d          # Start both services
+#   docker compose logs -f        # Follow logs
+#   docker compose down           # Stop all
+#
+# PORT CONVENTION:
+# Host ports use the 30xxx range to avoid conflicts with other TrueNAS apps.
+# The Hytale server default is UDP 5520 — if you are not running other apps
+# that conflict, you can change the host ports back (e.g., "5520:5520/udp").
+# Internal container ports (5520, 8080, 3000) are unchanged.
+#
+# Local source build (when needed):
+#   docker compose build --no-cache && docker compose up -d
 # =============================================================================
 
 # Shared API config - change the password here for local testing
@@ -19,19 +28,20 @@ services:
   # ---------------------------------------------------------------------------
   # Hytale Server
   # ---------------------------------------------------------------------------
-  hyos:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      platforms:
-        - linux/amd64
-    image: hyos:truenas
+  hyos-server:
+    # Uncomment build block for local source builds:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    #   platforms:
+    #     - linux/amd64
+    image: ghcr.io/editmysave/hyos/server:latest
     platform: linux/amd64
-    container_name: hyos
+    container_name: hyos-server
 
     ports:
-      - "5520:5520/udp"
-      - "8080:8080/tcp"
+      - "30520:5520/udp"
+      - "30080:8080/tcp"
 
     environment:
       <<: *api-config
@@ -51,9 +61,6 @@ services:
       API_RATE_BURST_AUTH: "10"
       API_RATE_LIMIT_ADMIN: "120"
       API_RATE_BURST_ADMIN: "20"
-      # Localtonet agent (set LOCALTONET_AUTHTOKEN for real tunnel)
-      LOCALTONET_ENABLED: "true"
-      LOCALTONET_AUTHTOKEN: "test-token"
 
     volumes:
       - ./data:/data
@@ -71,11 +78,12 @@ services:
   # ---------------------------------------------------------------------------
   # Server Manager (Web UI)
   # ---------------------------------------------------------------------------
-  manager:
-    build:
-      context: ../../server-manager/hyos-server-manager/next
-      dockerfile: Dockerfile
-    image: hyos-manager:latest
+  hyos-manager:
+    # Uncomment build block for local source builds:
+    # build:
+    #   context: ../../server-manager/hyos-server-manager/next
+    #   dockerfile: Dockerfile
+    image: ghcr.io/editmysave/hyos/manager:latest
     platform: linux/amd64
     container_name: hyos-manager
     # Add root group (GID 0) for Docker socket access
@@ -84,18 +92,18 @@ services:
       - "0"
 
     ports:
-      - "3000:3000"
+      - "30300:3000"
 
     environment:
       <<: *api-config
       REST_API_CLIENT_SECRET: test
       REST_API_CLIENT_ID: hyos-manager
       ADAPTER_TYPE: rest
-      HYTALE_CONTAINER_NAME: hyos
+      HYTALE_CONTAINER_NAME: hyos-server
       HYTALE_STATE_DIR: /data/.state
-      HYTALE_SERVER_HOST: hyos
+      HYTALE_SERVER_HOST: hyos-server
       HYTALE_SERVER_PORT: "8080"
-      REST_API_URL: http://hyos:8080
+      REST_API_URL: http://hyos-server:8080
       NODE_ENV: production
 
     volumes:
@@ -103,4 +111,4 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
     depends_on:
-      - hyos
+      - hyos-server

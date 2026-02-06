@@ -354,10 +354,10 @@ Reports comprehensive server status.
 
 ```bash
 # Human-readable output
-docker exec hyos /opt/scripts/cmd/status.sh
+docker exec hyos-server /opt/scripts/cmd/status.sh
 
 # JSON output
-docker exec hyos /opt/scripts/cmd/status.sh --json
+docker exec hyos-server /opt/scripts/cmd/status.sh --json
 ```
 
 **JSON output fields:** `server` (running, pid, uptime_seconds), `version` (current, latest, needs_update), `resources` (memory_used/total, disk_used/total), `config` (JVM settings, port), `timestamp`.
@@ -370,10 +370,10 @@ Manually trigger a server update. The server must be stopped.
 
 ```bash
 # Check for updates (dry run)
-docker exec hyos /opt/scripts/cmd/update.sh --check
+docker exec hyos-server /opt/scripts/cmd/update.sh --check
 
 # Update with backup
-docker exec hyos /opt/scripts/cmd/update.sh --backup --force
+docker exec hyos-server /opt/scripts/cmd/update.sh --backup --force
 ```
 
 **Process:** Verify stopped → detect files → compare versions → backup → download → extract → verify → update `.version`.
@@ -386,7 +386,7 @@ Background service for periodic update checks.
 
 ```bash
 # Single check and exit (for cron)
-docker exec hyos /opt/scripts/cmd/auto-update.sh --once
+docker exec hyos-server /opt/scripts/cmd/auto-update.sh --once
 
 # Continuous loop (started by entrypoint)
 /opt/scripts/cmd/auto-update.sh
@@ -405,7 +405,7 @@ docker exec hyos /opt/scripts/cmd/auto-update.sh --once
 Interactive re-authentication.
 
 ```bash
-docker exec -it hyos /opt/scripts/cmd/auth-init.sh
+docker exec -it hyos-server /opt/scripts/cmd/auth-init.sh
 ```
 
 Checks for existing valid tokens, prompts before re-authenticating, runs the device code flow, fetches profile, and saves tokens.
@@ -417,8 +417,8 @@ Checks for existing valid tokens, prompts before re-authenticating, runs the dev
 Execute a server console command by writing to the server process stdin.
 
 ```bash
-docker exec hyos /opt/scripts/cmd/exec.sh "say Hello World"
-docker exec hyos /opt/scripts/cmd/exec.sh "op add PlayerName"
+docker exec hyos-server /opt/scripts/cmd/exec.sh "say Hello World"
+docker exec hyos-server /opt/scripts/cmd/exec.sh "op add PlayerName"
 ```
 
 **Mechanism:** Writes the command string to `/proc/<server-PID>/fd/0` (stdin file descriptor).
@@ -431,13 +431,13 @@ Schedule a server update for the next container restart.
 
 ```bash
 # Schedule
-docker exec hyos /opt/scripts/cmd/schedule-update.sh
+docker exec hyos-server /opt/scripts/cmd/schedule-update.sh
 
 # Check if scheduled
-docker exec hyos /opt/scripts/cmd/schedule-update.sh --check
+docker exec hyos-server /opt/scripts/cmd/schedule-update.sh --check
 
 # Cancel
-docker exec hyos /opt/scripts/cmd/schedule-update.sh --clear
+docker exec hyos-server /opt/scripts/cmd/schedule-update.sh --clear
 ```
 
 Creates a `.update-on-restart` flag file (JSON with target version) that the entrypoint checks on startup.
@@ -452,10 +452,10 @@ Periodic health probe for Docker and the Manager UI.
 
 ```bash
 # Simple check (exit 0 = healthy, 1 = unhealthy)
-docker exec hyos /opt/scripts/healthcheck.sh
+docker exec hyos-server /opt/scripts/healthcheck.sh
 
 # JSON output
-docker exec hyos /opt/scripts/healthcheck.sh --json
+docker exec hyos-server /opt/scripts/healthcheck.sh --json
 ```
 
 **Checks Performed:**

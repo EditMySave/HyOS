@@ -16,7 +16,7 @@ const docker = new Docker({ socketPath: "/var/run/docker.sock" });
  */
 async function getServerContainer(): Promise<Docker.Container> {
   const config = await loadConfig();
-  const containerName = config.containerName || "hyos";
+  const containerName = config.containerName || "hyos-server";
   return docker.getContainer(containerName);
 }
 

@@ -17,10 +17,22 @@ groups:
     description: Configure Network for Hytale
   - name: Storage Configuration
     description: Configure Storage for Hytale
+  - name: Labels Configuration
+    description: Configure Labels for Hytale
   - name: Resources Configuration
     description: Configure Resources for Hytale
 
 questions:
+  - variable: TZ
+    group: Hytale Server Configuration
+    label: Timezone
+    schema:
+      type: string
+      default: Etc/UTC
+      required: true
+      $ref:
+        - definitions/timezone
+
   # ============================================================================
   # Group 1: Hytale Server Configuration
   # ============================================================================
@@ -416,7 +428,7 @@ questions:
                 label: Port Number
                 schema:
                   type: int
-                  default: 5520
+                  default: 30520
                   min: 1
                   max: 65535
                   required: true
@@ -440,7 +452,6 @@ questions:
           description: The TCP port for REST API access
           schema:
             type: dict
-            show_if: [["api.enabled", "=", true]]
             attrs:
               - variable: bind_mode
                 label: Port Bind Mode
@@ -458,7 +469,7 @@ questions:
                 label: Port Number
                 schema:
                   type: int
-                  default: 8080
+                  default: 30080
                   min: 1
                   max: 65535
                   required: true
@@ -482,7 +493,6 @@ questions:
           description: The TCP port for the HyOS Manager web UI
           schema:
             type: dict
-            show_if: [["manager.enabled", "=", true]]
             attrs:
               - variable: bind_mode
                 label: Port Bind Mode
@@ -500,7 +510,7 @@ questions:
                 label: Port Number
                 schema:
                   type: int
-                  default: 3000
+                  default: 30300
                   min: 1
                   max: 65535
                   required: true
@@ -770,7 +780,49 @@ questions:
                               required: true
 
   # ============================================================================
-  # Group 10: Resources Configuration
+  # Group 10: Labels Configuration
+  # ============================================================================
+  - variable: labels
+    label: ""
+    group: Labels Configuration
+    schema:
+      type: list
+      default: []
+      items:
+        - variable: label
+          label: Label
+          schema:
+            type: dict
+            attrs:
+              - variable: key
+                label: Key
+                schema:
+                  type: string
+                  required: true
+              - variable: value
+                label: Value
+                schema:
+                  type: string
+                  required: true
+              - variable: containers
+                label: Containers
+                description: Containers where the label should be applied
+                schema:
+                  type: list
+                  items:
+                    - variable: container
+                      label: Container
+                      schema:
+                        type: string
+                        required: true
+                        enum:
+                          - value: hytale-server
+                            description: hytale-server
+                          - value: hytale-manager
+                            description: hytale-manager
+
+  # ============================================================================
+  # Group 11: Resources Configuration
   # ============================================================================
   - variable: resources
     label: ""

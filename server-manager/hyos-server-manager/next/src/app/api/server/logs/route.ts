@@ -61,7 +61,7 @@ export async function GET(request: Request) {
   const since = parseInt(searchParams.get("since") || "0", 10);
 
   const config = await loadConfig();
-  const containerName = config.containerName || "hyos";
+  const containerName = config.containerName || "hyos-server";
   const stateDir = config.stateDir || "/data/.state";
 
   let logs = "";

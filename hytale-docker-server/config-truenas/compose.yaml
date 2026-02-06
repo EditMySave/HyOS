@@ -11,8 +11,14 @@
 # 5. Adjust memory settings based on your system (minimum 8GB recommended)
 #
 # ACCESS:
-# - Game Server: UDP port 5520
-# - Management UI: http://your-truenas-ip:3000
+# - Game Server: UDP port 30520
+# - Management UI: http://your-truenas-ip:30300
+#
+# PORT CONVENTION:
+# Host ports use the 30xxx range to avoid conflicts with other TrueNAS apps.
+# The Hytale server default is UDP 5520 — if you are not running other apps
+# that conflict, you can change the host ports back (e.g., "5520:5520/udp").
+# Internal container ports (5520, 8080, 3000) are unchanged.
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -24,12 +30,12 @@ x-api-config: &api-config
   API_CLIENT_ID: ${API_CLIENT_ID:-hyos-manager}
 
 services:
-  hytale:
-    # Use pre-built image from Docker Hub
+  hyos-server:
+    # Use pre-built image from GHCR (published by CI)
     # Using :latest with pull_policy: always ensures restarts pull the latest image
-    image: riceheadv8/hyos:latest
+    image: ghcr.io/editmysave/hyos/server:latest
     pull_policy: always
-    container_name: hyos
+    container_name: hyos-server
 
     # Run as TrueNAS apps user (568:568) - ensure dataset matches
     user: "568:568"
@@ -124,9 +130,9 @@ services:
     # Exposed ports
     ports:
       # UDP port for Hytale QUIC protocol (game traffic)
-      - "5520:5520/udp"
+      - "30520:5520/udp"
       # HTTP port for REST API (optional - comment out if not using API)
-      - "8080:8080/tcp"
+      - "30080:8080/tcp"
 
     # Volume mounts
     # IMPORTANT: Update the host path to your TrueNAS dataset
@@ -134,13 +140,14 @@ services:
       # Server data (world, config, mods, backups, auth)
       - /mnt/tank/apps/hytale:/data:rw
 
-    # Health check using modular script
-    healthcheck:
-      test: ["CMD", "/opt/scripts/healthcheck.sh"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 180s
+    # Healthcheck disabled: server blocks on OAuth device flow at first start,
+    # which prevents the healthcheck from passing until auth is complete.
+    # healthcheck:
+    #   test: ["CMD", "/opt/scripts/healthcheck.sh"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 180s
 
     # Graceful shutdown
     stop_grace_period: 30s
@@ -159,8 +166,8 @@ services:
   # ===========================================================================
   # Server Manager (Web UI)
   # ===========================================================================
-  manager:
-    image: riceheadv8/hyos-manager:latest
+  hyos-manager:
+    image: ghcr.io/editmysave/hyos/manager:latest
     pull_policy: always
     container_name: hyos-manager
 
@@ -181,9 +188,9 @@ services:
 
       # Adapter configuration
       ADAPTER_TYPE: rest
-      HYTALE_CONTAINER_NAME: hyos
+      HYTALE_CONTAINER_NAME: hyos-server
       HYTALE_STATE_DIR: /data/.state
-      HYTALE_SERVER_HOST: hytale
+      HYTALE_SERVER_HOST: hyos-server
       HYTALE_SERVER_PORT: "8080"
 
       # Node environment
@@ -191,7 +198,7 @@ services:
 
     # Web UI port
     ports:
-      - "3000:3000"
+      - "30300:3000"
 
     # Volume mounts
     volumes:
@@ -202,7 +209,7 @@ services:
 
     # Depends on the Hytale server
     depends_on:
-      - hytale
+      - hyos-server
 
     # Health check
     healthcheck:
@@ -210,7 +217,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 60s
 
     # Logging
     logging:

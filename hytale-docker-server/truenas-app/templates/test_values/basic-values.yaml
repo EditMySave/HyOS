@@ -55,17 +55,22 @@ run_as:
 network:
   game_port:
     bind_mode: published
-    port_number: 5520
+    port_number: 30520
     host_ips: []
   api_port:
     bind_mode: published
-    port_number: 8080
+    port_number: 30080
     host_ips: []
   manager_port:
     bind_mode: published
-    port_number: 3000
+    port_number: 30300
     host_ips: []
   host_network: false
+
+labels: []
+
+ix_volumes:
+  data: /opt/tests/mnt/hyos/data
 
 storage:
   data:
@@ -74,6 +79,7 @@ storage:
       acl_enable: false
       dataset_name: data
       acl_entries: {}
+      create_host_path: true
     host_path_config:
       acl_enable: false
       acl: {}

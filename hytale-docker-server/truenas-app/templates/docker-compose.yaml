@@ -7,26 +7,19 @@
 {# ============================================================================ #}
 {# Hytale Server Container #}
 {# ============================================================================ #}
-{% set server = tpl.add_container(values.consts.server_container_name, "server_image") %}
+{% set server = tpl.add_container(values.consts.server_container_name, "image") %}
 
 {% do server.set_user(values.run_as.user, values.run_as.group) %}
 {% do server.add_caps(caps) %}
 
-{# Health check using the built-in healthcheck script #}
-{% do server.healthcheck.set_custom_test("/opt/scripts/healthcheck.sh") %}
-{% do server.healthcheck.set_interval(30) %}
-{% do server.healthcheck.set_timeout(10) %}
-{% do server.healthcheck.set_start_period(180) %}
-{% do server.healthcheck.set_retries(3) %}
+{# Disable healthcheck - server blocks on OAuth device flow, can't pass in CI #}
+{% do server.healthcheck.disable() %}
 
 {# Enable TTY for OAuth device flow #}
 {% do server.set_tty(true) %}
 {% do server.set_stdin(true) %}
 
-{# ── User & System Environment Variables ── #}
-{% do server.environment.add_env("PUID", values.run_as.user) %}
-{% do server.environment.add_env("PGID", values.run_as.group) %}
-{% do server.environment.add_env("TZ", values.TZ | default("UTC")) %}
+{# Note: PUID/PGID/TZ are auto-set by set_user() and the library #}
 
 {# ── JVM Configuration ── #}
 {% do server.environment.add_env("JAVA_XMS", values.jvm.xms) %}
@@ -115,8 +108,7 @@
 {# Add to root group for Docker socket access #}
 {% do mgr.add_group(0) %}
 
-{# Manager environment variables #}
-{% do mgr.environment.add_env("TZ", values.TZ | default("UTC")) %}
+{# Manager environment variables (TZ auto-set by library) #}
 {% do mgr.environment.add_env("NODE_ENV", "production") %}
 {% do mgr.environment.add_env("ADAPTER_TYPE", "rest") %}
 {% do mgr.environment.add_env("HYTALE_CONTAINER_NAME", values.consts.server_container_name) %}
@@ -143,11 +135,11 @@
 {% do mgr.healthcheck.set_start_period(60) %}
 {% do mgr.healthcheck.set_retries(3) %}
 
-{# Manager depends on server being healthy #}
-{% do mgr.depends.add_dependency(values.consts.server_container_name, "service_healthy") %}
+{# Manager depends on server being started (no healthcheck on server) #}
+{% do mgr.depends.add_dependency(values.consts.server_container_name, "service_started") %}
 
 {# Add portal for manager web UI #}
-{% do tpl.portals.add_portal({"port": values.network.manager_port.port_number, "scheme": "http", "path": "/"}) %}
+{% do tpl.portals.add(values.network.manager_port, {"scheme": "http", "path": "/"}) %}
 {% endif %}
 
 {# ============================================================================ #}

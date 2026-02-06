@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const managerConfigSchema = z.object({
-  serverHost: z.string().default("hyos"),
+  serverHost: z.string().default("hyos-server"),
   serverPort: z.coerce.number().default(8080),
-  containerName: z.string().default("hyos"),
+  containerName: z.string().default("hyos-server"),
   apiClientId: z.string().default("hyos-manager"),
   apiClientSecret: z.string().optional(),
   stateDir: z.string().default("/data/.state"),

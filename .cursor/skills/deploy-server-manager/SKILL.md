@@ -32,7 +32,7 @@ The system deploys two containers that communicate:
 
 | File | Purpose | Manager Image |
 |------|---------|---------------|
-| `compose.yaml` | Production (TrueNAS) | `riceheadv8/hyos-manager:latest` (pulls from Hub) |
+| `compose.yaml` | Production (TrueNAS) | `ghcr.io/editmysave/hyos/manager:latest` (pulls from GHCR) |
 | `docker-compose.yml` | Local build/test | Builds from local source |
 
 **Important**: Always use `-f docker-compose.yml` for local builds:
@@ -71,47 +71,17 @@ cd server-manager/hyos-server-manager/next
 docker build -t hyos-manager:latest .
 
 # Or with version tag
-docker build -t riceheadv8/hyos-manager:v1.0.0 .
+docker build -t hyos-manager:v1.0.0 .
 ```
 
-### Push to Docker Hub
+### Publishing to GHCR
 
-```bash
-cd hytale-docker-server/config-truenas
+Production images are published automatically via GitHub Actions CI on push to `main`. No manual push needed.
 
-# Build and tag for Hub
-docker compose -f docker-compose.yml build
-
-# Tag images
-docker tag hyos:truenas riceheadv8/hyos:latest
-docker tag hyos-manager:latest riceheadv8/hyos-manager:latest
-
-# Push both
-docker push riceheadv8/hyos:latest
-docker push riceheadv8/hyos-manager:latest
-```
-
-### Multi-Architecture Publish (buildx)
-
-Use **docker buildx** with the `multiarch` builder to publish. Requires `docker login` first.
-
-**HyOS server** (amd64 only; Hytale downloader is amd64):
-
-```bash
-cd hytale-docker-server/config-truenas
-docker buildx build --builder multiarch --platform linux/amd64 --no-cache \
-  -t riceheadv8/hyos:latest --push -f Dockerfile .
-```
-
-**Manager** (multi-arch amd64 + arm64):
-
-```bash
-cd server-manager/hyos-server-manager/next
-docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --no-cache \
-  -t riceheadv8/hyos-manager:latest --push -f Dockerfile .
-```
-
-Ensure the `multiarch` builder exists: `docker buildx ls`. Create with `docker buildx create --name multiarch --use` if missing.
+| Image | Registry |
+|-------|----------|
+| Server | `ghcr.io/editmysave/hyos/server:latest` |
+| Manager | `ghcr.io/editmysave/hyos/manager:latest` |
 
 ## Manager Configuration
 
@@ -270,8 +240,7 @@ pnpm dev
 
 ```
 Deployment Checklist:
-- [ ] Server image built and pushed (riceheadv8/hyos:latest)
-- [ ] Manager image built and pushed (riceheadv8/hyos-manager:latest)
+- [ ] CI passing on main (images auto-published to GHCR)
 - [ ] API_CLIENT_SECRET set (min 8 chars)
 - [ ] Volume path updated (/mnt/tank/apps/hytale)
 - [ ] Ports available (5520/udp, 8080/tcp, 3000/tcp)

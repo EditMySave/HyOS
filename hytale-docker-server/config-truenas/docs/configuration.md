@@ -200,7 +200,7 @@ environment:
 
 ```bash
 # Check once per hour, update and restart if needed
-0 * * * * docker exec hyos /opt/scripts/cmd/auto-update.sh --once
+0 * * * * docker exec hyos-server /opt/scripts/cmd/auto-update.sh --once
 ```
 
 ## Hytale CLI Options

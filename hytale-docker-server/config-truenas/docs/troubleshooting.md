@@ -57,13 +57,15 @@ If using a non-default UID, set both `PUID`/`PGID` environment variables and the
 **Fix**:
 
 ```bash
-# Check what's using port 5520
-ss -tulnp | grep 5520
+# Check what's using port 30520
+ss -tulnp | grep 30520
 
-# Use a different port
-# In compose.yaml:
+# Use a different host port in compose.yaml:
 # ports:
-#   - "5521:5520/udp"
+#   - "30521:5520/udp"
+#
+# Or use the default Hytale port if no conflicts exist:
+#   - "5520:5520/udp"
 ```
 
 ---
@@ -76,7 +78,7 @@ ss -tulnp | grep 5520
 
 **Fix**:
 
-1. Watch logs in real-time for the auth prompt: `docker logs -f hyos`
+1. Watch logs in real-time for the auth prompt: `docker logs -f hyos-server`
 2. Do not restart the container during authentication
 3. Complete the flow within 15 minutes
 4. If timed out, restart the container to get a new code
@@ -92,7 +94,7 @@ ss -tulnp | grep 5520
 rm /mnt/tank/apps/hytale/.auth/tokens.json
 
 # Restart to trigger re-authentication
-docker restart hyos
+docker restart hyos-server
 ```
 
 ### Re-Authentication
@@ -103,7 +105,7 @@ docker restart hyos
 
 ```bash
 # Interactive re-auth
-docker exec -it hyos /opt/scripts/cmd/auth-init.sh
+docker exec -it hyos-server /opt/scripts/cmd/auth-init.sh
 ```
 
 ### Token Injection Not Working
@@ -144,11 +146,11 @@ All three are required. Cached tokens take priority — clear `/data/.auth/token
 
 ```bash
 # Validate the config manually
-docker exec hyos cat /data/server/config.json | jq .
+docker exec hyos-server cat /data/server/config.json | jq .
 
 # Reset to generated config
-docker exec hyos rm /data/server/config.json
-docker restart hyos
+docker exec hyos-server rm /data/server/config.json
+docker restart hyos-server
 ```
 
 If using `HYTALE_CONFIG_JSON`, validate the JSON string is properly escaped in your compose file.
@@ -207,10 +209,10 @@ See [Content-Only Mod Patching](mods-and-plugins.md#content-only-mod-patching) f
 
 ```bash
 # View mod loading state
-docker exec hyos cat /data/.state/mods.json | jq .
+docker exec hyos-server cat /data/.state/mods.json | jq .
 
 # View broken mods list
-docker exec hyos cat /data/.broken-mods
+docker exec hyos-server cat /data/.broken-mods
 ```
 
 ### Enable Verbose Diagnostics
@@ -275,14 +277,14 @@ If you changed the password, set `API_REGENERATE_CONFIG=true` on the server to f
 
    ```yaml
    # Manager environment
-   HYTALE_SERVER_HOST: hytale  # Must match the server service name in compose
+   HYTALE_SERVER_HOST: hyos-server  # Must match the server service name in compose
    HYTALE_SERVER_PORT: "8080"
    ```
 
 3. Verify the API is listening:
 
    ```bash
-   docker exec hyos ss -tlnp | grep 8080
+   docker exec hyos-server ss -tlnp | grep 8080
    ```
 
 ### Docker Socket Access
@@ -320,12 +322,12 @@ If you changed the password, set `API_REGENERATE_CONFIG=true` on the server to f
 
 ```bash
 # Stop the server first
-docker exec hyos /opt/scripts/cmd/update.sh --check
+docker exec hyos-server /opt/scripts/cmd/update.sh --check
 
 # If update available, stop and update
-docker stop hyos
-docker exec hyos /opt/scripts/cmd/update.sh --backup --force
-docker start hyos
+docker stop hyos-server
+docker exec hyos-server /opt/scripts/cmd/update.sh --backup --force
+docker start hyos-server
 ```
 
 ### Rollback After Failed Update
@@ -345,11 +347,11 @@ cp -r /mnt/tank/apps/hytale/backup-2026.01.17-20260119120000/Server/* \
 
 ```bash
 # Check if update is scheduled
-docker exec hyos /opt/scripts/cmd/schedule-update.sh --check
+docker exec hyos-server /opt/scripts/cmd/schedule-update.sh --check
 
 # Clear and reschedule
-docker exec hyos /opt/scripts/cmd/schedule-update.sh --clear
-docker exec hyos /opt/scripts/cmd/schedule-update.sh
+docker exec hyos-server /opt/scripts/cmd/schedule-update.sh --clear
+docker exec hyos-server /opt/scripts/cmd/schedule-update.sh
 ```
 
 The update applies on the next container restart, not immediately.
@@ -362,20 +364,20 @@ The update applies on the next container restart, not immediately.
 
 ```bash
 # Simple check
-docker exec hyos /opt/scripts/healthcheck.sh
+docker exec hyos-server /opt/scripts/healthcheck.sh
 
 # Detailed JSON output
-docker exec hyos /opt/scripts/healthcheck.sh --json
+docker exec hyos-server /opt/scripts/healthcheck.sh --json
 
 # Docker health status
-docker inspect --format='{{.State.Health.Status}}' hyos
+docker inspect --format='{{.State.Health.Status}}' hyos-server
 ```
 
 ### Common Health Check Failures
 
 | Check | Failure Reason | Fix |
 |-------|---------------|-----|
-| `process` | Server process not running | Check logs: `docker logs hyos` |
+| `process` | Server process not running | Check logs: `docker logs hyos-server` |
 | `port` | UDP 5520 not bound | Server may still be starting (wait for start_period) |
 | `data_dir` | `/data` not writable | Fix permissions: `chown -R 568:568 /data` |
 | `jar` | `HytaleServer.jar` missing | Server files not downloaded; check auth |
@@ -397,7 +399,7 @@ During this period, the container is not marked unhealthy even if checks fail.
 
 | Log | Location | Access |
 |-----|----------|--------|
-| Container stdout | Docker log driver | `docker logs hyos` |
+| Container stdout | Docker log driver | `docker logs hyos-server` |
 | Server game logs | `/data/server/logs/` | Files on disk |
 | Auto-update logs | `/data/logs/auto-update.log` | File on disk |
 | Class loading logs | `/data/server/logs/classloading.log` | When `DEBUG_CLASSLOADING=true` |
@@ -406,11 +408,11 @@ During this period, the container is not marked unhealthy even if checks fail.
 
 ```bash
 # View recent server logs
-docker logs --tail 100 hyos
+docker logs --tail 100 hyos-server
 
 # Follow logs in real-time
-docker logs -f hyos
+docker logs -f hyos-server
 
 # View auto-update history
-docker exec hyos cat /data/logs/auto-update.log
+docker exec hyos-server cat /data/logs/auto-update.log
 ```

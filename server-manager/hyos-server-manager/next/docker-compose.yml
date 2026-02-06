@@ -6,7 +6,7 @@
 # Usage:
 #   docker compose up -d
 #
-# Note: This expects the Hytale server to be running in a container named "hyos"
+# Note: This expects the Hytale server to be running in a container named "hyos-server"
 
 services:
   manager:
@@ -17,7 +17,7 @@ services:
     environment:
       # Adapter configuration
       - ADAPTER_TYPE=rest
-      - HYTALE_CONTAINER_NAME=hyos
+      - HYTALE_CONTAINER_NAME=hyos-server
       - HYTALE_STATE_DIR=/data/.state
       - HYTALE_SERVER_HOST=host.docker.internal
       - HYTALE_SERVER_PORT=8080

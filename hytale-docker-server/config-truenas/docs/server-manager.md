@@ -25,11 +25,11 @@ The Manager runs as a separate container alongside the Hytale server. It communi
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `HYTALE_SERVER_HOST` | `hyos` | Hostname of the Hytale server container |
+| `HYTALE_SERVER_HOST` | `hyos-server` | Hostname of the Hytale server container |
 | `HYTALE_SERVER_PORT` | `8080` | REST API port on the server |
 | `REST_API_CLIENT_ID` | `hyos-manager` | Client ID for API authentication |
 | `REST_API_CLIENT_SECRET` | — | Client secret — **must match** the server's `API_CLIENT_SECRET` |
-| `HYTALE_CONTAINER_NAME` | `hyos` | Docker container name (for start/stop/restart) |
+| `HYTALE_CONTAINER_NAME` | `hyos-server` | Docker container name (for start/stop/restart) |
 | `HYTALE_STATE_DIR` | `/data/.state` | Path to shared state files |
 | `ADAPTER_TYPE` | `rest` | Connection adapter (`rest` for API-based control) |
 | `NODE_ENV` | `production` | Node.js environment |

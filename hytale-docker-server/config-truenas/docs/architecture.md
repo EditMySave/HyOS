@@ -21,9 +21,9 @@ graph LR
     Browser["Browser<br/>(Player)"] -- "UDP 5520<br/>QUIC" --> HS
 
     subgraph Docker["Docker Host"]
-        HS["Hytale Server<br/>riceheadv8/hyos"]
+        HS["Hytale Server<br/>ghcr.io/editmysave/hyos/server"]
         API["API Plugin<br/>(inside HS)"]
-        MGR["HyOS Manager<br/>riceheadv8/hyos-manager"]
+        MGR["HyOS Manager<br/>ghcr.io/editmysave/hyos/manager"]
 
         HS --- API
         MGR -- "HTTP 8080<br/>REST API" --> API
@@ -40,8 +40,8 @@ graph LR
 
 | Component | Image | Role |
 |-----------|-------|------|
-| Hytale Server | `riceheadv8/hyos` | Game server with entrypoint scripts, API plugin |
-| HyOS Manager | `riceheadv8/hyos-manager` | Next.js web dashboard |
+| Hytale Server | `ghcr.io/editmysave/hyos/server` | Game server with entrypoint scripts, API plugin |
+| HyOS Manager | `ghcr.io/editmysave/hyos/manager` | Next.js web dashboard |
 | Docker Daemon | — | Container lifecycle control (via socket) |
 
 ---
@@ -277,13 +277,13 @@ interface UpdateState {
 
 ## Port Mapping
 
-| Port | Protocol | Service | Description |
-|------|----------|---------|-------------|
-| 5520 | UDP | Hytale Server | QUIC game traffic (player connections) |
-| 8080 | TCP | API Plugin | REST API for server management |
-| 3000 | TCP | HyOS Manager | Web UI dashboard |
+| Host Port | Container Port | Protocol | Service | Description |
+|-----------|---------------|----------|---------|-------------|
+| 30520 | 5520 | UDP | Hytale Server | QUIC game traffic (player connections) |
+| 30080 | 8080 | TCP | API Plugin | REST API for server management |
+| 30300 | 3000 | TCP | HyOS Manager | Web UI dashboard |
 
-All ports are configurable via environment variables (`SERVER_PORT`, `API_PORT`, manager's `ports` in compose).
+Host ports use the 30xxx range to avoid conflicts with other TrueNAS apps. The default Hytale server port is UDP 5520 — if no conflicts exist on your system, you can map host ports directly (e.g., `5520:5520/udp`). Internal container ports are configurable via environment variables (`SERVER_PORT`, `API_PORT`).
 
 ---
 

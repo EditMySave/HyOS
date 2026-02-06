@@ -1,10 +1,13 @@
 images:
-  server_image:
-    repository: riceheadv8/hyos
-    tag: "1.0.0"
+  image:
+    repository: ghcr.io/editmysave/hyos/server
+    tag: sha-e8d81e7
   manager_image:
-    repository: riceheadv8/hyos-manager
-    tag: "1.0.0"
+    repository: ghcr.io/editmysave/hyos/manager
+    tag: sha-e8d81e7
+  container_utils_image:
+    repository: ixsystems/container-utils
+    tag: 1.0.2
 
 consts:
   server_container_name: hytale-server

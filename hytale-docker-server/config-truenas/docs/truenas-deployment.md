@@ -16,7 +16,7 @@ The native app integrates with the TrueNAS SCALE app catalog and provides a guid
 
 ### How It Works
 
-The app is defined by four files in the `truenas-app/` directory:
+The app is defined by the following files in the `truenas-app/` directory:
 
 | File | Purpose |
 |------|---------|
@@ -24,6 +24,9 @@ The app is defined by four files in the `truenas-app/` directory:
 | `questions.yaml` | Defines the TrueNAS UI configuration form (all settings groups) |
 | `ix_values.yaml` | Default values and container image references |
 | `templates/docker-compose.yaml` | Jinja2 template that generates the actual Docker Compose from user inputs |
+| `templates/test_values/basic-values.yaml` | Test fixture for CI validation of the Jinja2 template |
+| `item.yaml` | Catalog item metadata (train, categories) |
+| `icon.png` | App icon displayed in the TrueNAS catalog |
 
 ### Requirements
 
@@ -46,6 +49,7 @@ The TrueNAS UI presents settings in organized groups:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
+| TZ Timezone | `Etc/UTC` | Timezone for logs and scheduled tasks (e.g., `America/New_York`) |
 | Server Name | `Hytale Server` | Display name in the server list |
 | Server MOTD | — | Message of the day |
 | Server Password | — | Leave empty for a public server |
@@ -87,7 +91,7 @@ The TrueNAS UI presents settings in organized groups:
 |---------|---------|-------------|
 | Enable Manager | `true` | Deploy the HyOS Manager web UI alongside the server |
 
-When enabled, a second container (`hytale-manager`) is deployed with access to shared state files and the Docker socket.
+When enabled, a second container (`hyos-manager`) is deployed with access to shared state files and the Docker socket.
 
 #### 6. Advanced Configuration
 
@@ -116,9 +120,9 @@ Toggle **Show Advanced Options** to reveal:
 
 | Port | Protocol | Default | Description |
 |------|----------|---------|-------------|
-| Game Port | UDP | `5520` | Hytale QUIC game traffic |
-| API Port | TCP | `8080` | REST API for the Manager |
-| Manager Port | TCP | `3000` | Web UI |
+| Game Port | UDP | `30520` | Hytale QUIC game traffic |
+| API Port | TCP | `30080` | REST API for the Manager |
+| Manager Port | TCP | `30300` | Web UI |
 
 Each port supports bind modes: `published` (accessible from host), `exposed` (container-only), or `none`.
 
@@ -133,7 +137,11 @@ Each port supports bind modes: `published` (accessible from host), `exposed` (co
 
 **Additional storage** — mount extra paths using host paths, ixVolume, SMB/CIFS, or NFS.
 
-#### 10. Resources
+#### 10. Labels Configuration
+
+Apply custom Docker labels to containers. Each label has a key, value, and target container selection (`hytale-server` and/or `hytale-manager`).
+
+#### 11. Resources
 
 | Setting | Default | Description |
 |---------|---------|-------------|
@@ -145,7 +153,7 @@ Each port supports bind modes: `published` (accessible from host), `exposed` (co
 1. Check container logs for the OAuth authentication prompt
 2. Complete the device code flow within 15 minutes
 3. The server will download game files and start automatically
-4. Access the Manager UI at `http://your-truenas-ip:3000`
+4. Access the Manager UI at `http://your-truenas-ip:30300`
 
 ---
 
