@@ -1,0 +1,369 @@
+# Configuration Reference
+
+All server behavior is controlled through environment variables set in your `compose.yaml` or TrueNAS app configuration.
+
+## Table of Contents
+
+- [User & Permissions](#user--permissions)
+- [JVM Memory](#jvm-memory)
+- [Garbage Collector](#garbage-collector)
+- [Server Settings](#server-settings)
+- [Config Generation](#config-generation)
+- [Whitelist](#whitelist)
+- [Auto-Update](#auto-update)
+- [Hytale CLI Options](#hytale-cli-options)
+- [API Plugin](#api-plugin)
+- [Token Injection](#token-injection)
+- [Debug](#debug)
+- [Memory Sizing Guidelines](#memory-sizing-guidelines)
+- [Config Generation Modes](#config-generation-modes)
+
+---
+
+## User & Permissions
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `PUID` | integer | `568` | User ID for the server process. TrueNAS default is 568. |
+| `PGID` | integer | `568` | Group ID for the server process. Match to dataset ownership. |
+| `UMASK` | string | `002` | File creation mask. `002` = group writable. |
+| `TZ` | string | `UTC` | Timezone for logs and scheduled tasks (e.g., `America/New_York`). |
+
+```yaml
+environment:
+  PUID: 568
+  PGID: 568
+  UMASK: "002"
+  TZ: America/New_York
+```
+
+## JVM Memory
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `JAVA_XMS` | string | `4G` | Initial heap size. Minimum 4G recommended. |
+| `JAVA_XMX` | string | `8G` | Maximum heap size. Set to 50-75% of available RAM. |
+| `JAVA_OPTS` | string | — | Additional JVM options (appended to the command). |
+| `JVM_XX_OPTS` | string | — | Additional `-XX:` JVM options (appended). |
+
+```yaml
+environment:
+  JAVA_XMS: 4G
+  JAVA_XMX: 8G
+  JAVA_OPTS: -Dfile.encoding=UTF-8
+```
+
+See [Memory Sizing Guidelines](#memory-sizing-guidelines) for recommendations based on player count.
+
+## Garbage Collector
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `USE_ZGC` | boolean | `false` | Use ZGC instead of G1GC. Better for low-latency but higher memory overhead. |
+| `G1_MAX_PAUSE` | integer | `200` | G1GC max pause time in milliseconds. |
+| `G1_NEW_SIZE_PERCENT` | integer | — | G1GC new generation size as percentage of heap. |
+| `G1_MAX_NEW_SIZE_PERCENT` | integer | — | G1GC max new generation size as percentage. |
+| `G1_HEAP_REGION_SIZE` | string | — | G1GC heap region size (e.g., `16m`). |
+| `ZGC_INTERVAL` | integer | — | ZGC collection interval in seconds. |
+
+**G1GC (default)** — balanced throughput and latency:
+
+```yaml
+environment:
+  USE_ZGC: "false"
+  G1_MAX_PAUSE: "200"
+```
+
+**ZGC** — ultra-low pause times (requires more RAM):
+
+```yaml
+environment:
+  USE_ZGC: "true"
+  ZGC_INTERVAL: "30"
+```
+
+## Server Settings
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `SERVER_PORT` | integer | `5520` | UDP port for the game server. Must match the exposed port. |
+| `PATCHLINE` | string | `release` | Server version channel: `release`, `staging`, or `nightly`. |
+| `ENABLE_AOT` | boolean | `true` | Use AOT (Ahead-of-Time) compilation cache for faster startup. |
+
+## Config Generation
+
+The container auto-generates `config.json` from environment variables on each startup. Set `SKIP_CONFIG_GENERATION=true` to manage the file manually.
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `SKIP_CONFIG_GENERATION` | boolean | `false` | Skip auto-generation; manage `config.json` manually. |
+| `SERVER_NAME` | string | `Hytale Server` | Server name displayed in the server list. |
+| `SERVER_MOTD` | string | — | Message of the day shown to players on join. |
+| `SERVER_PASSWORD` | string | — | Server password. Leave empty for a public server. |
+| `MAX_PLAYERS` | integer | `100` | Maximum concurrent players. |
+| `MAX_VIEW_RADIUS` | integer | `32` | Maximum view distance in chunks. |
+| `DEFAULT_WORLD` | string | `default` | Default world name on join. |
+| `DEFAULT_GAMEMODE` | string | `Adventure` | Default game mode: `Adventure`, `Creative`, or `Survival`. |
+| `LOCAL_COMPRESSION` | boolean | `false` | Enable local compression. |
+| `DISPLAY_TMP_TAGS` | boolean | `false` | Display temporary tags in strings. |
+| `PLAYER_STORAGE_TYPE` | string | `Hytale` | Player data storage type. |
+| `HYTALE_CONFIG_JSON` | string | — | Full `config.json` override as a JSON string. |
+
+```yaml
+environment:
+  SERVER_NAME: "My Awesome Server"
+  SERVER_MOTD: "Welcome!"
+  MAX_PLAYERS: "50"
+  DEFAULT_GAMEMODE: Adventure
+```
+
+**Generated `config.json` structure:**
+
+```json
+{
+  "Version": 3,
+  "ServerName": "My Awesome Server",
+  "MOTD": "Welcome!",
+  "Password": "",
+  "MaxPlayers": 50,
+  "MaxViewRadius": 32,
+  "LocalCompressionEnabled": false,
+  "Defaults": {
+    "World": "default",
+    "GameMode": "Adventure"
+  },
+  "ConnectionTimeouts": { "JoinTimeouts": {} },
+  "RateLimit": {},
+  "Modules": {},
+  "LogLevels": {},
+  "Mods": {},
+  "DisplayTmpTagsInStrings": false,
+  "PlayerStorage": { "Type": "Hytale" }
+}
+```
+
+See [Config Generation Modes](#config-generation-modes) for details on the three approaches.
+
+## Whitelist
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `WHITELIST_ENABLED` | boolean | `false` | Enable player whitelist. |
+| `WHITELIST_LIST` | string | — | Comma-separated list of allowed usernames. |
+| `WHITELIST_JSON` | string | — | Full `whitelist.json` override as a JSON string. |
+
+**Using a comma-separated list:**
+
+```yaml
+environment:
+  WHITELIST_ENABLED: "true"
+  WHITELIST_LIST: "player1,player2,player3"
+```
+
+**Using full JSON override:**
+
+```yaml
+environment:
+  WHITELIST_ENABLED: "true"
+  WHITELIST_JSON: '{"enabled": true, "players": ["player1", "player2"]}'
+```
+
+## Auto-Update
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `AUTO_UPDATE` | boolean | `false` | Check for and apply updates at container startup. |
+| `AUTO_UPDATE_INTERVAL` | integer | `3600` | Interval between update checks in seconds (background mode). |
+| `AUTO_UPDATE_TIME` | string | — | Specific time to check for updates (`HH:MM` format, e.g., `04:00`). |
+| `AUTO_UPDATE_RESTART` | boolean | `true` | Automatically restart the server after applying an update. |
+| `AUTO_UPDATE_BACKUP` | boolean | `true` | Create a backup before applying updates. |
+| `VERSION_CHECK_ENABLED` | boolean | `true` | Periodically refresh `version.json` for the Manager UI. |
+| `VERSION_CHECK_INTERVAL` | integer | `3600` | Seconds between version checks. |
+
+**Startup auto-update:**
+
+```yaml
+environment:
+  AUTO_UPDATE: "true"
+  AUTO_UPDATE_BACKUP: "true"
+```
+
+**Scheduled updates at a specific time:**
+
+```yaml
+environment:
+  AUTO_UPDATE: "true"
+  AUTO_UPDATE_TIME: "04:00"
+```
+
+**Cron-based updates on the host:**
+
+```bash
+# Check once per hour, update and restart if needed
+0 * * * * docker exec hyos /opt/scripts/cmd/auto-update.sh --once
+```
+
+## Hytale CLI Options
+
+All Hytale server CLI options are exposed as `HYTALE_*` environment variables.
+
+### Core
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `HYTALE_ACCEPT_EARLY_PLUGINS` | boolean | `false` | Accept early/experimental plugins. |
+| `HYTALE_ALLOW_OP` | boolean | `false` | Allow operator commands. |
+| `HYTALE_AUTH_MODE` | string | — | Authentication mode: `authenticated` or `offline`. |
+| `HYTALE_BARE` | boolean | `false` | Run in bare mode (minimal). |
+| `HYTALE_SINGLEPLAYER` | boolean | `false` | Run in singleplayer mode. |
+
+### Backups
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `HYTALE_BACKUP` | boolean | `false` | Enable automatic backups. |
+| `HYTALE_BACKUP_DIR` | string | `/data/backups` | Backup directory path. |
+| `HYTALE_BACKUP_FREQUENCY` | integer | `30` | Backup frequency in minutes. |
+| `HYTALE_BACKUP_MAX_COUNT` | integer | — | Maximum number of backups to keep. |
+
+```yaml
+environment:
+  HYTALE_BACKUP: "true"
+  HYTALE_BACKUP_FREQUENCY: "30"
+  HYTALE_BACKUP_MAX_COUNT: "10"
+```
+
+### Debug & Logging
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `HYTALE_DISABLE_SENTRY` | boolean | `false` | Disable Sentry error reporting. |
+| `HYTALE_DISABLE_FILE_WATCHER` | boolean | `false` | Disable file watcher for hot reloading. |
+| `HYTALE_EVENT_DEBUG` | boolean | `false` | Enable event debugging. |
+| `HYTALE_LOG` | string | — | Log level or configuration. |
+
+### Plugins & Mods
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `HYTALE_MODS` | string | — | Path to mods directory. Auto-detects `/data/mods` if present. |
+| `HYTALE_EARLY_PLUGINS` | string | — | Path to early plugins. |
+| `DEBUG_CLASSLOADING` | boolean | `false` | Enable verbose JVM class loading output for mod diagnostics. |
+| `SKIP_BROKEN_MODS` | boolean | `false` | Auto-quarantine mods that failed to load on previous startup. |
+
+### Worlds & Universe
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `HYTALE_UNIVERSE` | string | — | Path to universe data. |
+| `HYTALE_WORLD_GEN` | string | — | World generator configuration. |
+| `HYTALE_BOOT_COMMAND` | string | — | Command to run on server boot. |
+
+### Advanced
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `HYTALE_DISABLE_ASSET_COMPARE` | boolean | `false` | Disable asset comparison checks. |
+| `HYTALE_DISABLE_CPB_BUILD` | boolean | `false` | Disable CPB build. |
+| `HYTALE_FORCE_NETWORK_FLUSH` | integer | — | Force network flush interval. |
+| `HYTALE_GENERATE_SCHEMA` | boolean | `false` | Generate schema files. |
+| `HYTALE_MIGRATE_WORLDS` | string | — | Migrate worlds from path. |
+| `HYTALE_MIGRATIONS` | string | — | Migration configuration. |
+| `HYTALE_OWNER_NAME` | string | — | Server owner name. |
+| `HYTALE_PREFAB_CACHE` | string | — | Prefab cache path. |
+| `HYTALE_SHUTDOWN_AFTER_VALIDATE` | boolean | `false` | Shutdown after validation. |
+| `HYTALE_TRANSPORT` | string | — | Transport protocol configuration. |
+| `HYTALE_VALIDATE_ASSETS` | boolean | `false` | Validate assets on startup. |
+| `HYTALE_VALIDATE_PREFABS` | string | — | Validate prefabs. |
+| `HYTALE_VALIDATE_WORLD_GEN` | boolean | `false` | Validate world generation. |
+| `HYTALE_EXTRA_ARGS` | string | — | Additional server arguments (passthrough). |
+
+## API Plugin
+
+The built-in REST API plugin enables remote server management via the HyOS Manager.
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `API_ENABLED` | boolean | `true` | Enable the REST API plugin. |
+| `API_PORT` | integer | `8080` | HTTP port for the API. |
+| `API_CLIENT_ID` | string | `hyos-manager` | Client ID for API authentication. |
+| `API_CLIENT_SECRET` | string | — | Client secret (password) for API authentication. **Required** if API is enabled. |
+| `API_WEBSOCKET_ENABLED` | boolean | `true` | Enable WebSocket support for real-time updates. |
+| `API_WEBSOCKET_STATUS_INTERVAL` | integer | `1` | WebSocket status broadcast interval in seconds. |
+| `API_REGENERATE_CONFIG` | boolean | `false` | Force regenerate API config on startup to sync password from environment. |
+
+```yaml
+environment:
+  API_ENABLED: "true"
+  API_PORT: "8080"
+  API_CLIENT_SECRET: "your-secure-password"
+  API_WEBSOCKET_ENABLED: "true"
+```
+
+> The API plugin password is bcrypt-hashed before being written to config. The plaintext password is never stored on disk.
+
+## Token Injection
+
+For automated deployments (hosting providers), pre-inject authentication tokens to skip the interactive OAuth flow entirely.
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `HYTALE_SERVER_SESSION_TOKEN` | string | Pre-authenticated session token. |
+| `HYTALE_SERVER_IDENTITY_TOKEN` | string | Pre-authenticated identity token. |
+| `HYTALE_OWNER_UUID` | string | Server owner's UUID. |
+
+```yaml
+environment:
+  HYTALE_SERVER_SESSION_TOKEN: "eyJhbGciOiJSUzI1NiIs..."
+  HYTALE_SERVER_IDENTITY_TOKEN: "eyJhbGciOiJFUzI1NiIs..."
+  HYTALE_OWNER_UUID: "12345678-1234-1234-1234-123456789abc"
+```
+
+## Debug
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `DEBUG` | boolean | `false` | Enable debug logging in entrypoint scripts. |
+| `NO_COLOR` | boolean | `false` | Disable colored output in logs. |
+| `DEBUG_CLASSLOADING` | boolean | `false` | Enable verbose JVM class loading output. |
+
+---
+
+## Memory Sizing Guidelines
+
+| Server Type | Min Heap (`JAVA_XMX`) | Recommended | System RAM |
+|-------------|----------------------|-------------|------------|
+| Personal (1–10 players) | 4 GB | 6 GB | 8 GB |
+| Small (10–30 players) | 8 GB | 12 GB | 16 GB |
+| Medium (30–50 players) | 12 GB | 16 GB | 24 GB |
+| Large (50+ players) | 16 GB+ | 24 GB+ | 32 GB+ |
+
+> Set `JAVA_XMX` to 50–75% of available system RAM. Always leave headroom for the OS, Docker, and the Manager UI.
+
+---
+
+## Config Generation Modes
+
+There are three ways to manage `config.json`:
+
+### 1. Environment Variables (default)
+
+Set individual env vars (`SERVER_NAME`, `MAX_PLAYERS`, etc.) and the container generates `config.json` on each startup. This is the simplest approach and recommended for most users.
+
+### 2. Full JSON Override
+
+Set `HYTALE_CONFIG_JSON` to a complete JSON string. The container writes it directly to `config.json`, ignoring individual env vars.
+
+```yaml
+environment:
+  HYTALE_CONFIG_JSON: '{"Version":3,"ServerName":"Custom","MaxPlayers":20}'
+```
+
+### 3. Manual Management
+
+Set `SKIP_CONFIG_GENERATION=true` and edit `/data/server/config.json` directly on the host. The container will not overwrite your changes.
+
+```yaml
+environment:
+  SKIP_CONFIG_GENERATION: "true"
+```

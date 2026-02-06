@@ -1,0 +1,48 @@
+annotations:
+  min_scale_version: 24.10.2.2
+app_version: "1.0.0"
+capabilities:
+  - description: Hytale is able to change file ownership for data directory setup
+    name: CHOWN
+  - description: Hytale is able to bypass file permission checks during initialization
+    name: DAC_OVERRIDE
+  - description: Hytale is able to bypass ownership checks for file operations
+    name: FOWNER
+  - description: Hytale is able to change group ID for privilege dropping
+    name: SETGID
+  - description: Hytale is able to change user ID for privilege dropping
+    name: SETUID
+categories:
+  - games
+date_added: "2025-02-05"
+description: |
+  Hytale dedicated game server with web management UI, OAuth authentication,
+  auto-updates, mod support, and REST API for server control.
+home: https://hytale.com
+host_mounts: []
+icon: https://raw.githubusercontent.com/reisscashmore/hyos/main/assets/icon.png
+keywords:
+  - hytale
+  - game-server
+  - voxel
+  - sandbox
+lib_version: 2.1.78
+lib_version_hash: ""
+maintainers:
+  - email: reisscashmore@gmail.com
+    name: reisscashmore
+    url: https://github.com/reisscashmore
+name: hytale-server
+run_as_context:
+  - description: Hytale server and manager run as non-root user
+    gid: 568
+    group_name: hytale
+    uid: 568
+    user_name: hytale
+screenshots: []
+sources:
+  - https://github.com/reisscashmore/hyos
+  - https://hytale.com
+title: Hytale Server
+train: community
+version: 1.0.0
