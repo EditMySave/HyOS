@@ -22,7 +22,9 @@ renaming everything to hyos based
 Set the default ports to something sensible for truenas
 Proper Multi Arch building
 Ngrokking
-
+Bcrypt Auth
+Add server address to dashboard
+README
 
 
   1. Mod Search (Improvements)              

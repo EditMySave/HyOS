@@ -6,3 +6,7 @@ hytale-docker-server/config-truenas/data/**/*
 hytale-docker-server/config-truenas/plugins/**/*
 saves/**/*
 reference-implementations/**/*
+CLAUDE.md
+.cursor/**/*
+.claude/**/*
+.roo/**/*
