@@ -1,28 +1,19 @@
 
-Outdated Mods
-Mod Failed to Load pick up on that
-Check for mod loading in logs and load failures
-
-Mod Search
+Mod Search - Recommended
+Mod Upload as top button
 Truenas Catalog
 Pipelines
 Documentation
 File manager
 More logs scrollback
-Better installed mods button detection
 visit website button on mods
 Config.json confifurator winternode.com
-Recommended mods
-Better Mod Management
 Create new world
 Logs filtering on plugins
-Better restart tracking on installed mods / loading
 Fix running state of truenas image
 Mods page has gutters
-Update channel
+Update channel - pre release / main
 Docs website
-renaming everything to hyos based
-Set the default ports to something sensible for truenas
 Proper Multi Arch building
 Ngrokking
 Bcrypt Auth
@@ -30,8 +21,6 @@ Add server address to dashboard
 README
 
 Make OP has an error
-
-server update rollback
 
 New Tabs:
 Connected Players
