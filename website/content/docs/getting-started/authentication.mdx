@@ -1,0 +1,54 @@
+---
+title: Authentication
+description: How the OAuth device flow works and how to authenticate your Hytale server.
+---
+
+HyOS uses the OAuth 2.0 Device Authorization Flow to authenticate with the Hytale platform. This happens automatically on first run.
+
+## How It Works
+
+1. The container starts and detects no cached auth token
+2. It initiates the OAuth device flow and displays a code in the logs
+3. You visit the authorization URL, enter the code, and sign in with your Hytale account
+4. The container receives an access token and caches it at `/data/.auth/token.json`
+5. Subsequent restarts use the cached token (auto-refreshed when expired)
+
+## First-Time Setup
+
+Watch the container logs during first startup:
+
+```bash
+docker logs -f hytale-server
+```
+
+You will see output like:
+
+```
+[AUTH] Please visit: https://auth.hytale.com/device
+[AUTH] Enter code: ABCD-1234
+[AUTH] Waiting for authorization...
+```
+
+Visit the URL, enter the code, and authorize. The server will continue automatically.
+
+## Token Injection
+
+For automated deployments (CI/CD, scaling), you can inject a pre-obtained token via environment variables:
+
+```yaml
+environment:
+  - HYTALE_ACCESS_TOKEN=your-access-token
+  - HYTALE_REFRESH_TOKEN=your-refresh-token
+```
+
+This skips the interactive device flow entirely. See the [Configuration Reference](/docs/configuration) for details.
+
+## Token Storage
+
+Tokens are stored at `/data/.auth/token.json` inside the container. This path is within the mounted volume, so tokens persist across container restarts.
+
+## Troubleshooting
+
+- **Token expired and refresh fails**: Delete `/data/.auth/token.json` and restart the container to re-authenticate
+- **Device flow times out**: The code expires after 15 minutes — restart the container to get a new code
+- See [Troubleshooting](/docs/troubleshooting) for more authentication issues

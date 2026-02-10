@@ -1,0 +1,39 @@
+---
+title: HyOS Documentation
+description: Complete guide to deploying and managing Hytale dedicated servers with HyOS.
+---
+
+Welcome to the HyOS documentation. HyOS is a Docker-based ecosystem for running and managing Hytale dedicated servers.
+
+## Quick Links
+
+- [Getting Started](/docs/getting-started) - Deploy your first server in minutes
+- [Configuration](/docs/configuration) - Environment variables and server settings
+- [Server Management](/docs/server-management/dashboard) - Web dashboard guide
+- [Mods](/docs/mods) - Install and manage mods
+- [Deployment](/docs/deployment/truenas) - TrueNAS and Docker Compose deployment
+- [Architecture](/docs/architecture/overview) - System design and data flow
+- [Scripts Reference](/docs/scripts-reference) - Entrypoint and library scripts
+- [Troubleshooting](/docs/troubleshooting) - Common issues and solutions
+
+## Prerequisites
+
+- **Docker** and **Docker Compose** v2+
+- **Hytale account** with dedicated server access
+- **8 GB RAM** minimum (4 GB for the server, headroom for the OS)
+- **x86_64** architecture (ARM is not supported by Hytale)
+
+## Container Images
+
+| Image | Description |
+|-------|-------------|
+| `ghcr.io/editmysave/hyos/server:latest` | Hytale dedicated server |
+| `ghcr.io/editmysave/hyos/manager:latest` | Web management dashboard |
+
+## Ports
+
+| Port | Service |
+|------|---------|
+| 30520/udp | Hytale game server |
+| 30080/tcp | API plugin (REST) |
+| 3000/tcp | Manager web UI |

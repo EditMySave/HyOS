@@ -1,0 +1,88 @@
+---
+title: Docker Compose Deployment
+description: Deploy HyOS using Docker Compose on any Linux, macOS, or Windows system with Docker.
+---
+
+The simplest way to deploy HyOS is with Docker Compose. This works on any system with Docker installed.
+
+## Prerequisites
+
+- Docker Engine 24+ with Compose v2
+- 8 GB RAM minimum
+- x86_64 architecture
+
+## Quick Deploy
+
+Create a `docker-compose.yml` file:
+
+```yaml
+services:
+  hytale-server:
+    image: ghcr.io/editmysave/hyos/server:latest
+    container_name: hytale-server
+    ports:
+      - "30520:30520/udp"   # Game server
+      - "30080:30080/tcp"   # API plugin
+    volumes:
+      - ./data:/data
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - JAVA_XMS=2G
+      - JAVA_XMX=4G
+    restart: unless-stopped
+
+  hyos-manager:
+    image: ghcr.io/editmysave/hyos/manager:latest
+    container_name: hyos-manager
+    ports:
+      - "3000:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data:/data:ro
+    environment:
+      - HYTALE_CONTAINER_NAME=hytale-server
+      - API_BASE_URL=http://hytale-server:30080
+    restart: unless-stopped
+    depends_on:
+      - hytale-server
+```
+
+Then start it:
+
+```bash
+docker compose up -d
+```
+
+## First Run
+
+1. Check logs for the authentication prompt:
+
+```bash
+docker logs -f hytale-server
+```
+
+2. Complete the OAuth device flow when prompted
+3. The server will download game files and start automatically
+4. Access the manager UI at `http://localhost:3000`
+
+## Updating
+
+Pull the latest images and recreate:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+## Configuration
+
+See the [Configuration Reference](/docs/configuration) for all available environment variables.
+
+## Next Steps
+
+- [Configuration](/docs/configuration) — Tune JVM, server settings, and auto-updates
+- [Mods](/docs/mods) — Install and manage mods
+- [Dashboard](/docs/server-management/dashboard) — Use the web UI
+- [TrueNAS Deployment](/docs/deployment/truenas) — Deploy on TrueNAS SCALE

@@ -1,0 +1,421 @@
+---
+title: Troubleshooting
+description: Solutions for common HyOS issues including startup failures, authentication, crashes, and connectivity
+---
+
+Common issues and their solutions.
+
+## Table of Contents
+
+- [Container Won't Start](#container-wont-start)
+- [Authentication Issues](#authentication-issues)
+- [Server Crashes](#server-crashes)
+- [Game Files Re-Download Every Restart](#game-files-re-download-every-restart)
+- [Mod Loading Failures](#mod-loading-failures)
+- [Manager Can't Connect](#manager-cant-connect)
+- [Update Failures](#update-failures)
+- [Health Check Failures](#health-check-failures)
+- [Log Locations](#log-locations)
+
+---
+
+## Container Won't Start
+
+### Permissions Error
+
+**Symptom**: Container exits immediately with permission errors.
+
+**Fix**:
+
+```bash
+# Ensure dataset ownership matches PUID/PGID
+chown -R 568:568 /mnt/tank/apps/hytale
+
+# Verify
+ls -la /mnt/tank/apps/hytale
+```
+
+If using a non-default UID, set both `PUID`/`PGID` environment variables and the `user:` directive in compose to match.
+
+### Wrong Architecture
+
+**Symptom**: Container exits with "Architecture not supported".
+
+**Fix**: HyOS only supports x86_64/amd64. ARM-based hosts (Apple Silicon, Raspberry Pi) are not supported by the Hytale server.
+
+### Insufficient Memory
+
+**Symptom**: Container starts but Java exits with `OutOfMemoryError`.
+
+**Fix**:
+
+1. Reduce `JAVA_XMX` to fit available RAM
+2. Ensure the container memory limit is at least 2 GB higher than `JAVA_XMX`
+3. Check available memory: `free -h` or TrueNAS Resources panel
+
+### Port Already in Use
+
+**Symptom**: `bind: address already in use`.
+
+**Fix**:
+
+```bash
+# Check what's using port 30520
+ss -tulnp | grep 30520
+
+# Use a different host port in compose.yaml:
+# ports:
+#   - "30521:5520/udp"
+#
+# Or use the default Hytale port if no conflicts exist:
+#   - "5520:5520/udp"
+```
+
+---
+
+## Authentication Issues
+
+### OAuth Timeout
+
+**Symptom**: Authentication times out after 15 minutes.
+
+**Fix**:
+
+1. Watch logs in real-time for the auth prompt: `docker logs -f hyos-server`
+2. Do not restart the container during authentication
+3. Complete the flow within 15 minutes
+4. If timed out, restart the container to get a new code
+
+### Token Expired or Corrupted
+
+**Symptom**: Server fails to authenticate on startup despite previous success.
+
+**Fix**:
+
+```bash
+# Clear cached tokens
+rm /mnt/tank/apps/hytale/.auth/tokens.json
+
+# Restart to trigger re-authentication
+docker restart hyos-server
+```
+
+### Re-Authentication
+
+**Symptom**: Need to switch accounts or re-authenticate.
+
+**Fix**:
+
+```bash
+# Interactive re-auth
+docker exec -it hyos-server /opt/scripts/cmd/auth-init.sh
+```
+
+### Token Injection Not Working
+
+**Symptom**: Pre-injected `HYTALE_SERVER_SESSION_TOKEN` is ignored.
+
+**Fix**: Ensure all three variables are set:
+
+```yaml
+environment:
+  HYTALE_SERVER_SESSION_TOKEN: "..."
+  HYTALE_SERVER_IDENTITY_TOKEN: "..."
+  HYTALE_OWNER_UUID: "..."
+```
+
+All three are required. Cached tokens take priority — clear `/data/.auth/tokens.json` if switching from cached to injected.
+
+---
+
+## Server Crashes
+
+### Java OutOfMemoryError
+
+**Symptom**: Server crashes with `java.lang.OutOfMemoryError: Java heap space`.
+
+**Fix**:
+
+1. Increase `JAVA_XMX` (see [Memory Sizing Guidelines](/docs/configuration#memory-sizing-guidelines))
+2. Ensure container memory limit exceeds `JAVA_XMX` by at least 2 GB
+3. Reduce `MAX_VIEW_RADIUS` to lower memory consumption
+4. Reduce `MAX_PLAYERS`
+
+### Config Errors
+
+**Symptom**: Server exits with config-related errors.
+
+**Fix**:
+
+```bash
+# Validate the config manually
+docker exec hyos-server cat /data/server/config.json | jq .
+
+# Reset to generated config
+docker exec hyos-server rm /data/server/config.json
+docker restart hyos-server
+```
+
+If using `HYTALE_CONFIG_JSON`, validate the JSON string is properly escaped in your compose file.
+
+### Mod Conflicts
+
+**Symptom**: Server crashes after adding mods.
+
+**Fix**:
+
+1. Remove all mods from `/data/mods/` (except `hytale-api-*.jar`)
+2. Restart to confirm vanilla server works
+3. Add mods back one at a time to identify the conflict
+4. Set `SKIP_BROKEN_MODS=true` to auto-quarantine failing mods
+
+---
+
+## Game Files Re-Download Every Restart
+
+**Symptom**: Server downloads game files on every container start.
+
+This should not happen with the current image. If it does:
+
+**Fix**:
+
+1. Verify the volume is properly mounted and persisted:
+
+   ```bash
+   ls -la /mnt/tank/apps/hytale/server/
+   # Should contain HytaleServer.jar
+   ```
+
+2. Check that the `/data` volume is not using a tmpfs or ephemeral storage
+3. Verify `HytaleServer.jar` exists at the expected path
+4. Check file permissions: files should be owned by 568:568
+
+---
+
+## Mod Loading Failures
+
+### NullPointerException in PluginClassLoader
+
+**Symptom**: `Failed to load plugin` with `NullPointerException` in `PluginClassLoader.loadLocalClass`.
+
+**Cause**: The mod's `manifest.json` is missing the `Main` field (content-only mod).
+
+**Fix**:
+
+1. **Patch the mod** via the Manager UI (Mods → Installed → Patch)
+2. **Auto-quarantine**: Set `SKIP_BROKEN_MODS=true`
+3. **Manual removal**: Move the JAR out of `/data/mods/`
+
+See [Content-Only Mod Patching](/docs/mods#content-only-mod-patching) for details.
+
+### Check Which Mods Failed
+
+```bash
+# View mod loading state
+docker exec hyos-server cat /data/.state/mods.json | jq .
+
+# View broken mods list
+docker exec hyos-server cat /data/.broken-mods
+```
+
+### Enable Verbose Diagnostics
+
+```yaml
+environment:
+  DEBUG_CLASSLOADING: "true"
+```
+
+This writes detailed JVM class loading output to a separate log file for debugging.
+
+### Re-Enable Quarantined Mods
+
+```bash
+# List quarantined mods
+ls /mnt/tank/apps/hytale/mods/.disabled/
+
+# Move back
+mv /mnt/tank/apps/hytale/mods/.disabled/MyMod.jar /mnt/tank/apps/hytale/mods/
+
+# Restart with quarantine disabled
+# Set SKIP_BROKEN_MODS=false and restart
+```
+
+Broken mods are version-tagged — when the server updates to a new version, previously broken mods are automatically retried.
+
+---
+
+## Manager Can't Connect
+
+### API Credentials Mismatch
+
+**Symptom**: Manager shows "Failed to load server status" or 401 errors.
+
+**Fix**: Ensure the API secret matches between both containers:
+
+```yaml
+# Server
+environment:
+  API_CLIENT_SECRET: "my-password"
+
+# Manager
+environment:
+  REST_API_CLIENT_SECRET: "my-password"  # Must be identical
+```
+
+If you changed the password, set `API_REGENERATE_CONFIG=true` on the server to force config regeneration.
+
+### Network Issues
+
+**Symptom**: Manager can't reach the API.
+
+**Fix**:
+
+1. Verify both containers are on the same Docker network:
+
+   ```bash
+   docker network inspect bridge
+   ```
+
+2. Check the server hostname:
+
+   ```yaml
+   # Manager environment
+   HYTALE_SERVER_HOST: hyos-server  # Must match the server service name in compose
+   HYTALE_SERVER_PORT: "8080"
+   ```
+
+3. Verify the API is listening:
+
+   ```bash
+   docker exec hyos-server ss -tlnp | grep 8080
+   ```
+
+### Docker Socket Access
+
+**Symptom**: Manager shows "Docker unavailable" — start/stop/restart buttons disabled.
+
+**Fix**:
+
+1. Verify the socket is mounted:
+
+   ```yaml
+   volumes:
+     - /var/run/docker.sock:/var/run/docker.sock:ro
+   ```
+
+2. Verify the container has socket access:
+
+   ```yaml
+   group_add:
+     - "0"  # Root group
+   ```
+
+3. Check socket permissions on the host:
+
+   ```bash
+   ls -la /var/run/docker.sock
+   # Should be: srw-rw---- root docker
+   ```
+
+---
+
+## Update Failures
+
+### Manual Update
+
+```bash
+# Stop the server first
+docker exec hyos-server /opt/scripts/cmd/update.sh --check
+
+# If update available, stop and update
+docker stop hyos-server
+docker exec hyos-server /opt/scripts/cmd/update.sh --backup --force
+docker start hyos-server
+```
+
+### Rollback After Failed Update
+
+If an update fails, backups are stored in `/data/backup-VERSION-TIMESTAMP/`:
+
+```bash
+# List backups
+ls /mnt/tank/apps/hytale/backup-*/
+
+# Restore from backup (example)
+cp -r /mnt/tank/apps/hytale/backup-2026.01.17-20260119120000/Server/* \
+      /mnt/tank/apps/hytale/server/
+```
+
+### Scheduled Update Not Applying
+
+```bash
+# Check if update is scheduled
+docker exec hyos-server /opt/scripts/cmd/schedule-update.sh --check
+
+# Clear and reschedule
+docker exec hyos-server /opt/scripts/cmd/schedule-update.sh --clear
+docker exec hyos-server /opt/scripts/cmd/schedule-update.sh
+```
+
+The update applies on the next container restart, not immediately.
+
+---
+
+## Health Check Failures
+
+### Check Health Manually
+
+```bash
+# Simple check
+docker exec hyos-server /opt/scripts/healthcheck.sh
+
+# Detailed JSON output
+docker exec hyos-server /opt/scripts/healthcheck.sh --json
+
+# Docker health status
+docker inspect --format='{{.State.Health.Status}}' hyos-server
+```
+
+### Common Health Check Failures
+
+| Check | Failure Reason | Fix |
+|-------|---------------|-----|
+| `process` | Server process not running | Check logs: `docker logs hyos-server` |
+| `port` | UDP 5520 not bound | Server may still be starting (wait for start_period) |
+| `data_dir` | `/data` not writable | Fix permissions: `chown -R 568:568 /data` |
+| `jar` | `HytaleServer.jar` missing | Server files not downloaded; check auth |
+| `memory` | Memory usage >90% | Increase container memory limit or reduce `JAVA_XMX` |
+
+### Health Check During Startup
+
+The Docker health check has a 180-second `start_period` to account for:
+
+- First-run file downloads
+- OAuth authentication (up to 15 minutes)
+- AOT compilation cache generation
+
+During this period, the container is not marked unhealthy even if checks fail.
+
+---
+
+## Log Locations
+
+| Log | Location | Access |
+|-----|----------|--------|
+| Container stdout | Docker log driver | `docker logs hyos-server` |
+| Server game logs | `/data/server/logs/` | Files on disk |
+| Auto-update logs | `/data/logs/auto-update.log` | File on disk |
+| Class loading logs | `/data/server/logs/classloading.log` | When `DEBUG_CLASSLOADING=true` |
+| Health check state | `/data/.state/health.json` | JSON file |
+| Manager logs | Docker log driver | `docker logs hyos-manager` |
+
+```bash
+# View recent server logs
+docker logs --tail 100 hyos-server
+
+# Follow logs in real-time
+docker logs -f hyos-server
+
+# View auto-update history
+docker exec hyos-server cat /data/logs/auto-update.log
+```

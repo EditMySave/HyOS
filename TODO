@@ -34,6 +34,11 @@ File Manager
 
 Automatic installation script?
 
+My Installations - Link your MineOS installations to your account. Your installation ID is shown during setup.
+SSO
+Anonymous heartbeat
+
+
 
   1. Mod Search (Improvements)              
   Current state: Multi-provider search exists across CurseForge, Modtale, and NexusMods with aggregation, sorting, and pagination.   

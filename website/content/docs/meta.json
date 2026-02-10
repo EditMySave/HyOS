@@ -1,0 +1,20 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "---Getting Started---",
+    "getting-started",
+    "---Configuration---",
+    "configuration",
+    "---Server Management---",
+    "server-management",
+    "---Mods---",
+    "mods",
+    "---Deployment---",
+    "deployment",
+    "---Reference---",
+    "architecture",
+    "scripts-reference",
+    "---Help---",
+    "troubleshooting"
+  ]
+}
