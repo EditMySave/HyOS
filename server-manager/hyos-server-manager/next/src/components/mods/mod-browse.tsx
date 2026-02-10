@@ -179,6 +179,14 @@ export function ModBrowse({ className }: { className?: string }) {
         await installMod({
           provider: mod.provider,
           version: mod.latestVersion,
+          modInfo: {
+            name: mod.name,
+            authors: mod.authors,
+            summary: mod.summary,
+            iconUrl: mod.iconUrl,
+            websiteUrl: mod.websiteUrl,
+            providerModId: mod.id,
+          },
         });
         setJustInstalledKeys((prev) => new Set(prev).add(key));
         mutate();

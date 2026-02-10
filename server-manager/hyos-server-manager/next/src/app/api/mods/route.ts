@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import type { InstalledMod } from "@/lib/services/mods/mods.types";
 import { inspectJar } from "@/lib/services/mods/jar-inspector";
+import { loadRegistry } from "@/lib/services/mods/mod-registry";
 
 function getModsPath(): string {
   // Use HYTALE_STATE_DIR to derive base path, default to /data in containers
@@ -34,7 +34,10 @@ export async function GET() {
     // Read directory contents
     const entries = await fs.readdir(modsPath, { withFileTypes: true });
 
-    const mods: InstalledMod[] = [];
+    // Load registry once for all mods
+    const registry = await loadRegistry(modsPath);
+
+    const mods = [];
 
     for (const entry of entries) {
       // Only process JAR files
@@ -51,7 +54,15 @@ export async function GET() {
       // Inspect JAR manifest for patch status
       let needsPatch = false;
       let isPatched = false;
-      let manifestInfo: InstalledMod["manifestInfo"];
+      let manifestInfo: {
+        hasManifest: boolean;
+        main: string | null;
+        group: string | null;
+        name: string | null;
+        version: string | null;
+        dependencies: string[];
+        serverVersion: string | null;
+      } | undefined;
       try {
         const inspection = inspectJar(filePath);
         needsPatch = inspection.needsPatch;
@@ -61,16 +72,27 @@ export async function GET() {
         console.error(`[mods] Error inspecting ${entry.name}:`, e);
       }
 
+      // Merge registry data
+      const reg = registry[entry.name];
+
       mods.push({
         id,
         name: entry.name,
         fileName: entry.name,
+        displayName: manifestInfo?.name ?? reg?.summary?.split(" ")[0] ?? id,
+        description: reg?.summary ?? null,
+        version: manifestInfo?.version ?? null,
+        author: reg?.authors?.[0] ?? null,
+        authors: reg?.authors ?? [],
         size: stats.size,
         modified: stats.mtime.toISOString(),
         path: filePath,
         needsPatch,
         isPatched,
         manifestInfo,
+        dependencies: manifestInfo?.dependencies ?? [],
+        iconUrl: reg?.iconUrl ?? null,
+        providerSource: reg?.provider ?? null,
       });
     }
 

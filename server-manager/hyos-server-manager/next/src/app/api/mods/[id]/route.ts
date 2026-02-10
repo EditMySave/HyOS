@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { unregisterMod } from "@/lib/services/mods/mod-registry";
 
 function getModsPath(): string {
   const stateDir = process.env.HYTALE_STATE_DIR;
@@ -44,6 +45,13 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
 
     // Delete the file
     await fs.unlink(filePath);
+
+    // Clean up registry entry
+    try {
+      await unregisterMod(modsPath, fileName);
+    } catch (e) {
+      console.error("[mods/delete] Failed to update registry:", e);
+    }
 
     return NextResponse.json({
       success: true,

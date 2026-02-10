@@ -6,6 +6,7 @@ import {
   uploadMod,
   deleteMod,
   patchMod,
+  getModUpdates,
 } from "./mods.service";
 
 // ============================================================================
@@ -29,6 +30,16 @@ export function useLoadedPlugins() {
   return useSWR("loaded-plugins", getLoadedPlugins, {
     refreshInterval: 10000, // Refresh every 10 seconds (more frequent for live status)
     revalidateOnFocus: true,
+  });
+}
+
+/**
+ * Hook to check for mod updates from providers
+ */
+export function useModUpdates() {
+  return useSWR("mod-updates", getModUpdates, {
+    refreshInterval: 300000, // Refresh every 5 minutes
+    revalidateOnFocus: false,
   });
 }
 

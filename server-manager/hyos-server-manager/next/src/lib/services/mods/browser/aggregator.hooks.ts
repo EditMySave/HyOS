@@ -3,6 +3,7 @@ import useSWRMutation from "swr/mutation";
 import {
   searchAllProviders,
   installMod as installModService,
+  type InstallModInfo,
 } from "./aggregator.service";
 import type { AggregatedSearchResult, ModVersion, SearchParams } from "./types";
 
@@ -27,12 +28,17 @@ export function useModInstall() {
       {
         arg,
       }: {
-        arg: { version: ModVersion; provider: string };
+        arg: {
+          version: ModVersion;
+          provider: string;
+          modInfo?: InstallModInfo;
+        };
       },
     ) =>
       installModService(
         arg.provider as "curseforge" | "modtale" | "nexusmods",
         arg.version,
+        arg.modInfo,
       ),
   );
 }

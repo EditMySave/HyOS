@@ -10,6 +10,9 @@ export interface ManifestInfo {
   main: string | null;
   group: string | null;
   name: string | null;
+  version: string | null;
+  dependencies: string[];
+  serverVersion: string | null;
 }
 
 export interface JarInspectionResult {
@@ -25,7 +28,7 @@ export interface JarInspectionResult {
 function isFullyPatched(manifest: Record<string, unknown>): boolean {
   return (
     manifest.Main === CONTENT_MOD_STUB_MAIN &&
-    manifest.IncludesAssetPack === true &&
+    "IncludesAssetPack" in manifest &&
     "LoadBefore" in manifest &&
     "SubPlugins" in manifest
   );
@@ -50,11 +53,26 @@ export function inspectJar(jarPath: string): JarInspectionResult {
   const manifest = JSON.parse(zip.readAsText(entry));
   const main: string | undefined = manifest.Main;
 
+  // Parse dependencies - can be array of strings or objects
+  let dependencies: string[] = [];
+  if (Array.isArray(manifest.Dependencies)) {
+    dependencies = manifest.Dependencies.map((dep: unknown) => {
+      if (typeof dep === "string") return dep;
+      if (typeof dep === "object" && dep !== null && "Group" in dep) {
+        return String((dep as { Group: unknown }).Group);
+      }
+      return String(dep);
+    });
+  }
+
   const manifestInfo: ManifestInfo = {
     hasManifest: true,
     main: main ?? null,
     group: manifest.Group ?? null,
     name: manifest.Name ?? null,
+    version: manifest.Version ?? null,
+    dependencies,
+    serverVersion: manifest.ServerVersion ?? null,
   };
 
   // No Main class at all — needs patch
@@ -96,7 +114,7 @@ export function patchJar(jarPath: string): void {
   // Set Main class
   manifest.Main = CONTENT_MOD_STUB_MAIN;
 
-  // Ensure all content-mod fields are present (align with working mod format)
+  // Ensure all content-mod fields are present
   if (!("IncludesAssetPack" in manifest)) {
     manifest.IncludesAssetPack = true;
   }

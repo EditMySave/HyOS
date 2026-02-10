@@ -9,6 +9,8 @@ import {
   deleteModResponseSchema,
   type PatchModResponse,
   patchModResponseSchema,
+  type ModUpdatesResponse,
+  modUpdatesResponseSchema,
 } from "./mods.types";
 
 /**
@@ -97,4 +99,16 @@ export async function patchMod(modId: string): Promise<PatchModResponse> {
 
   const data = await response.json();
   return patchModResponseSchema.parse(data);
+}
+
+/**
+ * Check for mod updates from providers
+ */
+export async function getModUpdates(): Promise<ModUpdatesResponse> {
+  const response = await fetch("/api/mods/updates");
+  if (!response.ok) {
+    throw new Error(`Failed to check updates: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return modUpdatesResponseSchema.parse(data);
 }

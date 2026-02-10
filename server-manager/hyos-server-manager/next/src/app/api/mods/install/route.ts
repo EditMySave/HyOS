@@ -7,6 +7,7 @@ import type { ModProvider, ModVersion } from "@/lib/services/mods/browser/types"
 import { modVersionSchema } from "@/lib/services/mods/browser/types";
 import { getNexusModFiles } from "@/lib/services/mods/browser/providers/nexusmods.service";
 import { loadProviderConfig } from "@/lib/services/mods/providers.loader";
+import { registerMod } from "@/lib/services/mods/mod-registry";
 
 function getModsPath(): string {
   const stateDir = process.env.HYTALE_STATE_DIR;
@@ -17,9 +18,19 @@ function getModsPath(): string {
   return "/tmp/hytale-data/mods";
 }
 
+const modInfoSchema = z.object({
+  name: z.string().optional(),
+  authors: z.array(z.string()).optional(),
+  summary: z.string().optional(),
+  iconUrl: z.string().nullable().optional(),
+  websiteUrl: z.string().optional(),
+  providerModId: z.string().optional(),
+});
+
 const installBodySchema = z.object({
   provider: z.enum(["curseforge", "modtale", "nexusmods"]),
   version: modVersionSchema,
+  modInfo: modInfoSchema.optional(),
 });
 
 export async function POST(request: Request) {
@@ -34,7 +45,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { provider, version } = parsed.data;
+    const { provider, version, modInfo } = parsed.data;
     const providerConfig = await loadProviderConfig();
     const providerApiKey = providerConfig[provider as ModProvider].apiKey;
 
@@ -84,6 +95,23 @@ export async function POST(request: Request) {
     await fs.mkdir(modsPath, { recursive: true });
     const filePath = path.join(modsPath, safeFileName);
     await fs.writeFile(filePath, data);
+
+    // Register mod in registry with provider metadata
+    try {
+      await registerMod(modsPath, safeFileName, {
+        provider: provider as "curseforge" | "modtale" | "nexusmods",
+        providerModId: modInfo?.providerModId ?? resolvedVersion.fileId,
+        fileId: resolvedVersion.fileId,
+        installedVersion: resolvedVersion.displayName || resolvedVersion.fileName,
+        authors: modInfo?.authors ?? [],
+        summary: modInfo?.summary ?? "",
+        iconUrl: modInfo?.iconUrl ?? null,
+        websiteUrl: modInfo?.websiteUrl ?? "",
+        installedAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error("[mods/install] Failed to update registry:", e);
+    }
 
     return NextResponse.json({
       success: true,

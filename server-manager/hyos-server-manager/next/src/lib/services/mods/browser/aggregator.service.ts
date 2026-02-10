@@ -93,6 +93,15 @@ export async function searchAllProviders(
   return data as AggregatedSearchResult;
 }
 
+export interface InstallModInfo {
+  name?: string;
+  authors?: string[];
+  summary?: string;
+  iconUrl?: string | null;
+  websiteUrl?: string;
+  providerModId?: string;
+}
+
 /**
  * Call from client to install a mod via API.
  * API key is loaded server-side from file.
@@ -100,11 +109,12 @@ export async function searchAllProviders(
 export async function installMod(
   provider: ModProvider,
   version: ModVersion,
+  modInfo?: InstallModInfo,
 ): Promise<{ success: boolean; message: string }> {
   const response = await fetch("/api/mods/install", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ provider, version }),
+    body: JSON.stringify({ provider, version, modInfo }),
   });
 
   const data = await response.json();

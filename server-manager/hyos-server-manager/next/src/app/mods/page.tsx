@@ -1,42 +1,23 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import {
-  useInstalledMods,
-  useLoadedPlugins,
-  useUploadMod,
-  useDeleteMod,
-  usePatchMod,
-} from "@/lib/services/mods";
+import { useInstalledMods, useLoadedPlugins, useUploadMod } from "@/lib/services/mods";
 import { ModBrowse } from "@/components/mods/mod-browse";
+import { ModInstalled } from "@/components/mods/mod-installed";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import {
   Loader2,
   Upload,
-  Trash2,
   RefreshCw,
   FileArchive,
-  Puzzle,
-  AlertCircle,
   Search,
   FolderOpen,
-  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Format bytes to human readable
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;
@@ -45,51 +26,22 @@ function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
-// Format date to relative time
-function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) return "just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
-}
-
 export default function ModsPage() {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  // Data fetching
   const {
-    data: installedMods,
-    error: installedError,
     isLoading: installedLoading,
     mutate: refreshInstalled,
   } = useInstalledMods();
 
   const {
-    data: loadedPlugins,
-    error: loadedError,
     isLoading: loadedLoading,
     mutate: refreshLoaded,
   } = useLoadedPlugins();
 
-  // Mutations
   const { trigger: uploadMod, isMutating: isUploading } = useUploadMod();
-  const { trigger: deleteMod, isMutating: isDeleting } = useDeleteMod();
-  const { trigger: patchMod, isMutating: isPatching } = usePatchMod();
 
-  // Track which mod is currently being patched
-  const [patchingModId, setPatchingModId] = useState<string | null>(null);
-  const [isPatchingAll, setIsPatchingAll] = useState(false);
-
-  // Handle file selection
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -100,10 +52,8 @@ export default function ModsPage() {
     [],
   );
 
-  // Handle upload
   const handleUpload = useCallback(async () => {
     if (!selectedFile) return;
-
     try {
       await uploadMod(selectedFile);
       setSelectedFile(null);
@@ -113,61 +63,6 @@ export default function ModsPage() {
     }
   }, [selectedFile, uploadMod, refreshInstalled]);
 
-  // Handle delete
-  const handleDelete = useCallback(
-    async (modId: string) => {
-      if (!confirm("Are you sure you want to delete this mod?")) return;
-
-      try {
-        await deleteMod(modId);
-        refreshInstalled();
-      } catch (error) {
-        console.error("Delete failed:", error);
-      }
-    },
-    [deleteMod, refreshInstalled],
-  );
-
-  // Handle patch
-  const handlePatch = useCallback(
-    async (modId: string) => {
-      setPatchingModId(modId);
-      try {
-        await patchMod(modId);
-        refreshInstalled();
-      } catch (error) {
-        console.error("Patch failed:", error);
-      } finally {
-        setPatchingModId(null);
-      }
-    },
-    [patchMod, refreshInstalled],
-  );
-
-  // Handle patch all
-  const handlePatchAll = useCallback(async () => {
-    if (!installedMods) return;
-    const toPatch = installedMods.mods.filter((m) => m.needsPatch);
-    if (toPatch.length === 0) return;
-
-    setIsPatchingAll(true);
-    try {
-      for (const mod of toPatch) {
-        setPatchingModId(mod.id);
-        try {
-          await patchMod(mod.id);
-        } catch (error) {
-          console.error(`Patch failed for ${mod.name}:`, error);
-        }
-      }
-      refreshInstalled();
-    } finally {
-      setPatchingModId(null);
-      setIsPatchingAll(false);
-    }
-  }, [installedMods, patchMod, refreshInstalled]);
-
-  // Handle drag events
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -178,7 +73,6 @@ export default function ModsPage() {
     }
   }, []);
 
-  // Handle drop
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -194,22 +88,6 @@ export default function ModsPage() {
       }
     }
   }, []);
-
-  // Check if a mod is loaded
-  const isModLoaded = (modName: string) => {
-    const baseName = modName.replace(/\.jar$/, "");
-    return loadedPlugins?.plugins.some(
-      (p) => p.name.toLowerCase() === baseName.toLowerCase(),
-    );
-  };
-
-  // Get plugin info for a loaded mod
-  const getPluginInfo = (modName: string) => {
-    const baseName = modName.replace(/\.jar$/, "");
-    return loadedPlugins?.plugins.find(
-      (p) => p.name.toLowerCase() === baseName.toLowerCase(),
-    );
-  };
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
@@ -338,225 +216,7 @@ export default function ModsPage() {
         </TabsContent>
 
         <TabsContent value="installed">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Puzzle className="h-5 w-5" />
-                  Plugins
-                  {loadedPlugins && (
-                    <Badge variant="secondary">{loadedPlugins.count}</Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loadedLoading ? (
-                  <div className="flex h-32 items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : loadedError ? (
-                  <div className="flex h-32 items-center justify-center text-muted-foreground">
-                    <AlertCircle className="mr-2 h-5 w-5" />
-                    Failed to load plugins
-                  </div>
-                ) : loadedPlugins?.plugins.length === 0 ? (
-                  <div className="flex h-32 items-center justify-center text-muted-foreground">
-                    No plugins loaded
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {loadedPlugins?.plugins.map((plugin) => (
-                      <div
-                        key={plugin.name}
-                        className="flex items-center justify-between rounded-lg border p-3"
-                      >
-                        <div>
-                          <p className="font-medium">{plugin.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {plugin.description || "No description"}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <Badge
-                            variant={
-                              plugin.state === "ENABLED" ? "default" : "secondary"
-                            }
-                          >
-                            {plugin.state}
-                          </Badge>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            v{plugin.version}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileArchive className="h-5 w-5" />
-                  Mods
-                  {installedMods && (
-                    <Badge variant="secondary">{installedMods.count}</Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {installedLoading ? (
-                  <div className="flex h-32 items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : installedError ? (
-                  <div className="flex h-32 items-center justify-center text-muted-foreground">
-                    <AlertCircle className="mr-2 h-5 w-5" />
-                    Failed to load mods
-                  </div>
-                ) : installedMods?.mods.length === 0 ? (
-                  <div className="flex h-32 items-center justify-center text-muted-foreground">
-                    No mods installed
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Mod</TableHead>
-                        <TableHead>Size</TableHead>
-                        <TableHead>Modified</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="w-24"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {installedMods?.mods.map((mod) => {
-                        const loaded = isModLoaded(mod.fileName);
-                        const pluginInfo = getPluginInfo(mod.fileName);
-
-                        return (
-                          <TableRow key={mod.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <FileArchive className="h-5 w-5 text-muted-foreground" />
-                                <div>
-                                  <p className="font-medium">{mod.name}</p>
-                                  {pluginInfo && (
-                                    <p className="text-xs text-muted-foreground">
-                                      v{pluginInfo.version}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>{formatBytes(mod.size)}</TableCell>
-                            <TableCell>{formatRelativeTime(mod.modified)}</TableCell>
-                            <TableCell>
-                              {mod.needsPatch ? (
-                                <Badge variant="outline" className="border-amber-500 text-amber-500">
-                                  <AlertCircle className="mr-1 h-3 w-3" />
-                                  Needs Patch
-                                </Badge>
-                              ) : mod.isPatched && !loaded ? (
-                                <Badge variant="outline" className="border-blue-500 text-blue-500">
-                                  Patched
-                                </Badge>
-                              ) : loaded ? (
-                                <Badge className="bg-green-500 hover:bg-green-600">
-                                  Loaded
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-amber-500">
-                                  Restart Required
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-1">
-                                {mod.needsPatch && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handlePatch(mod.id)}
-                                    disabled={isPatching || isPatchingAll}
-                                    className="text-amber-500 hover:text-amber-600"
-                                  >
-                                    {patchingModId === mod.id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Wrench className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDelete(mod.id)}
-                                  disabled={isDeleting}
-                                  className="text-destructive hover:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {(() => {
-            const patchCount = installedMods?.mods.filter((m) => m.needsPatch).length ?? 0;
-            return patchCount > 0 ? (
-              <div className="mt-6 rounded-lg border border-amber-500/50 bg-amber-500/10 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="mt-0.5 h-5 w-5 text-amber-500" />
-                    <div>
-                      <p className="font-medium text-amber-500">Content-Only Mods Detected</p>
-                      <p className="text-sm text-amber-500/80">
-                        {patchCount} mod{patchCount > 1 ? "s are" : " is"} missing a Main class and will crash the server. Use the patch button to fix {patchCount > 1 ? "them" : "it"}.
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handlePatchAll}
-                    disabled={isPatchingAll}
-                    className="shrink-0 border-amber-500 text-amber-500 hover:bg-amber-500/10"
-                  >
-                    {isPatchingAll ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Wrench className="mr-2 h-4 w-4" />
-                    )}
-                    Patch All
-                  </Button>
-                </div>
-              </div>
-            ) : null;
-          })()}
-
-          {installedMods?.mods.some((m) => !m.needsPatch && !isModLoaded(m.fileName)) && (
-            <div className="mt-6 rounded-lg border border-amber-500/50 bg-amber-500/10 p-4">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="mt-0.5 h-5 w-5 text-amber-500" />
-                <div>
-                  <p className="font-medium text-amber-500">Restart Required</p>
-                  <p className="text-sm text-amber-500/80">
-                    Some mods have been installed or removed. Restart the server
-                    to apply changes.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+          <ModInstalled />
         </TabsContent>
       </Tabs>
     </div>

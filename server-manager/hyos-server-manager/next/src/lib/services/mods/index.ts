@@ -9,6 +9,8 @@ export type {
   PatchModResponse,
   ManifestInfo,
   ModStatus,
+  ModUpdate,
+  ModUpdatesResponse,
 } from "./mods.types";
 
 // Services
@@ -18,12 +20,14 @@ export {
   uploadMod,
   deleteMod,
   patchMod,
+  getModUpdates,
 } from "./mods.service";
 
 // Hooks
 export {
   useInstalledMods,
   useLoadedPlugins,
+  useModUpdates,
   useUploadMod,
   useDeleteMod,
   usePatchMod,
