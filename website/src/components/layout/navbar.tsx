@@ -40,7 +40,7 @@ export function Navbar() {
             </span>
           </Link>
 
-          <nav className="hidden items-stretch border-x border-dashed border-border md:flex">
+          <nav className="flex items-stretch border-x border-dashed border-border">
             {NAV_ITEMS.map((item) => {
               const active = pathname === item.href;
               return (
@@ -60,15 +60,16 @@ export function Navbar() {
             })}
           </nav>
 
-          <div className="hidden items-center py-5 pl-10 md:flex">
+          <div className="flex items-center py-5 pl-10">
             <Link
               href="https://github.com/editmysave/hyOS"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground transition hover:text-foreground"
+              className="flex items-center whitespace-nowrap text-muted-foreground transition hover:text-foreground"
               aria-label="GitHub repository"
             >
               <GitHubIcon className="h-5 w-5" />
+              <span className="ml-2 text-sm font-medium">GitHub</span>
             </Link>
           </div>
         </div>
