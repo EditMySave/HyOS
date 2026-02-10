@@ -180,7 +180,7 @@ jobs:
   # ---------------------------------------------------------------------------
   build-website:
     runs-on: ubuntu-latest
-    environment: production
+    environment: main
     steps:
       - name: Checkout
         uses: actions/checkout@v4
