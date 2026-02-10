@@ -174,7 +174,7 @@ For users who prefer manual control, deploy using the `compose.yaml` directly.
 
 3. **Click "Install via YAML"**
 
-4. **Paste the contents of [`compose.yaml`](../compose.yaml)**
+4. **Paste the contents of [`compose.yaml`](../hytale-docker-server/config-truenas/compose.yaml)**
 
 5. **Update the volume path** to match your dataset:
 

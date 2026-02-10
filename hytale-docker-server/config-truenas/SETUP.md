@@ -41,15 +41,15 @@ On first run, check the container logs for the OAuth URL:
 
 ## Documentation
 
-For detailed documentation, see the [docs/](docs/) directory:
+For detailed documentation, see the [docs/](../../docs/) directory:
 
 | Document | Description |
 |----------|-------------|
-| [Quick Start](docs/quickstart.md) | Detailed getting started guide |
-| [Configuration Reference](docs/configuration.md) | All environment variables, memory tuning, config generation modes |
-| [TrueNAS Deployment](docs/truenas-deployment.md) | Native TrueNAS app and custom app deployment |
-| [Server Manager](docs/server-manager.md) | HyOS Manager web UI user guide |
-| [Mods & Plugins](docs/mods-and-plugins.md) | Installing mods, content-only patching, API plugin |
-| [Scripts Reference](docs/scripts-reference.md) | Entrypoint, library scripts, and command scripts |
-| [Architecture](docs/architecture.md) | System design, diagrams, state files, security model |
-| [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
+| [Quick Start](../../docs/quickstart.md) | Detailed getting started guide |
+| [Configuration Reference](../../docs/configuration.md) | All environment variables, memory tuning, config generation modes |
+| [TrueNAS Deployment](../../docs/truenas-deployment.md) | Native TrueNAS app and custom app deployment |
+| [Server Manager](../../docs/server-manager.md) | HyOS Manager web UI user guide |
+| [Mods & Plugins](../../docs/mods-and-plugins.md) | Installing mods, content-only patching, API plugin |
+| [Scripts Reference](../../docs/scripts-reference.md) | Entrypoint, library scripts, and command scripts |
+| [Architecture](../../docs/architecture.md) | System design, diagrams, state files, security model |
+| [Troubleshooting](../../docs/troubleshooting.md) | Common issues and solutions |

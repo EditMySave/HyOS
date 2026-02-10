@@ -48,7 +48,7 @@ Deploy:
 docker compose up -d
 ```
 
-> For the full compose file with the Manager UI and API plugin, see the [compose.yaml](../compose.yaml) in the repository root.
+> For the full compose file with the Manager UI and API plugin, see the [compose.yaml](../hytale-docker-server/config-truenas/compose.yaml) in the config-truenas directory.
 
 ## 3. Complete Authentication
 

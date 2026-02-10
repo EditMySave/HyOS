@@ -58,7 +58,7 @@ docker compose up -d
 docker logs -f hyos-server  # Complete OAuth when prompted
 ```
 
-For the full setup with the Manager UI and API plugin, see the [Quick Start guide](hytale-docker-server/config-truenas/docs/quickstart.md).
+For the full setup with the Manager UI and API plugin, see the [Quick Start guide](docs/quickstart.md).
 
 ## Compatibility
 
@@ -83,7 +83,7 @@ hyOS runs two containers that share a single `/data` volume:
 
 The server container handles authentication, updates, mod validation, and config generation before launching the Java process. The Manager reads state files from `/data/.state/` and communicates with the embedded API plugin over HTTP.
 
-See [Architecture](hytale-docker-server/config-truenas/docs/architecture.md) for diagrams and the full security model.
+See [Architecture](docs/architecture.md) for diagrams and the full security model.
 
 ## Docker Images
 
@@ -97,14 +97,14 @@ See [Architecture](hytale-docker-server/config-truenas/docs/architecture.md) for
 
 | Document | Description |
 |---|---|
-| [Quick Start](hytale-docker-server/config-truenas/docs/quickstart.md) | Get a server running in minutes |
-| [Configuration Reference](hytale-docker-server/config-truenas/docs/configuration.md) | Environment variables, memory tuning, config generation |
-| [TrueNAS Deployment](hytale-docker-server/config-truenas/docs/truenas-deployment.md) | TrueNAS SCALE native and custom app deployment |
-| [Server Manager](hytale-docker-server/config-truenas/docs/server-manager.md) | Web UI user guide |
-| [Mods & Plugins](hytale-docker-server/config-truenas/docs/mods-and-plugins.md) | Installing mods, content-only patching, API plugin |
-| [Architecture](hytale-docker-server/config-truenas/docs/architecture.md) | System design, diagrams, state files, security model |
-| [Scripts Reference](hytale-docker-server/config-truenas/docs/scripts-reference.md) | Entrypoint, library scripts, and command scripts |
-| [Troubleshooting](hytale-docker-server/config-truenas/docs/troubleshooting.md) | Common issues and solutions |
+| [Quick Start](docs/quickstart.md) | Get a server running in minutes |
+| [Configuration Reference](docs/configuration.md) | Environment variables, memory tuning, config generation |
+| [TrueNAS Deployment](docs/truenas-deployment.md) | TrueNAS SCALE native and custom app deployment |
+| [Server Manager](docs/server-manager.md) | Web UI user guide |
+| [Mods & Plugins](docs/mods-and-plugins.md) | Installing mods, content-only patching, API plugin |
+| [Architecture](docs/architecture.md) | System design, diagrams, state files, security model |
+| [Scripts Reference](docs/scripts-reference.md) | Entrypoint, library scripts, and command scripts |
+| [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
 
 ## Project Structure
 
