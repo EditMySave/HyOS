@@ -1,22 +1,18 @@
 # =============================================================================
 # HyOS - Local Development & Testing
 # =============================================================================
-# Uses GHCR images published by CI. For local source builds, uncomment the
-# `build:` blocks and comment out the `image:` lines.
+# Manager builds from local source. Server pulls from GHCR.
 #
 # Usage:
-#   docker compose up -d          # Start both services
-#   docker compose logs -f        # Follow logs
-#   docker compose down           # Stop all
+#   docker compose -f docker-compose.yml build --no-cache && docker compose -f docker-compose.yml up --force-recreate -d
+#   docker compose -f docker-compose.yml logs -f    # Follow logs
+#   docker compose -f docker-compose.yml down        # Stop all
 #
 # PORT CONVENTION:
 # Host ports use the 30xxx range to avoid conflicts with other TrueNAS apps.
 # The Hytale server default is UDP 5520 — if you are not running other apps
 # that conflict, you can change the host ports back (e.g., "5520:5520/udp").
 # Internal container ports (5520, 8080, 3000) are unchanged.
-#
-# Local source build (when needed):
-#   docker compose build --no-cache && docker compose up -d
 # =============================================================================
 
 # Shared API config - change the password here for local testing
@@ -79,11 +75,12 @@ services:
   # Server Manager (Web UI)
   # ---------------------------------------------------------------------------
   hyos-manager:
-    # Uncomment build block for local source builds:
-    # build:
-    #   context: ../../server-manager/hyos-server-manager/next
-    #   dockerfile: Dockerfile
-    image: ghcr.io/editmysave/hyos/manager:latest
+    build:
+      context: ../../server-manager/hyos-server-manager/next
+      dockerfile: Dockerfile
+    # To use pre-built GHCR image instead of local build, comment out
+    # the build block above and uncomment the line below:
+    # image: ghcr.io/editmysave/hyos/manager:latest
     platform: linux/amd64
     container_name: hyos-manager
     # Add root group (GID 0) for Docker socket access

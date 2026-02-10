@@ -24,9 +24,7 @@ export async function saveProviderSettings(
 ): Promise<ProviderSettingsResponse> {
   const parsed = saveProviderSettingsRequestSchema.safeParse(request);
   if (!parsed.success) {
-    throw new Error(
-      `Invalid request: ${JSON.stringify(parsed.error.issues)}`,
-    );
+    throw new Error(`Invalid request: ${JSON.stringify(parsed.error.issues)}`);
   }
   const response = await fetch("/api/mods/providers/settings", {
     method: "PUT",
@@ -47,10 +45,9 @@ export async function saveProviderSettings(
 export async function resetProviderKey(
   provider: ModProvider,
 ): Promise<ProviderSettingsResponse> {
-  const response = await fetch(
-    `/api/mods/providers/settings/${provider}/key`,
-    { method: "DELETE" },
-  );
+  const response = await fetch(`/api/mods/providers/settings/${provider}/key`, {
+    method: "DELETE",
+  });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
     throw new Error(

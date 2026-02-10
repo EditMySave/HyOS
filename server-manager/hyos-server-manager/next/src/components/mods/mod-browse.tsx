@@ -45,8 +45,7 @@ function ModCard({
   isInstalling: boolean;
   isInstalled: boolean;
 }) {
-  const canInstall =
-    mod.latestVersion != null && !isInstalling && !isInstalled;
+  const canInstall = mod.latestVersion != null && !isInstalling && !isInstalled;
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border p-4">
@@ -233,122 +232,126 @@ export function ModBrowse({ className }: { className?: string }) {
             <Settings className="h-5 w-5" />
           </Button>
         </CardHeader>
-      <CardContent className="space-y-4">
-        {hydrated && hasNoProviders && (
-          <div className="flex items-center gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
-            <AlertCircle className="h-5 w-5 shrink-0" />
-            <span>
-              Enable at least one mod source and add API keys where required
-              (CurseForge, NexusMods).
-            </span>
-          </div>
-        )}
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            placeholder="Search mods..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="max-w-sm"
-          />
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SearchParams["sort"])}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <Button onClick={handleSearch} disabled={isLoading}>
-            {isLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Search className="mr-2 h-4 w-4" />
-            )}
-            Search
-          </Button>
-        </div>
-
-        {error && (
-          <div className="flex items-center gap-2 text-destructive">
-            <AlertCircle className="h-5 w-5" />
-            {error.message}
-          </div>
-        )}
-
-        {isLoading && (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        )}
-
-        {!isLoading && data && (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {data.results.map((mod) => (
-                <ModCard
-                  key={`${mod.provider}-${mod.id}`}
-                  mod={mod}
-                  onInstall={handleInstall}
-                  isInstalling={installingModKey === `${mod.provider}-${mod.id}`}
-                  isInstalled={
-                    justInstalledKeys.has(`${mod.provider}-${mod.id}`) ||
-                    !!installedMods?.mods.some(
-                      (m) => m.name === mod.latestVersion?.fileName,
-                    )
-                  }
-                />
-              ))}
+        <CardContent className="space-y-4">
+          {hydrated && hasNoProviders && (
+            <div className="flex items-center gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
+              <AlertCircle className="h-5 w-5 shrink-0" />
+              <span>
+                Enable at least one mod source and add API keys where required
+                (CurseForge, NexusMods).
+              </span>
             </div>
+          )}
 
-            {data.results.length === 0 && (
-              <div className="py-12 text-center text-muted-foreground">
-                No mods found. Try a different query or enable more sources.
-              </div>
-            )}
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              placeholder="Search mods..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              className="max-w-sm"
+            />
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SearchParams["sort"])}
+              className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <Button onClick={handleSearch} disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="mr-2 h-4 w-4" />
+              )}
+              Search
+            </Button>
+          </div>
 
-            {data.errors.length > 0 && (
-              <div className="text-sm text-amber-600 dark:text-amber-400">
-                Some sources failed:{" "}
-                {data.errors.map((e) => `${e.provider}: ${e.error}`).join("; ")}
-              </div>
-            )}
+          {error && (
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              {error.message}
+            </div>
+          )}
 
-            {data.results.length > 0 && submittedParams && (
-              <div className="flex justify-center gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={submittedParams.page === 0}
-                  onClick={() => {
-                    const next = Math.max(0, submittedParams.page - 1);
-                    setPage(next);
-                    setSubmittedParams({ ...submittedParams, page: next });
-                  }}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const next = submittedParams.page + 1;
-                    setPage(next);
-                    setSubmittedParams({ ...submittedParams, page: next });
-                  }}
-                >
-                  Next
-                </Button>
+          {isLoading && (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
+          {!isLoading && data && (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {data.results.map((mod) => (
+                  <ModCard
+                    key={`${mod.provider}-${mod.id}`}
+                    mod={mod}
+                    onInstall={handleInstall}
+                    isInstalling={
+                      installingModKey === `${mod.provider}-${mod.id}`
+                    }
+                    isInstalled={
+                      justInstalledKeys.has(`${mod.provider}-${mod.id}`) ||
+                      !!installedMods?.mods.some(
+                        (m) => m.name === mod.latestVersion?.fileName,
+                      )
+                    }
+                  />
+                ))}
               </div>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+
+              {data.results.length === 0 && (
+                <div className="py-12 text-center text-muted-foreground">
+                  No mods found. Try a different query or enable more sources.
+                </div>
+              )}
+
+              {data.errors.length > 0 && (
+                <div className="text-sm text-amber-600 dark:text-amber-400">
+                  Some sources failed:{" "}
+                  {data.errors
+                    .map((e) => `${e.provider}: ${e.error}`)
+                    .join("; ")}
+                </div>
+              )}
+
+              {data.results.length > 0 && submittedParams && (
+                <div className="flex justify-center gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={submittedParams.page === 0}
+                    onClick={() => {
+                      const next = Math.max(0, submittedParams.page - 1);
+                      setPage(next);
+                      setSubmittedParams({ ...submittedParams, page: next });
+                    }}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const next = submittedParams.page + 1;
+                      setPage(next);
+                      setSubmittedParams({ ...submittedParams, page: next });
+                    }}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
     </>
   );
 }

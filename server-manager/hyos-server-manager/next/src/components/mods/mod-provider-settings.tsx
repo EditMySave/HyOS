@@ -115,7 +115,10 @@ export function ModProviderSettingsDialog({
       if (updated) {
         setProvidersFromSettings(updated);
         setNewKeyInput((prev) => ({ ...prev, [id]: "" }));
-        setProviderEnabled(id, updated.providers.find((p) => p.id === id)!.enabled);
+        setProviderEnabled(
+          id,
+          updated.providers.find((p) => p.id === id)!.enabled,
+        );
         setSuccessId(id);
         setTimeout(() => setSuccessId(null), 2000);
         mutateSettings();
@@ -130,7 +133,10 @@ export function ModProviderSettingsDialog({
       const updated = await resetKey(id);
       if (updated) {
         setProvidersFromSettings(updated);
-        setProviderEnabled(id, updated.providers.find((p) => p.id === id)!.enabled);
+        setProviderEnabled(
+          id,
+          updated.providers.find((p) => p.id === id)!.enabled,
+        );
         setSuccessId(id);
         setTimeout(() => setSuccessId(null), 2000);
         mutateSettings();
@@ -156,8 +162,10 @@ export function ModProviderSettingsDialog({
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
           {PROVIDERS.map((provider) => {
             const enabled = enabledState[provider.id];
-            const hasApiKey = settingsByProvider.get(provider.id)?.hasApiKey ?? false;
-            const showSave = !hasApiKey && (newKeyInput[provider.id]?.trim() ?? "").length > 0;
+            const hasApiKey =
+              settingsByProvider.get(provider.id)?.hasApiKey ?? false;
+            const showSave =
+              !hasApiKey && (newKeyInput[provider.id]?.trim() ?? "").length > 0;
             const showReset = hasApiKey;
             const justSuccess = successId === provider.id;
             const busy = isSaving || isResetting;
@@ -183,7 +191,10 @@ export function ModProviderSettingsDialog({
                       checked={enabled}
                       onChange={async (e) => {
                         const next = e.target.checked;
-                        setEnabledState((prev) => ({ ...prev, [provider.id]: next }));
+                        setEnabledState((prev) => ({
+                          ...prev,
+                          [provider.id]: next,
+                        }));
                         try {
                           const updated = await saveSettings({
                             provider: provider.id,
@@ -284,7 +295,6 @@ export function ModProviderSettingsDialog({
                     )}
                   </div>
                 )}
-
               </div>
             );
           })}

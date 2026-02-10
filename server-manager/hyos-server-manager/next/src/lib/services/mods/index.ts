@@ -1,48 +1,5 @@
 // Types
-export type {
-  InstalledMod,
-  InstalledModsResponse,
-  LoadedPlugin,
-  LoadedPluginsResponse,
-  UploadModResponse,
-  DeleteModResponse,
-  PatchModResponse,
-  ManifestInfo,
-  ModStatus,
-  ModUpdate,
-  ModUpdatesResponse,
-} from "./mods.types";
 
-// Services
-export {
-  getInstalledMods,
-  getLoadedPlugins,
-  uploadMod,
-  deleteMod,
-  patchMod,
-  getModUpdates,
-} from "./mods.service";
-
-// Hooks
-export {
-  useInstalledMods,
-  useLoadedPlugins,
-  useModUpdates,
-  useUploadMod,
-  useDeleteMod,
-  usePatchMod,
-} from "./mods.hooks";
-
-// Browser (aggregated mod search)
-export {
-  useAggregatedSearch,
-  useModInstall,
-  searchAllProviders,
-  installMod,
-  runSearch,
-  getProviders,
-  getProvider,
-} from "./browser";
 export type {
   AggregatedSearchResult,
   BrowsedMod,
@@ -51,3 +8,49 @@ export type {
   ProviderConfig,
   SearchParams,
 } from "./browser";
+// Browser (aggregated mod search)
+export {
+  getProvider,
+  getProviders,
+  installMod,
+  runSearch,
+  searchAllProviders,
+  useAggregatedSearch,
+  useModInstall,
+} from "./browser";
+
+// Hooks
+export {
+  useDeleteMod,
+  useInstalledMods,
+  useLoadedPlugins,
+  useModLink,
+  useModUpdates,
+  usePatchMod,
+  useUploadMod,
+} from "./mods.hooks";
+// Services
+export {
+  deleteMod,
+  getInstalledMods,
+  getLoadedPlugins,
+  getModUpdates,
+  linkModToProvider,
+  patchMod,
+  uploadMod,
+} from "./mods.service";
+export type {
+  DeleteModResponse,
+  InstalledMod,
+  InstalledModsResponse,
+  LinkModData,
+  LinkModResponse,
+  LoadedPlugin,
+  LoadedPluginsResponse,
+  ManifestInfo,
+  ModStatus,
+  ModUpdate,
+  ModUpdatesResponse,
+  PatchModResponse,
+  UploadModResponse,
+} from "./mods.types";

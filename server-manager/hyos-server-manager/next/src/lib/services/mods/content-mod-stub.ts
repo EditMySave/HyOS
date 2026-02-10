@@ -8,5 +8,4 @@ export const CONTENT_MOD_STUB_CLASS_BASE64 =
 
 export const CONTENT_MOD_STUB_MAIN = "hyos.stub.ContentModStub";
 
-export const CONTENT_MOD_STUB_CLASS_PATH =
-  "hyos/stub/ContentModStub.class";
+export const CONTENT_MOD_STUB_CLASS_PATH = "hyos/stub/ContentModStub.class";

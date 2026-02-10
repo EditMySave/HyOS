@@ -1,16 +1,19 @@
 import {
-  type InstalledModsResponse,
-  installedModsResponseSchema,
-  type LoadedPluginsResponse,
-  loadedPluginsResponseSchema,
-  type UploadModResponse,
-  uploadModResponseSchema,
   type DeleteModResponse,
   deleteModResponseSchema,
-  type PatchModResponse,
-  patchModResponseSchema,
+  type InstalledModsResponse,
+  installedModsResponseSchema,
+  type LinkModData,
+  type LinkModResponse,
+  type LoadedPluginsResponse,
+  linkModResponseSchema,
+  loadedPluginsResponseSchema,
   type ModUpdatesResponse,
   modUpdatesResponseSchema,
+  type PatchModResponse,
+  patchModResponseSchema,
+  type UploadModResponse,
+  uploadModResponseSchema,
 } from "./mods.types";
 
 /**
@@ -111,4 +114,27 @@ export async function getModUpdates(): Promise<ModUpdatesResponse> {
   }
   const data = await response.json();
   return modUpdatesResponseSchema.parse(data);
+}
+
+/**
+ * Link an installed mod to a provider for update detection
+ */
+export async function linkModToProvider(
+  modId: string,
+  data: LinkModData,
+): Promise<LinkModResponse> {
+  const response = await fetch(`/api/mods/${modId}/link`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(
+      (error as { error?: string })?.error ??
+        `Failed to link mod: ${response.statusText}`,
+    );
+  }
+  const result = await response.json();
+  return linkModResponseSchema.parse(result);
 }

@@ -83,7 +83,9 @@ export class ModtaleProvider implements ModProviderAdapter {
       categories,
       iconUrl: item.imageUrl ?? null,
       websiteUrl: `https://modtale.net/project/${item.slug ?? item.id}`,
-      latestVersion: latestFile ? this.mapListItemVersionToModVersion(latestFile) : null,
+      latestVersion: latestFile
+        ? this.mapListItemVersionToModVersion(latestFile)
+        : null,
       updatedAt: item.updatedAt ?? "",
     };
   }
@@ -127,7 +129,8 @@ export class ModtaleProvider implements ModProviderAdapter {
     const latestFile = mod.versions?.[0];
     const downloadCount =
       mod.downloadCount ??
-      (mod.versions?.reduce((s, v) => s + (v.downloadCount ?? 0), 0) ?? 0);
+      mod.versions?.reduce((s, v) => s + (v.downloadCount ?? 0), 0) ??
+      0;
 
     return {
       id: mod.id,

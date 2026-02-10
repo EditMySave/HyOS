@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { NextResponse } from "next/server";
 import { inspectJar } from "@/lib/services/mods/jar-inspector";
 
 function getModsPath(): string {
@@ -103,6 +103,7 @@ export async function POST(request: Request) {
       manifestInfo,
       dependencies: manifestInfo?.dependencies ?? [],
       iconUrl: null,
+      websiteUrl: null,
       providerSource: null,
     };
 

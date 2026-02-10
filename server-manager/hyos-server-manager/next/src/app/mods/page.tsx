@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useInstalledMods, useLoadedPlugins, useUploadMod } from "@/lib/services/mods";
+import {
+  useInstalledMods,
+  useLoadedPlugins,
+  useUploadMod,
+} from "@/lib/services/mods";
 import { ModBrowse } from "@/components/mods/mod-browse";
 import { ModInstalled } from "@/components/mods/mod-installed";
 import { Button } from "@/components/ui/button";
@@ -30,15 +34,11 @@ export default function ModsPage() {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const {
-    isLoading: installedLoading,
-    mutate: refreshInstalled,
-  } = useInstalledMods();
+  const { isLoading: installedLoading, mutate: refreshInstalled } =
+    useInstalledMods();
 
-  const {
-    isLoading: loadedLoading,
-    mutate: refreshLoaded,
-  } = useLoadedPlugins();
+  const { isLoading: loadedLoading, mutate: refreshLoaded } =
+    useLoadedPlugins();
 
   const { trigger: uploadMod, isMutating: isUploading } = useUploadMod();
 

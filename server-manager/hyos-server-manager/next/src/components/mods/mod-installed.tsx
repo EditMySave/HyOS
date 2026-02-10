@@ -7,8 +7,9 @@ import {
   useModUpdates,
   useDeleteMod,
   usePatchMod,
+  useModInstall,
 } from "@/lib/services/mods";
-import type { InstalledMod, LoadedPlugin } from "@/lib/services/mods";
+import type { InstalledMod, LoadedPlugin, ModUpdate } from "@/lib/services/mods";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,7 +117,10 @@ function StatCard({
 function ModIcon({
   mod,
   size = "sm",
-}: { mod: InstalledMod; size?: "sm" | "lg" }) {
+}: {
+  mod: InstalledMod;
+  size?: "sm" | "lg";
+}) {
   const dim = size === "lg" ? "h-12 w-12" : "h-8 w-8";
   const iconDim = size === "lg" ? "h-6 w-6" : "h-4 w-4";
 
@@ -140,10 +144,7 @@ function ModIcon({
       )}
       style={{ backgroundColor: `hsl(${hue}, 60%, 90%)` }}
     >
-      <Puzzle
-        className={iconDim}
-        style={{ color: `hsl(${hue}, 60%, 40%)` }}
-      />
+      <Puzzle className={iconDim} style={{ color: `hsl(${hue}, 60%, 40%)` }} />
     </div>
   );
 }
@@ -156,6 +157,8 @@ function ModGridCard({
   mod,
   isLoaded,
   hasUpdate,
+  onUpdate,
+  isUpdating,
   onDetails,
   onDelete,
   isDeleting,
@@ -163,6 +166,8 @@ function ModGridCard({
   mod: InstalledMod;
   isLoaded: boolean;
   hasUpdate: boolean;
+  onUpdate?: () => void;
+  isUpdating: boolean;
   onDetails: () => void;
   onDelete: () => void;
   isDeleting: boolean;
@@ -182,19 +187,40 @@ function ModGridCard({
         </div>
         <div className="flex gap-1.5">
           {isLoaded ? (
-            <Badge className="bg-green-500 hover:bg-green-600" variant="default">
+            <Badge
+              className="bg-green-500 hover:bg-green-600"
+              variant="default"
+            >
               Active
             </Badge>
           ) : (
             <Badge variant="secondary">Inactive</Badge>
           )}
           {hasUpdate && (
-            <Badge className="bg-green-600 hover:bg-green-700" variant="default">
+            <Badge
+              className="bg-green-600 hover:bg-green-700"
+              variant="default"
+            >
               Update
             </Badge>
           )}
         </div>
         <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          {onUpdate ? (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={onUpdate}
+              disabled={isUpdating}
+              className="text-green-500 hover:text-green-600"
+            >
+              {isUpdating ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <ArrowUpCircle className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          ) : null}
           <Button variant="ghost" size="icon-xs" onClick={onDetails}>
             <Settings className="h-3.5 w-3.5" />
           </Button>
@@ -225,9 +251,10 @@ export function ModInstalled() {
     mutate: refreshInstalled,
   } = useInstalledMods();
   const { data: loadedPlugins } = useLoadedPlugins();
-  const { data: updatesData } = useModUpdates();
+  const { data: updatesData, mutate: refreshUpdates } = useModUpdates();
   const { trigger: deleteMod, isMutating: isDeleting } = useDeleteMod();
   const { trigger: patchMod, isMutating: isPatching } = usePatchMod();
+  const { trigger: installMod } = useModInstall();
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
@@ -237,6 +264,7 @@ export function ModInstalled() {
   const [detailsMod, setDetailsMod] = useState<InstalledMod | null>(null);
   const [patchingModId, setPatchingModId] = useState<string | null>(null);
   const [isPatchingAll, setIsPatchingAll] = useState(false);
+  const [updatingModId, setUpdatingModId] = useState<string | null>(null);
 
   const mods = installedMods?.mods ?? [];
   const updates = updatesData?.updates ?? [];
@@ -329,7 +357,9 @@ export function ModInstalled() {
         case "version":
           return (a.version ?? "").localeCompare(b.version ?? "");
         case "modified":
-          return new Date(b.modified).getTime() - new Date(a.modified).getTime();
+          return (
+            new Date(b.modified).getTime() - new Date(a.modified).getTime()
+          );
         default:
           return 0;
       }
@@ -401,6 +431,35 @@ export function ModInstalled() {
     }
   }, [mods, patchMod, refreshInstalled]);
 
+  const handleUpdate = useCallback(
+    async (mod: InstalledMod, update: ModUpdate) => {
+      if (!update.latestModVersion) return;
+      setUpdatingModId(mod.id);
+      try {
+        await installMod({
+          version: update.latestModVersion,
+          provider: update.provider,
+          modInfo: {
+            providerModId: update.providerModId,
+            name: mod.displayName,
+            authors: mod.authors,
+            summary: mod.description ?? "",
+            iconUrl: mod.iconUrl,
+            websiteUrl: mod.websiteUrl ?? undefined,
+          },
+          replaceFileName: mod.fileName,
+        });
+        refreshInstalled();
+        refreshUpdates();
+      } catch (error) {
+        console.error("Update failed:", error);
+      } finally {
+        setUpdatingModId(null);
+      }
+    },
+    [installMod, refreshInstalled, refreshUpdates],
+  );
+
   // Loading state
   if (installedLoading) {
     return (
@@ -434,7 +493,9 @@ export function ModInstalled() {
         <StatCard
           label="Updates Available"
           primary={updates.length}
-          secondary={criticalCount > 0 ? `${criticalCount} critical` : "All up to date"}
+          secondary={
+            criticalCount > 0 ? `${criticalCount} critical` : "All up to date"
+          }
           icon={ArrowUpCircle}
           iconColorClass="text-green-500"
           iconBgClass="bg-green-500/10"
@@ -610,9 +671,7 @@ export function ModInstalled() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm">
-                          {mod.version ?? "-"}
-                        </span>
+                        <span className="text-sm">{mod.version ?? "-"}</span>
                         {update && (
                           <Badge className="bg-green-600 hover:bg-green-700 text-[10px] px-1.5 py-0">
                             Update
@@ -665,6 +724,21 @@ export function ModInstalled() {
                             )}
                           </Button>
                         )}
+                        {update?.latestModVersion ? (
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => handleUpdate(mod, update)}
+                            disabled={updatingModId === mod.id}
+                            className="text-green-500 hover:text-green-600"
+                          >
+                            {updatingModId === mod.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <ArrowUpCircle className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                        ) : null}
                         <Button
                           variant="ghost"
                           size="icon-xs"
@@ -692,17 +766,26 @@ export function ModInstalled() {
       ) : (
         /* Grid View */
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {paginated.map((mod) => (
-            <ModGridCard
-              key={mod.id}
-              mod={mod}
-              isLoaded={isModLoaded(mod)}
-              hasUpdate={updateMap.has(mod.fileName)}
-              onDetails={() => setDetailsMod(mod)}
-              onDelete={() => handleDelete(mod.id)}
-              isDeleting={isDeleting}
-            />
-          ))}
+          {paginated.map((mod) => {
+            const update = updateMap.get(mod.fileName);
+            return (
+              <ModGridCard
+                key={mod.id}
+                mod={mod}
+                isLoaded={isModLoaded(mod)}
+                hasUpdate={!!update}
+                onUpdate={
+                  update?.latestModVersion
+                    ? () => handleUpdate(mod, update)
+                    : undefined
+                }
+                isUpdating={updatingModId === mod.id}
+                onDetails={() => setDetailsMod(mod)}
+                onDelete={() => handleDelete(mod.id)}
+                isDeleting={isDeleting}
+              />
+            );
+          })}
         </div>
       )}
 

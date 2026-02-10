@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { NextResponse } from "next/server";
 import { inspectJar } from "@/lib/services/mods/jar-inspector";
 import { loadRegistry } from "@/lib/services/mods/mod-registry";
 
@@ -54,15 +54,17 @@ export async function GET() {
       // Inspect JAR manifest for patch status
       let needsPatch = false;
       let isPatched = false;
-      let manifestInfo: {
-        hasManifest: boolean;
-        main: string | null;
-        group: string | null;
-        name: string | null;
-        version: string | null;
-        dependencies: string[];
-        serverVersion: string | null;
-      } | undefined;
+      let manifestInfo:
+        | {
+            hasManifest: boolean;
+            main: string | null;
+            group: string | null;
+            name: string | null;
+            version: string | null;
+            dependencies: string[];
+            serverVersion: string | null;
+          }
+        | undefined;
       try {
         const inspection = inspectJar(filePath);
         needsPatch = inspection.needsPatch;
@@ -92,6 +94,7 @@ export async function GET() {
         manifestInfo,
         dependencies: manifestInfo?.dependencies ?? [],
         iconUrl: reg?.iconUrl ?? null,
+        websiteUrl: reg?.websiteUrl ?? null,
         providerSource: reg?.provider ?? null,
       });
     }

@@ -110,11 +110,12 @@ export async function installMod(
   provider: ModProvider,
   version: ModVersion,
   modInfo?: InstallModInfo,
+  replaceFileName?: string,
 ): Promise<{ success: boolean; message: string }> {
   const response = await fetch("/api/mods/install", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ provider, version, modInfo }),
+    body: JSON.stringify({ provider, version, modInfo, replaceFileName }),
   });
 
   const data = await response.json();

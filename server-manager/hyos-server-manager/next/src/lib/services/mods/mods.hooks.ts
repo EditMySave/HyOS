@@ -1,13 +1,15 @@
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import {
+  deleteMod,
   getInstalledMods,
   getLoadedPlugins,
-  uploadMod,
-  deleteMod,
-  patchMod,
   getModUpdates,
+  linkModToProvider,
+  patchMod,
+  uploadMod,
 } from "./mods.service";
+import type { LinkModData } from "./mods.types";
 
 // ============================================================================
 // Query Hooks (Data Fetching)
@@ -95,4 +97,16 @@ export function usePatchMod() {
       // Revalidate installed mods list after patch
     },
   });
+}
+
+/**
+ * Hook to link an installed mod to a provider
+ */
+export function useModLink() {
+  return useSWRMutation<
+    Awaited<ReturnType<typeof linkModToProvider>>,
+    Error,
+    string,
+    { modId: string; data: LinkModData }
+  >("link-mod", async (_, { arg }) => linkModToProvider(arg.modId, arg.data));
 }

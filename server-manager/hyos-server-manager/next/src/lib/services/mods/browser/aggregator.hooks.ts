@@ -32,6 +32,7 @@ export function useModInstall() {
           version: ModVersion;
           provider: string;
           modInfo?: InstallModInfo;
+          replaceFileName?: string;
         };
       },
     ) =>
@@ -39,6 +40,7 @@ export function useModInstall() {
         arg.provider as "curseforge" | "modtale" | "nexusmods",
         arg.version,
         arg.modInfo,
+        arg.replaceFileName,
       ),
   );
 }

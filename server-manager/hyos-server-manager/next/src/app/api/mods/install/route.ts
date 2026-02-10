@@ -3,11 +3,15 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getProvider } from "@/lib/services/mods/browser/providers";
-import type { ModProvider, ModVersion } from "@/lib/services/mods/browser/types";
-import { modVersionSchema } from "@/lib/services/mods/browser/types";
 import { getNexusModFiles } from "@/lib/services/mods/browser/providers/nexusmods.service";
+import type {
+  ModProvider,
+  ModVersion,
+} from "@/lib/services/mods/browser/types";
+import { modVersionSchema } from "@/lib/services/mods/browser/types";
+import { inspectJar } from "@/lib/services/mods/jar-inspector";
+import { registerMod, unregisterMod } from "@/lib/services/mods/mod-registry";
 import { loadProviderConfig } from "@/lib/services/mods/providers.loader";
-import { registerMod } from "@/lib/services/mods/mod-registry";
 
 function getModsPath(): string {
   const stateDir = process.env.HYTALE_STATE_DIR;
@@ -31,6 +35,7 @@ const installBodySchema = z.object({
   provider: z.enum(["curseforge", "modtale", "nexusmods"]),
   version: modVersionSchema,
   modInfo: modInfoSchema.optional(),
+  replaceFileName: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -45,7 +50,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { provider, version, modInfo } = parsed.data;
+    const { provider, version, modInfo, replaceFileName } = parsed.data;
     const providerConfig = await loadProviderConfig();
     const providerApiKey = providerConfig[provider as ModProvider].apiKey;
 
@@ -96,13 +101,25 @@ export async function POST(request: Request) {
     const filePath = path.join(modsPath, safeFileName);
     await fs.writeFile(filePath, data);
 
+    // Inspect JAR to get manifest version for accurate version tracking
+    let manifestVersion: string | null = null;
+    try {
+      const inspection = inspectJar(filePath);
+      manifestVersion = inspection.manifestInfo?.version ?? null;
+    } catch (e) {
+      console.error(`[mods/install] Error inspecting ${safeFileName}:`, e);
+    }
+
     // Register mod in registry with provider metadata
     try {
       await registerMod(modsPath, safeFileName, {
         provider: provider as "curseforge" | "modtale" | "nexusmods",
         providerModId: modInfo?.providerModId ?? resolvedVersion.fileId,
         fileId: resolvedVersion.fileId,
-        installedVersion: resolvedVersion.displayName || resolvedVersion.fileName,
+        installedVersion:
+          manifestVersion ||
+          resolvedVersion.displayName ||
+          resolvedVersion.fileName,
         authors: modInfo?.authors ?? [],
         summary: modInfo?.summary ?? "",
         iconUrl: modInfo?.iconUrl ?? null,
@@ -111,6 +128,20 @@ export async function POST(request: Request) {
       });
     } catch (e) {
       console.error("[mods/install] Failed to update registry:", e);
+    }
+
+    // Clean up the old file when updating (different filename)
+    if (replaceFileName && replaceFileName !== safeFileName) {
+      try {
+        const oldPath = path.join(modsPath, path.basename(replaceFileName));
+        await fs.unlink(oldPath);
+        await unregisterMod(modsPath, path.basename(replaceFileName));
+      } catch (e) {
+        console.error(
+          `[mods/install] Failed to clean up old file ${replaceFileName}:`,
+          e,
+        );
+      }
     }
 
     return NextResponse.json({

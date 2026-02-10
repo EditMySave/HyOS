@@ -23,27 +23,41 @@ const Tabs = React.forwardRef<
     onValueChange?: (value: string) => void;
     defaultValue?: string;
   }
->(({ value, onValueChange, defaultValue, className, children, ...props }, ref) => {
-  const [internalValue, setInternal] = React.useState(defaultValue ?? value ?? "");
-  const isControlled = value !== undefined;
-  const current = isControlled ? value : internalValue;
+>(
+  (
+    { value, onValueChange, defaultValue, className, children, ...props },
+    ref,
+  ) => {
+    const [internalValue, setInternal] = React.useState(
+      defaultValue ?? value ?? "",
+    );
+    const isControlled = value !== undefined;
+    const current = isControlled ? value : internalValue;
 
-  const handleChange = React.useCallback(
-    (v: string) => {
-      if (!isControlled) setInternal(v);
-      onValueChange?.(v);
-    },
-    [isControlled, onValueChange],
-  );
+    const handleChange = React.useCallback(
+      (v: string) => {
+        if (!isControlled) setInternal(v);
+        onValueChange?.(v);
+      },
+      [isControlled, onValueChange],
+    );
 
-  return (
-    <TabsContext.Provider value={{ value: current, onValueChange: handleChange }}>
-      <div ref={ref} className={cn("w-full", className)} data-state={current} {...props}>
-        {children}
-      </div>
-    </TabsContext.Provider>
-  );
-});
+    return (
+      <TabsContext.Provider
+        value={{ value: current, onValueChange: handleChange }}
+      >
+        <div
+          ref={ref}
+          className={cn("w-full", className)}
+          data-state={current}
+          {...props}
+        >
+          {children}
+        </div>
+      </TabsContext.Provider>
+    );
+  },
+);
 Tabs.displayName = "Tabs";
 
 const TabsList = React.forwardRef<

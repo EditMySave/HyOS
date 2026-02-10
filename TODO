@@ -1,6 +1,8 @@
 
 Outdated Mods
-Mod Failed to Load
+Mod Failed to Load pick up on that
+Check for mod loading in logs and load failures
+
 Mod Search
 Truenas Catalog
 Pipelines
@@ -11,7 +13,6 @@ Better installed mods button detection
 visit website button on mods
 Config.json confifurator winternode.com
 Recommended mods
-Check for mod loading in logs and load failures
 Better Mod Management
 Create new world
 Logs filtering on plugins
@@ -28,13 +29,19 @@ Bcrypt Auth
 Add server address to dashboard
 README
 
+Make OP has an error
+
 server update rollback
 
 New Tabs:
 Connected Players
-Backups
+Backups 
 File Manager (Update Design)
 Worlds (Update Design)
+
+To Design
+Mod Search
+File Manager
 
 
   1. Mod Search (Improvements)              

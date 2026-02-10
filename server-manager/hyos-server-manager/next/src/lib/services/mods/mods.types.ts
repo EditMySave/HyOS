@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { modVersionSchema } from "./browser/types";
 
 // ============================================================================
 // Installed Mod Types (from filesystem)
@@ -33,6 +34,7 @@ export const installedModSchema = z.object({
   manifestInfo: manifestInfoSchema.optional(),
   dependencies: z.array(z.string()),
   iconUrl: z.string().nullable(),
+  websiteUrl: z.string().nullable(),
   providerSource: z.string().nullable(),
 });
 
@@ -122,6 +124,8 @@ export const modUpdateSchema = z.object({
   latestVersion: z.string(),
   latestFileId: z.string(),
   provider: z.string(),
+  providerModId: z.string(),
+  latestModVersion: modVersionSchema.nullable(),
   isCritical: z.boolean(),
 });
 
@@ -132,3 +136,23 @@ export const modUpdatesResponseSchema = z.object({
 
 export type ModUpdate = z.infer<typeof modUpdateSchema>;
 export type ModUpdatesResponse = z.infer<typeof modUpdatesResponseSchema>;
+
+// ============================================================================
+// Link Mod to Provider Types
+// ============================================================================
+
+export const linkModDataSchema = z.object({
+  provider: z.enum(["curseforge", "modtale", "nexusmods"]),
+  providerModId: z.string(),
+  websiteUrl: z.string(),
+  iconUrl: z.string().nullable(),
+  authors: z.array(z.string()),
+  summary: z.string(),
+});
+export type LinkModData = z.infer<typeof linkModDataSchema>;
+
+export const linkModResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+export type LinkModResponse = z.infer<typeof linkModResponseSchema>;
