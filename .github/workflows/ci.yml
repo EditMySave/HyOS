@@ -211,4 +211,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy website/out --project-name=hyos-website
+          command: pages deploy website/out --project-name=hyos-website --commit-dirty=true

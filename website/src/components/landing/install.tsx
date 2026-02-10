@@ -3,11 +3,29 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 
-const LINUX_COMMAND = `curl -fsSL https://raw.githubusercontent.com/editmysave/hyOS/main/docker-compose.yml -o docker-compose.yml
-docker compose up -d`;
+const COMPOSE_YAML = `services:
+  hytale:
+    image: ghcr.io/editmysave/hyos/server:latest
+    container_name: hytale-server
+    restart: unless-stopped
+    ports:
+      - "5520:5520/udp"
+    environment:
+      JAVA_XMS: "4G"
+      JAVA_XMX: "8G"
+      PATCHLINE: "release"
+    volumes:
+      - hytale-data:/data
+      - /etc/machine-id:/etc/machine-id:ro
+    stdin_open: true
+    tty: true
 
-const WINDOWS_COMMAND = `Invoke-WebRequest -Uri "https://raw.githubusercontent.com/editmysave/hyOS/main/docker-compose.yml" -OutFile "docker-compose.yml"
-docker compose up -d`;
+volumes:
+  hytale-data:`;
+
+const DOCKER_COMMANDS = `docker compose up -d
+docker attach hytale-server  # complete auth flow
+docker compose logs -f       # watch logs`;
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -37,44 +55,40 @@ export function Install() {
           Install HyOS
         </h2>
         <p className="mt-3 text-base text-muted-foreground">
-          One command to download and set up. Needs Docker.
+          Save as <code className="text-foreground">docker-compose.yml</code>,
+          then run the commands below.
         </p>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-2">
           <div className="border border-border bg-card">
             <div className="border-b border-border px-5 py-3">
               <span className="text-sm font-medium text-foreground">
-                Linux or macOS
+                docker-compose.yml
               </span>
             </div>
             <div className="relative p-5">
               <pre className="overflow-x-auto text-sm leading-relaxed text-muted-foreground">
-                <code>{LINUX_COMMAND}</code>
+                <code>{COMPOSE_YAML}</code>
               </pre>
-              <CopyButton text={LINUX_COMMAND} />
-            </div>
-            <div className="border-t border-border px-5 py-2">
-              <span className="text-xs text-foreground-muted">
-                Requires Docker
-              </span>
+              <CopyButton text={COMPOSE_YAML} />
             </div>
           </div>
 
           <div className="border border-border bg-card">
             <div className="border-b border-border px-5 py-3">
               <span className="text-sm font-medium text-foreground">
-                Windows PowerShell
+                Run
               </span>
             </div>
             <div className="relative p-5">
               <pre className="overflow-x-auto text-sm leading-relaxed text-muted-foreground">
-                <code>{WINDOWS_COMMAND}</code>
+                <code>{DOCKER_COMMANDS}</code>
               </pre>
-              <CopyButton text={WINDOWS_COMMAND} />
+              <CopyButton text={DOCKER_COMMANDS} />
             </div>
             <div className="border-t border-border px-5 py-2">
               <span className="text-xs text-foreground-muted">
-                Requires Docker Desktop
+                Requires Docker
               </span>
             </div>
           </div>
