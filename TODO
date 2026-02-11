@@ -61,7 +61,7 @@ Anonymous heartbeat
   version, icon)                                                                                                                                         
   - Questions schema - Defines all configurable env vars as TrueNAS UI form fields (server host, ports, JVM memory, mod paths, API credentials)          
   - Values defaults - Sensible defaults for TrueNAS deployment (volume mounts for /data, networking, resource limits)                                    
-  - Upgrade strategy - Chart versioning that maps to hyOS Docker image tags                                                                              
+  - Upgrade strategy - Chart versioning that maps to HyOS Docker image tags                                                                              
   - Documentation page - In-catalog description, screenshots, and setup instructions                                                                     
   - Repository structure - Separate truenas-catalog/ directory at repo root with the standard stable/hyos/ chart hierarchy                               
                                                                                                                                                          

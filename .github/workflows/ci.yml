@@ -1,5 +1,5 @@
 # =============================================================================
-# hyOS CI/CD Pipeline
+# HyOS CI/CD Pipeline
 # =============================================================================
 # Builds the API plugin JAR, Docker server image, and server manager image.
 # Publishes to GHCR on push to main; validates builds on PRs.

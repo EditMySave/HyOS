@@ -31,7 +31,7 @@ FROM eclipse-temurin:25-jre-alpine
 # OCI Labels
 LABEL org.opencontainers.image.title="Hytale Server (Minimal)" \
       org.opencontainers.image.description="Minimal Hytale dedicated server for production" \
-      org.opencontainers.image.authors="hyOS Project"
+      org.opencontainers.image.authors="HyOS Project"
 
 # Build arguments
 ARG UID=1000

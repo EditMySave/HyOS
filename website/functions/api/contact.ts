@@ -57,9 +57,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "hyOS Contact <noreply@hyos.io>",
+        from: "HyOS Contact <noreply@hyos.io>",
         to: env.CONTACT_EMAIL || "contact@hyos.io",
-        subject: `[hyOS ${topic}] from ${name}`,
+        subject: `[HyOS ${topic}] from ${name}`,
         text: `Topic: ${topic}\nName: ${name}\nEmail: ${email}\n\n${message}`,
       }),
     });

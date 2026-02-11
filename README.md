@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="logo.png" alt="hyOS" width="200" />
+  <img src="logo.png" alt="HyOS" width="200" />
 </p>
 
-<h3 align="center">hyOS</h3>
+<h3 align="center">HyOS</h3>
 <p align="center">Docker-based Hytale server management with first-class TrueNAS support.</p>
 
 <p align="center">
@@ -13,9 +13,9 @@
 
 ---
 
-## What is hyOS?
+## What is HyOS?
 
-hyOS is a multi-container system for running and managing Hytale dedicated servers. It pairs a game server container (automated setup, OAuth auth, auto-updates, mod management) with a Next.js web dashboard for remote administration. Designed for TrueNAS SCALE but works on any Docker host.
+HyOS is a multi-container system for running and managing Hytale dedicated servers. It pairs a game server container (automated setup, OAuth auth, auto-updates, mod management) with a Next.js web dashboard for remote administration. Designed for TrueNAS SCALE but works on any Docker host.
 
 ## Key Features
 
@@ -74,7 +74,7 @@ For the full setup with the Manager UI and API plugin, see the [Quick Start guid
 
 ## Architecture
 
-hyOS runs two containers that share a single `/data` volume:
+HyOS runs two containers that share a single `/data` volume:
 
 | Container | Image | Role |
 |---|---|---|
@@ -109,7 +109,7 @@ See [Architecture](docs/architecture.md) for diagrams and the full security mode
 ## Project Structure
 
 ```
-hyOS/
+HyOS/
 ├── hytale-docker-server/       # Docker configs for the game server
 │   ├── config-truenas/         # TrueNAS-optimized build (primary)
 │   ├── config-developer/       # Developer build with TypeScript/Bun

@@ -40,7 +40,7 @@ FROM oven/bun:1-debian
 # OCI Labels
 LABEL org.opencontainers.image.title="Hytale Server (Developer)" \
       org.opencontainers.image.description="Developer-focused Hytale server with mod support" \
-      org.opencontainers.image.authors="hyOS Project"
+      org.opencontainers.image.authors="HyOS Project"
 
 # Build arguments
 ARG UID=1000

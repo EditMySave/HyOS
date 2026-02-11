@@ -35,7 +35,7 @@ FROM eclipse-temurin:25-jre-alpine
 # OCI Labels
 LABEL org.opencontainers.image.title="Hytale Server (TrueNAS Enterprise)" \
       org.opencontainers.image.description="Enterprise Hytale server for TrueNAS SCALE with Web UI support" \
-      org.opencontainers.image.authors="hyOS Project"
+      org.opencontainers.image.authors="HyOS Project"
 
 # Default UID/GID - TrueNAS typically uses 568 for apps
 ARG PUID=568
