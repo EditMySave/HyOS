@@ -14,8 +14,10 @@ capabilities:
   name: SETUID
 categories:
 - games
+changelog_url: https://github.com/EditMySave/HyOS/commits/main/
 date_added: '2026-02-05'
-description: 'Hytale dedicated game server with web management UI, OAuth authentication, auto-updates, mod support, and REST API for server control.'
+description: Hytale dedicated game server with web management UI, OAuth authentication,
+  auto-updates, mod support, and REST API for server control.
 home: https://hytale.com
 host_mounts:
 - description: Docker socket
@@ -29,9 +31,9 @@ keywords:
 lib_version: 2.1.78
 lib_version_hash: 704d8b93e03eb32f66350c926e93f9f1f7e43f21c1bfbd4d28d4035c6fcd77e4
 maintainers:
-- email: ems@neurio.co.uk
-  name: Reiss Cashmore
-  url: https://hyos.io
+- email: dev@truenas.com
+  name: truenas
+  url: https://www.truenas.com/
 name: hyos
 run_as_context:
 - description: Container [hytale-manager] can run as any non-root user and group.
@@ -51,4 +53,4 @@ sources:
 - https://github.com/editmysave/hyos/pkgs/container/hyos%2Fserver
 title: HyOS - Hytale Server
 train: community
-version: 1.0.2
+version: 1.0.3
