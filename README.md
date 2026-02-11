@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" alt="HyOS" width="200" />
+  <img src="logo.png" alt="HyOS" width="200" height="100" />
 </p>
 
 <h3 align="center">HyOS</h3>
