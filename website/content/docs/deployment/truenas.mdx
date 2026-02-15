@@ -1,35 +1,20 @@
 ---
 title: "TrueNAS Deployment"
-description: "Deploy HyOS on TrueNAS SCALE using native apps or Docker Compose"
+description: "Deploy HyOS on TrueNAS SCALE using Docker Compose or the native app catalog"
 ---
 
-Two deployment methods are available for TrueNAS SCALE: the **native TrueNAS App** (recommended) or a **Custom App** using a compose file.
+Two deployment methods are available for TrueNAS SCALE: a **Custom App** using a compose file (recommended) or the **Native TrueNAS App** from the catalog.
 
 ## Table of Contents
 
-- [Native TrueNAS App](#native-truenas-app)
 - [Custom App (Compose)](#custom-app-compose)
-- [TrueNAS-Specific Considerations](#truenas-specific-considerations)
+- [Native TrueNAS App](#native-truenas-app)
 
 ---
 
-## Native TrueNAS App
+## Custom App (Compose)
 
-The native app integrates with the TrueNAS SCALE app catalog and provides a guided UI for all configuration options.
-
-### How It Works
-
-The app is defined by the following files in the `truenas-app/` directory:
-
-| File | Purpose |
-|------|---------|
-| `app.yaml` | App metadata: name, version, capabilities, icon, requirements |
-| `questions.yaml` | Defines the TrueNAS UI configuration form (all settings groups) |
-| `ix_values.yaml` | Default values and container image references |
-| `templates/docker-compose.yaml` | Jinja2 template that generates the actual Docker Compose from user inputs |
-| `templates/test_values/basic-values.yaml` | Test fixture for CI validation of the Jinja2 template |
-| `item.yaml` | Catalog item metadata (train, categories) |
-| `icon.png` | App icon displayed in the TrueNAS catalog |
+Deploy HyOS by pasting a compose file directly into TrueNAS. This gives you full control over every setting.
 
 ### Requirements
 
@@ -38,242 +23,255 @@ The app is defined by the following files in the `truenas-app/` directory:
 - 4+ CPU cores
 - x86_64/amd64 architecture
 
+### Step 1 — Create a Dataset
+
+1. Open the TrueNAS web UI and go to **Datasets**
+2. Select your pool (e.g. `tank`) and click **Add Dataset**
+3. Name it `hytale` (the full path will be something like `tank/apps/hytale`)
+4. Click **Save**
+5. Select the new `hytale` dataset and click **Edit** under **Permissions**
+6. Set **User** to `568` and **Group** to `568`
+7. Check **Apply User** and **Apply Group**
+8. Check **Apply permissions recursively**
+9. Click **Save**
+
+> TrueNAS SCALE uses UID/GID `568` as the default for app containers. The Hytale server container drops privileges to this user, so your dataset ownership must match.
+
+### Step 2 — Create the Custom App
+
+1. Go to **Apps** in the sidebar
+2. Click **Discover Apps** in the top-right
+3. Click **Custom App**
+4. Select **Install via YAML**
+5. Paste the full compose file below into the editor
+6. **Before deploying**, update these two values:
+   - **Volume path** — replace `/mnt/tank/apps/hytale` with the path to your dataset (on both services)
+   - **API password** — replace `changeme123` with a secure password (on the `x-api-config` line)
+7. Click **Save**
+
+### Full Compose File
+
+```yaml
+# =============================================================================
+# HyOS - Hytale Server + Manager - TrueNAS SCALE Custom App
+# =============================================================================
+# ACCESS:
+# - Game Server: UDP port 30520
+# - Management UI: http://your-truenas-ip:30300
+#
+# PORT CONVENTION:
+# Host ports use the 30xxx range to avoid conflicts with other TrueNAS apps.
+# The Hytale server default is UDP 5520 — if you are not running other apps
+# that conflict, you can change the host ports back (e.g., "5520:5520/udp").
+# Internal container ports (5520, 8080, 3000) are unchanged.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Shared configuration - SET YOUR PASSWORD HERE
+# ---------------------------------------------------------------------------
+x-api-config: &api-config
+  API_CLIENT_SECRET: changeme123
+  API_CLIENT_ID: hyos-manager
+
+services:
+  hyos-server:
+    image: ghcr.io/editmysave/hyos/server:latest
+    pull_policy: always
+    container_name: hyos-server
+    user: "568:568"
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+    environment:
+      <<: *api-config
+
+      # --- User Settings ---
+      PUID: 568
+      PGID: 568
+      UMASK: "002"
+      TZ: UTC
+
+      # --- JVM Memory ---
+      JAVA_XMS: 8G
+      JAVA_XMX: 12G
+      USE_ZGC: "false"
+      G1_MAX_PAUSE: "200"
+
+      # --- Server Settings ---
+      SERVER_PORT: "5520"
+      PATCHLINE: release
+      ENABLE_AOT: "true"
+      SKIP_CONFIG_GENERATION: "false"
+      SERVER_NAME: "Hytale Server"
+      SERVER_MOTD: ""
+      SERVER_PASSWORD: ""
+      MAX_PLAYERS: "100"
+      MAX_VIEW_RADIUS: "32"
+      DEFAULT_WORLD: default
+      DEFAULT_GAMEMODE: Adventure
+      LOCAL_COMPRESSION: "false"
+      DISPLAY_TMP_TAGS: "false"
+      PLAYER_STORAGE_TYPE: Hytale
+
+      # --- Auto-Update ---
+      AUTO_UPDATE: "false"
+      VERSION_CHECK_ENABLED: "true"
+      VERSION_CHECK_INTERVAL: "3600"
+
+      # --- Whitelist ---
+      WHITELIST_ENABLED: "false"
+
+      # --- Hytale Options ---
+      HYTALE_ACCEPT_EARLY_PLUGINS: "false"
+      HYTALE_ALLOW_OP: "false"
+      HYTALE_BACKUP: "true"
+      HYTALE_BACKUP_FREQUENCY: "30"
+      HYTALE_DISABLE_SENTRY: "false"
+
+      # --- REST API Plugin ---
+      API_ENABLED: "true"
+      API_PORT: "8080"
+      API_WEBSOCKET_ENABLED: "true"
+      API_WEBSOCKET_STATUS_INTERVAL: "1"
+      API_REGENERATE_CONFIG: "true"
+
+      # --- Debug ---
+      DEBUG: "false"
+      NO_COLOR: "false"
+
+    ports:
+      - "30520:5520/udp"    # Game traffic (QUIC)
+      - "30080:8080/tcp"    # REST API
+
+    # UPDATE THIS PATH to your dataset
+    volumes:
+      - /mnt/tank/apps/hytale:/data:rw
+
+    stop_grace_period: 30s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+    security_opt:
+      - no-new-privileges:true
+
+  # =========================================================================
+  # Server Manager (Web UI)
+  # =========================================================================
+  hyos-manager:
+    image: ghcr.io/editmysave/hyos/manager:latest
+    pull_policy: always
+    container_name: hyos-manager
+    user: "568:568"
+    group_add:
+      - "0"
+    restart: unless-stopped
+
+    environment:
+      <<: *api-config
+      REST_API_CLIENT_SECRET: changeme123
+      REST_API_CLIENT_ID: hyos-manager
+      ADAPTER_TYPE: rest
+      HYTALE_CONTAINER_NAME: hyos-server
+      HYTALE_STATE_DIR: /data/.state
+      HYTALE_SERVER_HOST: hyos-server
+      HYTALE_SERVER_PORT: "8080"
+      NODE_ENV: production
+
+    ports:
+      - "30300:3000"        # Web UI
+
+    # UPDATE THIS PATH to your dataset (must match the server)
+    volumes:
+      - /mnt/tank/apps/hytale:/data:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    depends_on:
+      - hyos-server
+
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/server/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  default:
+    driver: bridge
+```
+
+> **Important:** The `REST_API_CLIENT_SECRET` value on the manager must match the `API_CLIENT_SECRET` on the server. If you change the password in `x-api-config`, update the manager's `REST_API_CLIENT_SECRET` to match.
+
+### Step 3 — Complete OAuth Authentication
+
+1. Go to **Apps** and click on the **hyos-server** app
+2. Open the container **Logs** (or click the shell/logs icon)
+3. Look for the OAuth device code prompt — it will display a URL and a code
+4. Open the URL in your browser and enter the code
+5. Complete authentication within 15 minutes
+6. The server will download game files and start automatically
+
+### Step 4 — Access the Manager UI
+
+Once both containers are running, open your browser to:
+
+```
+http://your-truenas-ip:30300
+```
+
+The Manager UI provides server control, console access, and configuration management.
+
+### Common Settings to Customize
+
+| Setting | Environment Variable | Default | Notes |
+|---------|---------------------|---------|-------|
+| Server name | `SERVER_NAME` | `Hytale Server` | Shown in the server list |
+| Max players | `MAX_PLAYERS` | `100` | Concurrent player limit |
+| Gamemode | `DEFAULT_GAMEMODE` | `Adventure` | `Adventure`, `Creative`, or `Survival` |
+| Heap memory | `JAVA_XMX` | `12G` | Set to 50-75% of total system RAM |
+| Timezone | `TZ` | `UTC` | e.g. `America/New_York` |
+| Auto-update | `AUTO_UPDATE` | `false` | Check for updates at startup |
+| Game port | Host port mapping | `30520` | Change the left side of `30520:5520/udp` |
+
+### Tips
+
+- Set container memory limits at least **2 GB higher** than `JAVA_XMX` to account for JVM overhead. Example: `JAVA_XMX=8G` needs ~10 GB container memory.
+- The Manager container needs Docker socket access (`/var/run/docker.sock`) to start/stop the server. It's mounted read-only.
+- Both containers log to `json-file` with size limits to prevent filling your ZFS pool.
+
+---
+
+## Native TrueNAS App
+
+The native app integrates with the TrueNAS SCALE app catalog and provides a guided UI for all configuration options — no compose file editing required.
+
 ### Installation
 
-1. Navigate to **Apps > Discover Apps > Custom App**
-2. Import the app catalog from the repository
-3. Click **Install** and walk through the configuration groups
+1. Go to **Apps** in the sidebar
+2. Click **Discover Apps**
+3. Search for **HyOS** in the catalog
+4. Click **Install** and walk through the configuration groups
 
-### Configuration Groups
-
-The TrueNAS UI presents settings in organized groups:
-
-#### 1. Hytale Server Configuration
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| TZ Timezone | `Etc/UTC` | Timezone for logs and scheduled tasks (e.g., `America/New_York`) |
-| Server Name | `Hytale Server` | Display name in the server list |
-| Server MOTD | — | Message of the day |
-| Server Password | — | Leave empty for a public server |
-| Max Players | `100` | Maximum concurrent players |
-| Default Gamemode | `Adventure` | `Adventure`, `Creative`, or `Survival` |
-| Patchline | `release` | Version channel: `release`, `staging`, `nightly` |
-
-#### 2. JVM & Memory
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Initial Heap (XMS) | `4G` | Starting heap size |
-| Max Heap (XMX) | `8G` | Maximum heap size — set to 50-75% of allocated RAM |
-| Use ZGC | `false` | ZGC for low-latency (needs more RAM) |
-| G1 Max Pause | `200` | G1GC max pause time in ms (when not using ZGC) |
-
-#### 3. Auto-Update
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Enable Auto-Update | `false` | Check for updates at container startup |
-| Check Interval | `3600` | Seconds between checks (background mode) |
-| Update Time | — | Specific time to check (`HH:MM` format) |
-| Auto-Restart | `true` | Restart server after applying an update |
-| Backup Before Update | `true` | Create a backup before applying updates |
-
-#### 4. API Configuration
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Enable REST API | `true` | Required for the Manager UI |
-| Client Secret | — | **Required** — password for API authentication |
-| Client ID | `hyos-manager` | Client identifier |
-| Enable WebSocket | `true` | Real-time updates to the Manager |
-
-#### 5. Manager (Web UI)
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Enable Manager | `true` | Deploy the HyOS Manager web UI alongside the server |
-
-When enabled, a second container (`hyos-manager`) is deployed with access to shared state files and the Docker socket.
-
-#### 6. Advanced Configuration
-
-Toggle **Show Advanced Options** to reveal:
-
-- **Auth Mode** — `authenticated` or `offline`
-- **AOT Cache** — Ahead-of-Time compilation for faster startup
-- **Disable Sentry** — Turn off error reporting
-- **Debug Logging** — Verbose entrypoint script output
-- **Hytale Backups** — In-game backup frequency and retention
-- **Whitelist** — Enable and configure player whitelist
-- **Skip Broken Mods** — Auto-quarantine failing mods
-- **Max View Radius** — Chunk view distance
-- **Additional Environment Variables** — Pass-through for any `HYTALE_*` option
-
-#### 7. User and Group Configuration
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| User ID | `568` | Must match dataset ownership |
-| Group ID | `568` | Must match dataset ownership |
-
-> Minimum value is 568. TrueNAS uses UID/GID 568 by default for app containers.
-
-#### 8. Network Configuration
-
-| Port | Protocol | Default | Description |
-|------|----------|---------|-------------|
-| Game Port | UDP | `30520` | Hytale QUIC game traffic |
-| API Port | TCP | `30080` | REST API for the Manager |
-| Manager Port | TCP | `30300` | Web UI |
-
-Each port supports bind modes: `published` (accessible from host), `exposed` (container-only), or `none`.
-
-#### 9. Storage Configuration
-
-**Primary data storage** — choose one:
-
-| Type | Description |
-|------|-------------|
-| **ixVolume** (default) | TrueNAS-managed volume with automatic dataset creation |
-| **Host Path** | Map to an existing ZFS dataset (e.g., `/mnt/tank/apps/hytale`) |
-
-**Additional storage** — mount extra paths using host paths, ixVolume, SMB/CIFS, or NFS.
-
-#### 10. Labels Configuration
-
-Apply custom Docker labels to containers. Each label has a key, value, and target container selection (`hytale-server` and/or `hytale-manager`).
-
-#### 11. Resources
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| CPUs | `4` | CPU core limit |
-| Memory (MB) | `12288` | Memory limit — should be at least 2 GB more than `JAVA_XMX` |
+The UI presents settings in organized groups: server configuration, JVM memory, auto-update, API settings, manager toggle, network ports, storage, and resource limits. Each setting has descriptions and defaults built into the form.
 
 ### Post-Installation
 
-1. Check container logs for the OAuth authentication prompt
-2. Complete the device code flow within 15 minutes
-3. The server will download game files and start automatically
-4. Access the Manager UI at `http://your-truenas-ip:30300`
-
----
-
-## Custom App (Compose)
-
-For users who prefer manual control, deploy using the `compose.yaml` directly.
-
-### Steps
-
-1. **Create a dataset:**
-
-   ```bash
-   zfs create tank/apps/hytale
-   chown -R 568:568 /mnt/tank/apps/hytale
-   ```
-
-2. **Go to Apps > Discover Apps > Custom App**
-
-3. **Click "Install via YAML"**
-
-4. **Paste the contents of the `compose.yaml` from `hytale-docker-server/config-truenas/`**
-
-5. **Update the volume path** to match your dataset:
-
-   ```yaml
-   volumes:
-     - /mnt/tank/apps/hytale:/data:rw
-   ```
-
-6. **Set `API_CLIENT_SECRET`** to a secure password (used by both the server and manager):
-
-   ```yaml
-   x-api-config: &api-config
-     API_CLIENT_SECRET: your-secure-password
-   ```
-
-7. **Deploy** and follow logs for the OAuth prompt.
-
----
-
-## TrueNAS-Specific Considerations
-
-### Why UID 568?
-
-TrueNAS SCALE uses UID/GID 568 as the default for app containers. The Hytale server container uses `su-exec` to drop privileges from root to this user. All files written to `/data` are owned by 568:568.
-
-If you use a different UID/GID:
-
-- Set `PUID` and `PGID` environment variables to match
-- Set `user:` in the compose file to match
-- Ensure the dataset is owned by the same UID/GID
-
-### ZFS Dataset Setup
-
-```bash
-# Create a dedicated dataset
-zfs create tank/apps/hytale
-
-# Set ownership
-chown -R 568:568 /mnt/tank/apps/hytale
-
-# Optional: Set ACLs if using ACL-enabled datasets
-# TrueNAS UI: Datasets > Edit Permissions > Set UID 568, GID 568
-```
-
-For ACL-enabled datasets, ensure the `hytale` user (UID 568) has full control.
-
-### Host Path vs ixVolume Storage
-
-| Feature | Host Path | ixVolume |
-|---------|-----------|----------|
-| Dataset control | Full — you create and manage the dataset | TrueNAS auto-creates |
-| Backup visibility | Direct access at known path | Managed by TrueNAS |
-| Portability | Easy to migrate | Tied to TrueNAS app lifecycle |
-| Recommended for | Production, manual management | Quick setup, testing |
-
-### Docker Socket Access
-
-The Manager container needs read-only access to the Docker socket for container control (start/stop/restart):
-
-```yaml
-volumes:
-  - /var/run/docker.sock:/var/run/docker.sock:ro
-group_add:
-  - "0"  # Root group for socket access
-```
-
-The socket is mounted read-only. The container runs as UID 568 but is added to GID 0 (root group) to read the socket (which has `0:0` ownership with `660` permissions on TrueNAS).
-
-### Resource Limits
-
-Set container memory limits at least **2 GB higher** than `JAVA_XMX` to account for:
-
-- JVM metaspace and off-heap memory
-- Operating system overhead
-- The entrypoint scripts and helper processes
-
-Example: `JAVA_XMX=8G` → container memory limit = 10240 MB (10 GB).
-
-### Log Management
-
-Both containers use the `json-file` logging driver with size limits:
-
-```yaml
-logging:
-  driver: json-file
-  options:
-    max-size: "50m"   # Server (larger due to game logs)
-    max-file: "3"
-```
-
-```yaml
-logging:
-  driver: json-file
-  options:
-    max-size: "10m"   # Manager
-    max-file: "3"
-```
-
-This prevents log files from consuming unlimited disk space on the ZFS pool.
+1. Go to **Apps** and click on the HyOS app
+2. Check container logs for the OAuth authentication prompt
+3. Complete the device code flow within 15 minutes
+4. The server will download game files and start automatically
+5. Access the Manager UI at `http://your-truenas-ip:30300`

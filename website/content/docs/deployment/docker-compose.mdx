@@ -21,8 +21,8 @@ services:
     image: ghcr.io/editmysave/hyos/server:latest
     container_name: hytale-server
     ports:
-      - "30520:30520/udp"   # Game server
-      - "30080:30080/tcp"   # API plugin
+      - "30520:5520/udp"    # Game server
+      - "30353:8080/tcp"    # API plugin
     volumes:
       - ./data:/data
     environment:
@@ -43,7 +43,7 @@ services:
       - ./data:/data:ro
     environment:
       - HYTALE_CONTAINER_NAME=hytale-server
-      - API_BASE_URL=http://hytale-server:30080
+      - API_BASE_URL=http://hytale-server:8080
     restart: unless-stopped
     depends_on:
       - hytale-server

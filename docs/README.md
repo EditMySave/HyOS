@@ -29,7 +29,7 @@ HyOS provides automated server management including OAuth authentication, auto-u
 
 - **GHCR**: [`ghcr.io/editmysave/hyos/server`](https://github.com/editmysave/hyos/pkgs/container/hyos%2Fserver)
 - **Game Server Port**: UDP 30520 (container: 5520)
-- **REST API Port**: TCP 30080 (container: 8080)
-- **Manager UI Port**: TCP 30300 (container: 3000)
+- **REST API Port**: TCP 30353 (container: 8080)
+- **Manager UI Port**: TCP 30354 (container: 3000)
 
 > Host ports use the 30xxx range to avoid conflicts with other TrueNAS apps. The default Hytale server port is UDP 5520 — you can override the host ports if no conflicts exist on your system.

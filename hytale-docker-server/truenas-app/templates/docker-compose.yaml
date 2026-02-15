@@ -106,7 +106,6 @@
 
 {% do mgr.set_user(values.run_as.user, values.run_as.group) %}
 {# Add to root group for Docker socket access #}
-{% do mgr.add_group(0) %}
 
 {# Manager environment variables (TZ auto-set by library) #}
 {% do mgr.environment.add_env("NODE_ENV", "production") %}
