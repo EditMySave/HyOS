@@ -51,6 +51,34 @@ overall_healthy=true
 overall_status="healthy"
 message=""
 
+# Check 0: Server state file — if starting/authenticating, container is alive and healthy
+check_state() {
+    local state_file="${DATA_DIR}/.state/server.json"
+    if [[ -f "$state_file" ]]; then
+        local status
+        status=$(jq -r '.status // empty' "$state_file" 2>/dev/null || echo "")
+        case "$status" in
+            starting)
+                checks+=("$(json_object "name" "state" "status" "pass" "message" "Server is starting (may be awaiting authentication)")")
+                echo "HEALTHY"
+                exit 0
+                ;;
+            running)
+                # Let other checks verify the running state
+                return 0
+                ;;
+            stopped|crashed)
+                checks+=("$(json_object "name" "state" "status" "fail" "message" "Server status: $status")")
+                overall_healthy=false
+                overall_status="unhealthy"
+                message="Server status: $status"
+                return 1
+                ;;
+        esac
+    fi
+    return 0
+}
+
 # Check 1: Process running
 check_process() {
     if pgrep -f "HytaleServer.jar" > /dev/null 2>&1; then
@@ -143,6 +171,7 @@ check_memory() {
 # Run Checks
 # =============================================================================
 
+check_state
 check_process
 check_port
 check_data
