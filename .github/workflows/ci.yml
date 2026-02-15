@@ -3,6 +3,7 @@
 # =============================================================================
 # Builds the API plugin JAR, Docker server image, and server manager image.
 # Publishes to GHCR on push to main; validates builds on PRs.
+# Auto-increments patch version on each push to main.
 # =============================================================================
 
 name: CI/CD
@@ -14,14 +15,54 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY: ghcr.io
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # Job 0: Compute next patch version (push to main only)
+  # ---------------------------------------------------------------------------
+  version:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      new_tag: ${{ steps.bump.outputs.new_tag }}
+    steps:
+      - name: Compute next version
+        id: bump
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: tags } = await github.rest.repos.listTags({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+            const semver = tags
+              .map(t => t.name)
+              .filter(n => /^v\d+\.\d+\.\d+$/.test(n));
+            semver.sort((a, b) => {
+              const pa = a.slice(1).split('.').map(Number);
+              const pb = b.slice(1).split('.').map(Number);
+              return pa[0] - pb[0] || pa[1] - pb[1] || pa[2] - pb[2];
+            });
+            const latest = semver.length ? semver.at(-1) : 'v0.0.0';
+            const [maj, min, pat] = latest.slice(1).split('.').map(Number);
+            const newVersion = `${maj}.${min}.${pat + 1}`;
+            const newTag = `v${newVersion}`;
+            core.setOutput('new_version', newVersion);
+            core.setOutput('new_tag', newTag);
+            core.info(`${latest} → ${newTag}`);
+
   # ---------------------------------------------------------------------------
   # Job 1: Build the Hytale API Plugin JAR
   # ---------------------------------------------------------------------------
@@ -94,7 +135,11 @@ jobs:
   # ---------------------------------------------------------------------------
   build-docker-server:
     runs-on: ubuntu-latest
-    needs: build-api-plugin
+    needs: [build-api-plugin, version]
+    if: |
+      always() &&
+      needs.build-api-plugin.result == 'success' &&
+      (needs.version.result == 'success' || needs.version.result == 'skipped')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -124,6 +169,7 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ needs.version.outputs.new_version }},enable=${{ needs.version.outputs.new_version != '' }}
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=pr
 
@@ -142,6 +188,10 @@ jobs:
   # ---------------------------------------------------------------------------
   build-server-manager:
     runs-on: ubuntu-latest
+    needs: [version]
+    if: |
+      always() &&
+      (needs.version.result == 'success' || needs.version.result == 'skipped')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -165,6 +215,7 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ needs.version.outputs.new_version }},enable=${{ needs.version.outputs.new_version != '' }}
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=pr
 
@@ -215,3 +266,25 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy website/out --project-name=hyos-website --commit-dirty=true
+
+  # ---------------------------------------------------------------------------
+  # Job 5: Create git tag after successful builds (push to main only)
+  # ---------------------------------------------------------------------------
+  tag-release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [version, build-docker-server, build-server-manager]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create git tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = '${{ needs.version.outputs.new_tag }}';
+            const version = '${{ needs.version.outputs.new_version }}';
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${tag}`,
+              sha: context.sha,
+            });
+            console.log(`Created tag ${tag} for version ${version}`);
