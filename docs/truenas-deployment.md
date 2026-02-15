@@ -121,8 +121,8 @@ Toggle **Show Advanced Options** to reveal:
 | Port | Protocol | Default | Description |
 |------|----------|---------|-------------|
 | Game Port | UDP | `30520` | Hytale QUIC game traffic |
-| API Port | TCP | `30353` | REST API for the Manager |
-| Manager Port | TCP | `30354` | Web UI |
+| API Port | TCP | `30356` | REST API for the Manager |
+| Manager Port | TCP | `30357` | Web UI |
 
 Each port supports bind modes: `published` (accessible from host), `exposed` (container-only), or `none`.
 
@@ -153,7 +153,7 @@ Apply custom Docker labels to containers. Each label has a key, value, and targe
 1. Check container logs for the OAuth authentication prompt
 2. Complete the device code flow within 15 minutes
 3. The server will download game files and start automatically
-4. Access the Manager UI at `http://your-truenas-ip:30354`
+4. Access the Manager UI at `http://your-truenas-ip:30357`
 
 ---
 
