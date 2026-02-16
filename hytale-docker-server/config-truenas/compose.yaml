@@ -140,14 +140,12 @@ services:
       # Server data (world, config, mods, backups, auth)
       - /mnt/tank/apps/hytale:/data:rw
 
-    # Healthcheck disabled: server blocks on OAuth device flow at first start,
-    # which prevents the healthcheck from passing until auth is complete.
-    # healthcheck:
-    #   test: ["CMD", "/opt/scripts/healthcheck.sh"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 180s
+    healthcheck:
+      test: ["CMD", "/opt/scripts/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 
     # Graceful shutdown
     stop_grace_period: 30s

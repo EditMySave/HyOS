@@ -16,21 +16,37 @@ The simplest way to deploy HyOS is with Docker Compose. This works on any system
 Create a `docker-compose.yml` file:
 
 ```yaml
+x-api-config: &api-config
+  API_CLIENT_SECRET: ${API_CLIENT_SECRET:-changeme123}
+  API_CLIENT_ID: ${API_CLIENT_ID:-hyos-manager}
+
 services:
   hytale-server:
     image: ghcr.io/editmysave/hyos/server:latest
     container_name: hytale-server
+    stdin_open: true
+    tty: true
     ports:
       - "30520:5520/udp"    # Game server
       - "30356:8080/tcp"    # API plugin
     volumes:
       - ./data:/data
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=UTC
-      - JAVA_XMS=2G
-      - JAVA_XMX=4G
+      <<: *api-config
+      PUID: 1000
+      PGID: 1000
+      TZ: ${TZ:-UTC}
+      JAVA_XMS: ${JAVA_XMS:-2G}
+      JAVA_XMX: ${JAVA_XMX:-4G}
+      API_ENABLED: "true"
+      API_WEBSOCKET_ENABLED: "true"
+      API_REGENERATE_CONFIG: "true"
+    healthcheck:
+      test: ["CMD", "/opt/scripts/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     restart: unless-stopped
 
   hyos-manager:
@@ -39,11 +55,24 @@ services:
     ports:
       - "3000:3000"
     volumes:
+      - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./data:/data:ro
     environment:
-      - HYTALE_CONTAINER_NAME=hytale-server
-      - API_BASE_URL=http://hytale-server:8080
+      <<: *api-config
+      REST_API_CLIENT_SECRET: ${API_CLIENT_SECRET:-changeme123}
+      REST_API_CLIENT_ID: ${API_CLIENT_ID:-hyos-manager}
+      ADAPTER_TYPE: rest
+      HYTALE_CONTAINER_NAME: hytale-server
+      HYTALE_STATE_DIR: /data/.state
+      HYTALE_SERVER_HOST: hytale-server
+      HYTALE_SERVER_PORT: "8080"
+      NODE_ENV: production
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/server/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     restart: unless-stopped
     depends_on:
       - hytale-server
