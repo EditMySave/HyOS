@@ -25,8 +25,9 @@ Create a `compose.yaml` with the following minimal configuration:
 
 ```yaml
 services:
-  hytale:
+  hyos-server:
     image: ghcr.io/editmysave/hyos/server:latest
+    pull_policy: always
     container_name: hyos-server
     user: "568:568"
     restart: unless-stopped
@@ -41,7 +42,13 @@ services:
     ports:
       - "30520:5520/udp"
     volumes:
-      - /mnt/tank/apps/hytale:/data:rw
+      - /opt/hytale:/data:rw
+    healthcheck:
+      test: ["CMD", "/opt/scripts/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     stop_grace_period: 30s
 ```
 
@@ -51,7 +58,7 @@ Deploy:
 docker compose up -d
 ```
 
-> For the full compose file with the Manager UI and API plugin, see the [compose.yaml](../hytale-docker-server/config-truenas/compose.yaml) in the config-truenas directory.
+> For the full compose file with the Manager UI and API plugin, see the [Deployment guides](/docs/deployment/truenas). Deploying on TrueNAS? See the [homepage](/docs) for a paste-ready YAML.
 
 ## 3. Complete Authentication
 
