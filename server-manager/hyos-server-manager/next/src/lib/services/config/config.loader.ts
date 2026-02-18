@@ -27,6 +27,7 @@ function defaults(): ManagerConfig {
     containerName: "hyos-server",
     apiClientId: "hyos-manager",
     stateDir: defaultStateDir(),
+    gamePort: 5520,
     setupComplete: false,
     createdAt: null,
     updatedAt: null,
@@ -36,11 +37,13 @@ function defaults(): ManagerConfig {
 function fromEnv(): Partial<ManagerConfig> {
   const stateDir = process.env.HYTALE_STATE_DIR ?? defaultStateDir();
   const port = process.env.HYTALE_SERVER_PORT;
+  const gamePort = process.env.HYTALE_GAME_PORT;
   const secret =
     process.env.REST_API_CLIENT_SECRET ?? process.env.API_CLIENT_SECRET;
   return {
     serverHost: process.env.HYTALE_SERVER_HOST ?? undefined,
     serverPort: port !== undefined ? Number.parseInt(port, 10) : undefined,
+    gamePort: gamePort !== undefined ? Number.parseInt(gamePort, 10) : undefined,
     containerName: process.env.HYTALE_CONTAINER_NAME ?? undefined,
     apiClientId:
       process.env.REST_API_CLIENT_ID ?? process.env.API_CLIENT_ID ?? undefined,

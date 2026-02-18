@@ -7,6 +7,7 @@ export const managerConfigSchema = z.object({
   apiClientId: z.string().default("hyos-manager"),
   apiClientSecret: z.string().optional(),
   stateDir: z.string().default("/data/.state"),
+  gamePort: z.coerce.number().default(5520),
   setupComplete: z.boolean().default(false),
   createdAt: z.string().nullable().default(null),
   updatedAt: z.string().nullable().default(null),

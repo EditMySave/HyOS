@@ -1,9 +1,11 @@
 "use client";
 
-import { AlertCircle, Clock, Package, Users } from "lucide-react";
+import { useState } from "react";
+import { AlertCircle, Check, Clock, Copy, Globe, Package, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useConfig } from "@/lib/services/config";
 import { useServerStatus, useServerVersion } from "@/lib/services/server";
 
 function formatUptime(seconds: number | null): string {
@@ -32,6 +34,7 @@ function getStateColor(state: string): string {
 }
 
 export function GameStats() {
+  const { data: config } = useConfig();
   const {
     data: status,
     error: statusError,
@@ -44,6 +47,21 @@ export function GameStats() {
     isLoading: versionLoading,
     mutate: mutateVersion,
   } = useServerVersion();
+
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyAddress = () => {
+    const address = getAddress();
+    navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const getAddress = (): string => {
+    const host = window.location.hostname;
+    const port = config?.gamePort ?? 5520;
+    return `${host}:${port}`;
+  };
 
   const error = statusError ?? versionError;
   const retry = () => {
@@ -125,6 +143,33 @@ export function GameStats() {
             <div className="text-2xl font-semibold">
               {version?.gameVersion ?? "Unknown"}
             </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Globe className="size-4 text-foreground-secondary" />
+            <span className="text-sm text-foreground-secondary">Server Address</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="font-mono text-right">
+              <div className="text-xl font-semibold">
+                {getAddress()}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleCopyAddress}
+              title="Copy to clipboard"
+            >
+              {copied ? (
+                <Check className="size-4" />
+              ) : (
+                <Copy className="size-4" />
+              )}
+            </Button>
           </div>
         </div>
 
