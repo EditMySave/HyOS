@@ -58,7 +58,7 @@ docker compose up -d
 docker logs -f hyos-server  # Complete OAuth when prompted
 ```
 
-For the full setup with the Manager UI and API plugin, see the [Quick Start guide](docs/quickstart.md).
+For the full setup with the Manager UI and API plugin, see the [Quick Start guide](website/content/docs/getting-started/index.mdx).
 
 ## Compatibility
 
@@ -83,7 +83,7 @@ HyOS runs two containers that share a single `/data` volume:
 
 The server container handles authentication, updates, mod validation, and config generation before launching the Java process. The Manager reads state files from `/data/.state/` and communicates with the embedded API plugin over HTTP.
 
-See [Architecture](docs/architecture.md) for diagrams and the full security model.
+See [Architecture](website/content/docs/architecture/overview.mdx) for diagrams and the full security model.
 
 ## Docker Images
 
@@ -97,14 +97,14 @@ See [Architecture](docs/architecture.md) for diagrams and the full security mode
 
 | Document | Description |
 |---|---|
-| [Quick Start](docs/quickstart.md) | Get a server running in minutes |
-| [Configuration Reference](docs/configuration.md) | Environment variables, memory tuning, config generation |
-| [TrueNAS Deployment](docs/truenas-deployment.md) | TrueNAS SCALE native and custom app deployment |
-| [Server Manager](docs/server-manager.md) | Web UI user guide |
-| [Mods & Plugins](docs/mods-and-plugins.md) | Installing mods, content-only patching, API plugin |
-| [Architecture](docs/architecture.md) | System design, diagrams, state files, security model |
-| [Scripts Reference](docs/scripts-reference.md) | Entrypoint, library scripts, and command scripts |
-| [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
+| [Quick Start](website/content/docs/getting-started/index.mdx) | Get a server running in minutes |
+| [Configuration Reference](website/content/docs/configuration/index.mdx) | Environment variables, memory tuning, config generation |
+| [TrueNAS Deployment](website/content/docs/deployment/truenas.mdx) | TrueNAS SCALE native and custom app deployment |
+| [Server Manager](website/content/docs/server-management/dashboard.mdx) | Web UI user guide |
+| [Mods & Plugins](website/content/docs/mods/index.mdx) | Installing mods, content-only patching, API plugin |
+| [Architecture](website/content/docs/architecture/overview.mdx) | System design, diagrams, state files, security model |
+| [Scripts Reference](website/content/docs/scripts-reference/index.mdx) | Entrypoint, library scripts, and command scripts |
+| [Troubleshooting](website/content/docs/troubleshooting/index.mdx) | Common issues and solutions |
 
 ## Project Structure
 

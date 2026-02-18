@@ -283,8 +283,8 @@ interface UpdateState {
 | Host Port | Container Port | Protocol | Service | Description |
 |-----------|---------------|----------|---------|-------------|
 | 30520 | 5520 | UDP | Hytale Server | QUIC game traffic (player connections) |
-| 30358 | 8080 | TCP | API Plugin | REST API for server management |
-| 30359 | 3000 | TCP | HyOS Manager | Web UI dashboard |
+| 30080 | 8080 | TCP | API Plugin | REST API for server management |
+| 30300 | 3000 | TCP | HyOS Manager | Web UI dashboard |
 
 Host ports use the 30xxx range to avoid conflicts with other TrueNAS apps. The default Hytale server port is UDP 5520 — if no conflicts exist on your system, you can map host ports directly (e.g., `5520:5520/udp`). Internal container ports are configurable via environment variables (`SERVER_PORT`, `API_PORT`).
 

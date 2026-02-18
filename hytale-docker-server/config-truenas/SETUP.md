@@ -41,15 +41,15 @@ On first run, check the container logs for the OAuth URL:
 
 ## Documentation
 
-For detailed documentation, see the [docs/](../../docs/) directory:
+For detailed documentation, see the [website docs](../../website/content/docs/) directory:
 
 | Document | Description |
 |----------|-------------|
-| [Quick Start](../../docs/quickstart.md) | Detailed getting started guide |
-| [Configuration Reference](../../docs/configuration.md) | All environment variables, memory tuning, config generation modes |
-| [TrueNAS Deployment](../../docs/truenas-deployment.md) | Native TrueNAS app and custom app deployment |
-| [Server Manager](../../docs/server-manager.md) | HyOS Manager web UI user guide |
-| [Mods & Plugins](../../docs/mods-and-plugins.md) | Installing mods, content-only patching, API plugin |
-| [Scripts Reference](../../docs/scripts-reference.md) | Entrypoint, library scripts, and command scripts |
-| [Architecture](../../docs/architecture.md) | System design, diagrams, state files, security model |
-| [Troubleshooting](../../docs/troubleshooting.md) | Common issues and solutions |
+| [Quick Start](../../website/content/docs/getting-started/index.mdx) | Detailed getting started guide |
+| [Configuration Reference](../../website/content/docs/configuration/index.mdx) | All environment variables, memory tuning, config generation modes |
+| [TrueNAS Deployment](../../website/content/docs/deployment/truenas.mdx) | Native TrueNAS app and custom app deployment |
+| [Server Manager](../../website/content/docs/server-management/dashboard.mdx) | HyOS Manager web UI user guide |
+| [Mods & Plugins](../../website/content/docs/mods/index.mdx) | Installing mods, content-only patching, API plugin |
+| [Scripts Reference](../../website/content/docs/scripts-reference/index.mdx) | Entrypoint, library scripts, and command scripts |
+| [Architecture](../../website/content/docs/architecture/overview.mdx) | System design, diagrams, state files, security model |
+| [Troubleshooting](../../website/content/docs/troubleshooting/index.mdx) | Common issues and solutions |

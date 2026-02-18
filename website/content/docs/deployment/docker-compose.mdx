@@ -21,14 +21,14 @@ x-api-config: &api-config
   API_CLIENT_ID: ${API_CLIENT_ID:-hyos-manager}
 
 services:
-  hytale-server:
+  hyos-server:
     image: ghcr.io/editmysave/hyos/server:latest
-    container_name: hytale-server
+    container_name: hyos-server
     stdin_open: true
     tty: true
     ports:
       - "30520:5520/udp"    # Game server
-      - "30358:8080/tcp"    # API plugin
+      - "30080:8080/tcp"    # API plugin
     volumes:
       - ./data:/data
     environment:
@@ -53,7 +53,7 @@ services:
     image: ghcr.io/editmysave/hyos/manager:latest
     container_name: hyos-manager
     ports:
-      - "3000:3000"
+      - "30300:3000"
     volumes:
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -62,20 +62,20 @@ services:
       REST_API_CLIENT_SECRET: ${API_CLIENT_SECRET:-changeme123}
       REST_API_CLIENT_ID: ${API_CLIENT_ID:-hyos-manager}
       ADAPTER_TYPE: rest
-      HYTALE_CONTAINER_NAME: hytale-server
+      HYTALE_CONTAINER_NAME: hyos-server
       HYTALE_STATE_DIR: /data/.state
-      HYTALE_SERVER_HOST: hytale-server
+      HYTALE_SERVER_HOST: hyos-server
       HYTALE_SERVER_PORT: "8080"
       NODE_ENV: production
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/server/status"]
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/server/status').then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
     restart: unless-stopped
     depends_on:
-      - hytale-server
+      - hyos-server
 ```
 
 Then start it:
@@ -89,12 +89,12 @@ docker compose up -d
 1. Check logs for the authentication prompt:
 
 ```bash
-docker logs -f hytale-server
+docker logs -f hyos-server
 ```
 
 2. Complete the OAuth device flow when prompted
 3. The server will download game files and start automatically
-4. Access the manager UI at `http://localhost:3000`
+4. Access the manager UI at `http://localhost:30300`
 
 ## Updating
 

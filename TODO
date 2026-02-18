@@ -1,45 +1,44 @@
-
-Mod Search - Recommended
-Mod Upload as top button
-File manager
-visit website button on mods
-Config.json confifurator winternode.com
-Create new world
-Logs filtering on plugins
-Fix running state of truenas image
-Mods page has gutters
-Update channel - pre release / main
-Docs website
-Proper Multi Arch building
-Ngrokking
-Bcrypt Auth
-Make OP has an error
-
-Disable mods without deleting them
-
-Pick up on mod loading errors
-
-Modtale error
-
-Analytics - Anonymous
-Error Reporting
-
-
 New Tabs:
 Connected Players
 Backups 
-File Manager (Update Design)
 Worlds (Update Design)
 
 To Design
 Mod Search
 File Manager
 
-Automatic installation script?
 
+Mod Search - Recommended
+Mod Upload as top button
+Modtale error
+Visit website button on mods
+Mods page has gutters
+Disable mods without deleting them
+Pick up on mod loading errors and isolate
+
+Create new world
+
+Make OP has an error
+
+Config.json confifurator winternode.com
+
+Logs filtering on plugins
+
+Ngrokking
+Bcrypt Auth
+
+Notifications - Load Failures, Server Crashes
+
+
+Platform
+Anonymous heartbeat
+Analytics - Anonymous
+Error Reporting
+
+Automatic installation script?
 My Installations - Link your MineOS installations to your account. Your installation ID is shown during setup.
 SSO
-Anonymous heartbeat
+
 
 
 

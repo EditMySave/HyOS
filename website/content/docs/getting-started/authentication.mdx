@@ -10,7 +10,7 @@ HyOS uses the OAuth 2.0 Device Authorization Flow to authenticate with the Hytal
 1. The container starts and detects no cached auth token
 2. It initiates the OAuth device flow and displays a code in the logs
 3. You visit the authorization URL, enter the code, and sign in with your Hytale account
-4. The container receives an access token and caches it at `/data/.auth/token.json`
+4. The container receives an access token and caches it at `/data/.auth/tokens.json`
 5. Subsequent restarts use the cached token (auto-refreshed when expired)
 
 ## First-Time Setup
@@ -18,13 +18,13 @@ HyOS uses the OAuth 2.0 Device Authorization Flow to authenticate with the Hytal
 Watch the container logs during first startup:
 
 ```bash
-docker logs -f hytale-server
+docker logs -f hyos-server
 ```
 
 You will see output like:
 
 ```
-[AUTH] Please visit: https://auth.hytale.com/device
+[AUTH] Please visit: https://oauth.accounts.hytale.com/oauth2/device/verify
 [AUTH] Enter code: ABCD-1234
 [AUTH] Waiting for authorization...
 ```
@@ -37,18 +37,19 @@ For automated deployments (CI/CD, scaling), you can inject a pre-obtained token 
 
 ```yaml
 environment:
-  - HYTALE_ACCESS_TOKEN=your-access-token
-  - HYTALE_REFRESH_TOKEN=your-refresh-token
+  - HYTALE_SERVER_SESSION_TOKEN=your-session-token
+  - HYTALE_SERVER_IDENTITY_TOKEN=your-identity-token
+  - HYTALE_OWNER_UUID=your-owner-uuid
 ```
 
 This skips the interactive device flow entirely. See the [Configuration Reference](/docs/configuration) for details.
 
 ## Token Storage
 
-Tokens are stored at `/data/.auth/token.json` inside the container. This path is within the mounted volume, so tokens persist across container restarts.
+Tokens are stored at `/data/.auth/tokens.json` inside the container. This path is within the mounted volume, so tokens persist across container restarts.
 
 ## Troubleshooting
 
-- **Token expired and refresh fails**: Delete `/data/.auth/token.json` and restart the container to re-authenticate
+- **Token expired and refresh fails**: Delete `/data/.auth/tokens.json` and restart the container to re-authenticate
 - **Device flow times out**: The code expires after 15 minutes — restart the container to get a new code
 - See [Troubleshooting](/docs/troubleshooting) for more authentication issues
