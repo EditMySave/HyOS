@@ -3,8 +3,8 @@ import useSWRMutation from "swr/mutation";
 import type { ModProvider } from "./browser/types";
 import {
   getProviderSettings,
-  saveProviderSettings as saveProviderSettingsService,
   resetProviderKey as resetProviderKeyService,
+  saveProviderSettings as saveProviderSettingsService,
 } from "./providers.service";
 import type {
   ProviderSettingsResponse,

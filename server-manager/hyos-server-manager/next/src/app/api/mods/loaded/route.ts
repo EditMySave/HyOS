@@ -1,8 +1,8 @@
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import { NextResponse } from "next/server";
 import { getContainerLogs } from "@/lib/docker";
 import { loadConfig } from "@/lib/services/config/config.loader";
-import { promises as fs } from "node:fs";
-import path from "node:path";
 
 /**
  * Parse PluginManager log lines to determine which mod JARs are loaded.

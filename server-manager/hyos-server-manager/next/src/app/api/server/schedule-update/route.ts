@@ -1,8 +1,8 @@
+import { readFile, unlink, writeFile } from "fs/promises";
 import { NextResponse } from "next/server";
-import { isDockerAvailable, execInContainer } from "@/lib/docker";
-import { loadConfig } from "@/lib/services/config/config.loader";
-import { readFile, writeFile, unlink } from "fs/promises";
 import { join } from "path";
+import { execInContainer, isDockerAvailable } from "@/lib/docker";
+import { loadConfig } from "@/lib/services/config/config.loader";
 
 export interface ScheduledUpdateStatus {
   scheduled: boolean;

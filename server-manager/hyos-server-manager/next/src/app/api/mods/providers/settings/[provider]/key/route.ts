@@ -1,9 +1,9 @@
+import { NextResponse } from "next/server";
 import { modProviderSchema } from "@/lib/services/mods/browser/types";
 import {
   loadProviderSettings,
   resetProviderKey,
 } from "@/lib/services/mods/providers.loader";
-import { NextResponse } from "next/server";
 
 export async function DELETE(
   _request: Request,

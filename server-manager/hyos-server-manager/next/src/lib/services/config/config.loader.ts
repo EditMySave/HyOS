@@ -43,7 +43,8 @@ function fromEnv(): Partial<ManagerConfig> {
   return {
     serverHost: process.env.HYTALE_SERVER_HOST ?? undefined,
     serverPort: port !== undefined ? Number.parseInt(port, 10) : undefined,
-    gamePort: gamePort !== undefined ? Number.parseInt(gamePort, 10) : undefined,
+    gamePort:
+      gamePort !== undefined ? Number.parseInt(gamePort, 10) : undefined,
     containerName: process.env.HYTALE_CONTAINER_NAME ?? undefined,
     apiClientId:
       process.env.REST_API_CLIENT_ID ?? process.env.API_CLIENT_ID ?? undefined,

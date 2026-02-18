@@ -1,11 +1,11 @@
+import { z } from "zod";
+import type { NxDownloadLink, NxFile, NxMod } from "./nexusmods.types";
 import {
+  nxDownloadLinkSchema,
+  nxFilesResponseSchema,
   nxModSchema,
   nxUpdatedModSchema,
-  nxFilesResponseSchema,
-  nxDownloadLinkSchema,
 } from "./nexusmods.types";
-import type { NxMod, NxFile, NxDownloadLink } from "./nexusmods.types";
-import { z } from "zod";
 
 const MAX_MODS_TO_FETCH = 50;
 const DETAILS_BATCH_SIZE = 5;

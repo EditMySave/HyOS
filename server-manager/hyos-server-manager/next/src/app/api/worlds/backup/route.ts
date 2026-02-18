@@ -1,8 +1,7 @@
-import { NextResponse } from "next/server";
-import { promises as fs } from "node:fs";
-import fsSync from "node:fs";
+import fsSync, { promises as fs } from "node:fs";
 import path from "node:path";
 import archiver from "archiver";
+import { NextResponse } from "next/server";
 
 function getBasePath(): string {
   // Use HYTALE_STATE_DIR to derive base path, default to /data in containers

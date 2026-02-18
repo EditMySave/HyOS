@@ -1,12 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useModProvidersStore } from "@/lib/stores/mod-providers.store";
-import {
-  useProviderSettings,
-  useSaveProviderSettings,
-  useResetProviderKey,
-} from "@/lib/services/mods/providers.hooks";
+import { Check, RotateCcw } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,8 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { ModProvider } from "@/lib/services/mods/browser/types";
+import {
+  useProviderSettings,
+  useResetProviderKey,
+  useSaveProviderSettings,
+} from "@/lib/services/mods/providers.hooks";
+import { useModProvidersStore } from "@/lib/stores/mod-providers.store";
 import { cn } from "@/lib/utils";
-import { Check, RotateCcw } from "lucide-react";
 
 const PROVIDERS: {
   id: ModProvider;

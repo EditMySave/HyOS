@@ -1,4 +1,3 @@
-import type { ModProviderAdapter } from "./provider.interface";
 import type {
   BrowsedMod,
   ModVersion,
@@ -6,13 +5,14 @@ import type {
   SearchParams,
 } from "../types";
 import {
-  searchNexusMods,
+  downloadNexusFile,
+  getNexusDownloadLinks,
   getNexusModDetails,
   getNexusModFiles,
-  getNexusDownloadLinks,
-  downloadNexusFile,
+  searchNexusMods,
 } from "./nexusmods.service";
-import type { NxMod, NxFile } from "./nexusmods.types";
+import type { NxFile, NxMod } from "./nexusmods.types";
+import type { ModProviderAdapter } from "./provider.interface";
 
 export class NexusModsProvider implements ModProviderAdapter {
   readonly id = "nexusmods" as const;

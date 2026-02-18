@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import {
-  useInstalledMods,
-  useLoadedPlugins,
-  useUploadMod,
-} from "@/lib/services/mods";
+  FileArchive,
+  FolderOpen,
+  Loader2,
+  RefreshCw,
+  Search,
+  Upload,
+} from "lucide-react";
+import { useCallback, useState } from "react";
 import { ModBrowse } from "@/components/mods/mod-browse";
 import { ModInstalled } from "@/components/mods/mod-installed";
 import { Button } from "@/components/ui/button";
@@ -13,13 +16,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Loader2,
-  Upload,
-  RefreshCw,
-  FileArchive,
-  Search,
-  FolderOpen,
-} from "lucide-react";
+  useInstalledMods,
+  useLoadedPlugins,
+  useUploadMod,
+} from "@/lib/services/mods";
 import { cn } from "@/lib/utils";
 
 function formatBytes(bytes: number): string {
@@ -27,7 +27,7 @@ function formatBytes(bytes: number): string {
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
 }
 
 export default function ModsPage() {

@@ -16,14 +16,13 @@ import { mutate } from "swr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import type { HytaleCommand } from "@/lib/data/hytale-commands";
 import {
   getActiveParam,
   HYTALE_COMMANDS,
   loadRecentCommands,
   saveRecentCommands,
 } from "@/lib/data/hytale-commands";
-import type { HytaleCommand } from "@/lib/data/hytale-commands";
-import { cn } from "@/lib/utils";
 import {
   useAddToGroup,
   useBanPlayer,
@@ -49,6 +48,7 @@ import {
 import type { InventorySection } from "@/lib/services/player";
 import type { Weather } from "@/lib/services/world";
 import { worldId } from "@/lib/services/world/world.types";
+import { cn } from "@/lib/utils";
 
 interface ResultToast {
   success: boolean;

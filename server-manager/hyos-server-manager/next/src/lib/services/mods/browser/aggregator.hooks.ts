@@ -1,9 +1,9 @@
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import {
-  searchAllProviders,
-  installMod as installModService,
   type InstallModInfo,
+  installMod as installModService,
+  searchAllProviders,
 } from "./aggregator.service";
 import type { AggregatedSearchResult, ModVersion, SearchParams } from "./types";
 

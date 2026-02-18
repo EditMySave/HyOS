@@ -1,11 +1,11 @@
 import type { ModProvider } from "./browser/types";
-import {
-  providerSettingsResponseSchema,
-  saveProviderSettingsRequestSchema,
-} from "./providers.types";
 import type {
   ProviderSettingsResponse,
   SaveProviderSettingsRequest,
+} from "./providers.types";
+import {
+  providerSettingsResponseSchema,
+  saveProviderSettingsRequestSchema,
 } from "./providers.types";
 
 export async function getProviderSettings(): Promise<ProviderSettingsResponse> {

@@ -5,20 +5,22 @@
  * Falls back to Docker container logs if log files aren't available.
  */
 
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import { NextResponse } from "next/server";
 import { getContainerLogs, parseAuthFromLogs } from "@/lib/docker";
 import { loadConfig } from "@/lib/services/config/config.loader";
-import { promises as fs } from "fs";
-import path from "path";
 
 /**
  * Read logs from Hytale's log files
  * Hytale stores logs in /data/server/logs/ with timestamped filenames
+ * Reads multiple log files (oldest to newest) until tail count is satisfied
  */
 async function readHytaleLogFiles(
   stateDir: string,
   tail: number,
-): Promise<string | null> {
+  offset?: number,
+): Promise<{ logs: string; totalLines: number }> {
   // Hytale logs are in /data/Server/logs/ (capital S, relative to state dir)
   const dataDir = path.dirname(stateDir); // /data/.state -> /data
   const logDir = path.join(dataDir, "Server", "logs");
@@ -29,35 +31,53 @@ async function readHytaleLogFiles(
 
     // List all log files and sort by name (newest last due to timestamp naming)
     const files = await fs.readdir(logDir);
-    const logFiles = files
-      .filter((f) => f.endsWith("_server.log"))
-      .sort()
-      .reverse(); // Newest first
+    const logFiles = files.filter((f) => f.endsWith("_server.log")).sort(); // Oldest first
 
     if (logFiles.length === 0) {
-      return null;
+      return { logs: "", totalLines: 0 };
     }
 
-    // Read the most recent log file
-    const latestLog = path.join(logDir, logFiles[0]);
-    const content = await fs.readFile(latestLog, "utf8");
+    // Read all log files and combine
+    let allLines: string[] = [];
+    for (const file of logFiles) {
+      const filePath = path.join(logDir, file);
+      const content = await fs.readFile(filePath, "utf8");
+      allLines = allLines.concat(content.split("\n"));
+    }
 
-    // Get last N lines
-    const lines = content.split("\n");
-    const lastLines = lines.slice(-tail).join("\n");
+    const totalLines = allLines.length;
 
-    return lastLines;
-  } catch (error: any) {
-    if (error.code !== "ENOENT") {
+    // Calculate which lines to return
+    let startIdx = 0;
+    let endIdx = totalLines;
+
+    if (offset !== undefined && offset > 0) {
+      // Incremental fetch: return lines after offset, limited by tail
+      startIdx = Math.min(offset, totalLines);
+      endIdx = Math.min(startIdx + tail, totalLines);
+    } else if (tail !== undefined && tail > 0) {
+      // Initial fetch: get last N lines
+      startIdx = Math.max(0, totalLines - tail);
+      endIdx = totalLines;
+    }
+
+    const selectedLines = allLines.slice(startIdx, endIdx);
+    const logs = selectedLines.join("\n");
+
+    return { logs, totalLines };
+  } catch (error: unknown) {
+    if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {
       console.error("Error reading log files:", error);
     }
-    return null;
+    return { logs: "", totalLines: 0 };
   }
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const tail = parseInt(searchParams.get("tail") || "100", 10);
+  const tail = parseInt(searchParams.get("tail") || "1000", 10); // Default to 1000
+  const offsetParam = searchParams.get("offset");
+  const offset = offsetParam ? parseInt(offsetParam, 10) : undefined;
   const since = parseInt(searchParams.get("since") || "0", 10);
 
   const config = await loadConfig();
@@ -66,12 +86,14 @@ export async function GET(request: Request) {
 
   let logs = "";
   let source = "none";
+  let totalLines = 0;
 
   // First try reading from Hytale log files (works without Docker socket)
-  const fileLogs = await readHytaleLogFiles(stateDir, tail);
-  if (fileLogs) {
-    logs = fileLogs;
+  const fileResult = await readHytaleLogFiles(stateDir, tail, offset);
+  if (fileResult.totalLines > 0) {
+    logs = fileResult.logs;
     source = "file";
+    totalLines = fileResult.totalLines;
   } else {
     // Fall back to Docker container logs
     try {
@@ -81,6 +103,8 @@ export async function GET(request: Request) {
         timestamps: true,
       });
       source = "docker";
+      // For Docker logs, estimate totalLines based on line count
+      totalLines = logs.split("\n").length;
     } catch (error) {
       console.error("Failed to get container logs:", error);
       // Return empty logs instead of error - logs might just not be available yet
@@ -95,5 +119,6 @@ export async function GET(request: Request) {
     auth,
     source,
     timestamp: Date.now(),
+    totalLines,
   });
 }

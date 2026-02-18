@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
-import { apiRequest, checkHealth, clearCache } from "@/lib/hytale-api";
-import { getContainerState, isDockerAvailable } from "@/lib/docker";
-import { loadConfig } from "@/lib/services/config/config.loader";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { NextResponse } from "next/server";
+import { getContainerState, isDockerAvailable } from "@/lib/docker";
+import { apiRequest, checkHealth, clearCache } from "@/lib/hytale-api";
+import { loadConfig } from "@/lib/services/config/config.loader";
 
 interface ApiStatusResponse {
   name: string;

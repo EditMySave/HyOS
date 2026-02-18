@@ -1,19 +1,24 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
 import {
-  useInstalledMods,
-  useLoadedPlugins,
-  useModUpdates,
-  useDeleteMod,
-  usePatchMod,
-  useModInstall,
-} from "@/lib/services/mods";
-import type { InstalledMod, LoadedPlugin, ModUpdate } from "@/lib/services/mods";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+  AlertCircle,
+  ArrowUpCircle,
+  HardDrive,
+  LayoutGrid,
+  LayoutList,
+  Link,
+  Loader2,
+  Puzzle,
+  Search,
+  Settings,
+  Trash2,
+  Wrench,
+} from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -22,20 +27,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type {
+  InstalledMod,
+  LoadedPlugin,
+  ModUpdate,
+} from "@/lib/services/mods";
 import {
-  Puzzle,
-  ArrowUpCircle,
-  Link,
-  HardDrive,
-  Search,
-  Loader2,
-  Trash2,
-  Settings,
-  AlertCircle,
-  Wrench,
-  LayoutList,
-  LayoutGrid,
-} from "lucide-react";
+  useDeleteMod,
+  useInstalledMods,
+  useLoadedPlugins,
+  useModInstall,
+  useModUpdates,
+  usePatchMod,
+} from "@/lib/services/mods";
 import { cn } from "@/lib/utils";
 import { ModDetailsDialog } from "./mod-details-dialog";
 
@@ -48,7 +52,7 @@ function formatBytes(bytes: number): string {
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
 }
 
 function hashString(str: string): number {

@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
-import path from "node:path";
 import os from "node:os";
+import path from "node:path";
 import AdmZip from "adm-zip";
+import { NextResponse } from "next/server";
 import {
-  slotsResponseSchema,
   createSlotResponseSchema,
   type SlotInfo,
+  slotsResponseSchema,
 } from "@/lib/services/worlds/worlds.types";
 
 function getBasePath(): string {

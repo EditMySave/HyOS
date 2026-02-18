@@ -1,5 +1,5 @@
-import { mtPageResponseSchema, mtModSchema } from "./modtale.types";
-import type { MtMod, MtFile, MtPageResponse } from "./modtale.types";
+import type { MtFile, MtMod, MtPageResponse } from "./modtale.types";
+import { mtModSchema, mtPageResponseSchema } from "./modtale.types";
 
 const MODTALE_API = "https://api.modtale.net/api/v1";
 const MODTALE_CDN = "https://cdn.modtale.net";

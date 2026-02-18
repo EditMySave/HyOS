@@ -1,30 +1,30 @@
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import {
+  cancelScheduledUpdate,
+  checkForUpdates,
+  executeCommand,
+  getAuthState,
+  getScheduledUpdate,
   getServerStatus,
   getServerVersion,
-  getAuthState,
-  executeCommand,
-  startServer,
-  stopServer,
-  restartServer,
+  getUpdateStatus,
   getWhitelist,
   manageWhitelist,
-  getUpdateStatus,
-  checkForUpdates,
-  getScheduledUpdate,
+  restartServer,
   scheduleUpdate,
-  cancelScheduledUpdate,
+  startServer,
+  stopServer,
 } from "./server.service";
 import type {
-  ServerStatus,
-  VersionInfo,
   AuthState,
   CommandResult,
-  WhitelistInfo,
-  WhitelistAction,
-  UpdateCheckResult,
   ScheduledUpdateStatus,
+  ServerStatus,
+  UpdateCheckResult,
+  VersionInfo,
+  WhitelistAction,
+  WhitelistInfo,
 } from "./server.types";
 
 /**

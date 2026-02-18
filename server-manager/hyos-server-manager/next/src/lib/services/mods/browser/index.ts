@@ -1,3 +1,10 @@
+export { useAggregatedSearch, useModInstall } from "./aggregator.hooks";
+export {
+  installMod,
+  runSearch,
+  searchAllProviders,
+} from "./aggregator.service";
+export { getProvider, getProviders } from "./providers";
 export type {
   AggregatedSearchResult,
   BrowsedMod,
@@ -6,10 +13,3 @@ export type {
   ProviderConfig,
   SearchParams,
 } from "./types";
-export {
-  runSearch,
-  searchAllProviders,
-  installMod,
-} from "./aggregator.service";
-export { useAggregatedSearch, useModInstall } from "./aggregator.hooks";
-export { getProviders, getProvider } from "./providers";

@@ -1,7 +1,15 @@
 "use client";
 
+import {
+  AlertCircle,
+  Check,
+  Clock,
+  Copy,
+  Globe,
+  Package,
+  Users,
+} from "lucide-react";
 import { useState } from "react";
-import { AlertCircle, Check, Clock, Copy, Globe, Package, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -149,13 +157,13 @@ export function GameStats() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Globe className="size-4 text-foreground-secondary" />
-            <span className="text-sm text-foreground-secondary">Server Address</span>
+            <span className="text-sm text-foreground-secondary">
+              Server Address
+            </span>
           </div>
           <div className="flex items-center gap-3">
             <div className="font-mono text-right">
-              <div className="text-xl font-semibold">
-                {getAddress()}
-              </div>
+              <div className="text-xl font-semibold">{getAddress()}</div>
             </div>
             <Button
               variant="outline"

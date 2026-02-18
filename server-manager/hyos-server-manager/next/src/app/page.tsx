@@ -3,11 +3,11 @@
 import {
   AuthNotification,
   GameStats,
-  ServerStats,
-  QuickActions,
   PerformanceChart,
   PlayerCountChart,
   PlayersTable,
+  QuickActions,
+  ServerStats,
 } from "@/components/dashboard";
 
 export default function Home() {

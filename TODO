@@ -1,11 +1,7 @@
 
 Mod Search - Recommended
 Mod Upload as top button
-Truenas Catalog
-Pipelines
-Documentation
 File manager
-More logs scrollback
 visit website button on mods
 Config.json confifurator winternode.com
 Create new world
@@ -17,10 +13,17 @@ Docs website
 Proper Multi Arch building
 Ngrokking
 Bcrypt Auth
-Add server address to dashboard
-README
-
 Make OP has an error
+
+Disable mods without deleting them
+
+Pick up on mod loading errors
+
+Modtale error
+
+Analytics - Anonymous
+Error Reporting
+
 
 New Tabs:
 Connected Players

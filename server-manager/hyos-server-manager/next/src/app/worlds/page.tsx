@@ -1,14 +1,7 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
-import {
-  useUniverseFiles,
-  useSlots,
-  useCreateSlot,
-  useActivateSlot,
-  useDeleteSlot,
-  useRenameSlot,
-} from "@/lib/services/worlds";
+import { Pencil } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,16 +19,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Pencil } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  useActivateSlot,
+  useCreateSlot,
+  useDeleteSlot,
+  useRenameSlot,
+  useSlots,
+  useUniverseFiles,
+} from "@/lib/services/worlds";
 import type { FileInfo, SlotInfo } from "@/lib/services/worlds/worlds.types";
+import { cn } from "@/lib/utils";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+  return `${(bytes / k ** i).toFixed(2)} ${sizes[i]}`;
 }
 
 function formatDate(dateString: string): string {

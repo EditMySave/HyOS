@@ -1,7 +1,10 @@
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { getProvider } from "@/lib/services/mods/browser/providers";
-import type { ModProvider, ModVersion } from "@/lib/services/mods/browser/types";
+import type {
+  ModProvider,
+  ModVersion,
+} from "@/lib/services/mods/browser/types";
 import { loadRegistry } from "@/lib/services/mods/mod-registry";
 import { loadProviderConfig } from "@/lib/services/mods/providers.loader";
 

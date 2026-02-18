@@ -1,4 +1,3 @@
-import type { ModProviderAdapter } from "./provider.interface";
 import type {
   BrowsedMod,
   ModVersion,
@@ -6,12 +5,13 @@ import type {
   SearchParams,
 } from "../types";
 import {
-  searchCurseForge,
+  downloadCurseForgeFile,
   getCurseForgeModDetails,
   getCurseForgeModFiles,
-  downloadCurseForgeFile,
+  searchCurseForge,
 } from "./curseforge.service";
 import type { CfMod, CfModFile } from "./curseforge.types";
+import type { ModProviderAdapter } from "./provider.interface";
 
 export class CurseForgeProvider implements ModProviderAdapter {
   readonly id = "curseforge" as const;

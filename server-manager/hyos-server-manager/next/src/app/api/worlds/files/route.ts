@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { NextResponse } from "next/server";
 import type { FileInfo } from "@/lib/services/worlds/worlds.types";
 
 function getUniversePath(): string {

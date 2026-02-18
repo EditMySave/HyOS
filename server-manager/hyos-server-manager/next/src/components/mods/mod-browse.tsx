@@ -1,31 +1,33 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { useModProvidersStore } from "@/lib/stores/mod-providers.store";
+import {
+  AlertCircle,
+  Check,
+  Download,
+  ExternalLink,
+  FileArchive,
+  Loader2,
+  Search,
+  Settings,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useInstalledMods } from "@/lib/services/mods";
 import {
   useAggregatedSearch,
   useModInstall,
 } from "@/lib/services/mods/browser/aggregator.hooks";
+import type {
+  BrowsedMod,
+  SearchParams,
+} from "@/lib/services/mods/browser/types";
 import { useProviderSettings } from "@/lib/services/mods/providers.hooks";
-import { useInstalledMods } from "@/lib/services/mods";
-import type { SearchParams } from "@/lib/services/mods/browser/types";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Search,
-  Loader2,
-  Download,
-  ExternalLink,
-  FileArchive,
-  AlertCircle,
-  Settings,
-  Check,
-} from "lucide-react";
-import { ModProviderSettingsDialog } from "./mod-provider-settings";
+import { useModProvidersStore } from "@/lib/stores/mod-providers.store";
 import { cn } from "@/lib/utils";
-import type { BrowsedMod } from "@/lib/services/mods/browser/types";
+import { ModProviderSettingsDialog } from "./mod-provider-settings";
 
 const SORT_OPTIONS: { value: SearchParams["sort"]; label: string }[] = [
   { value: "downloads", label: "Downloads" },

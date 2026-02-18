@@ -1,20 +1,19 @@
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import useSWRMutation from "swr/mutation";
-import { mutate } from "swr";
 import {
-  getUniverseFiles,
-  getSlots,
-  createSlot,
   activateSlot,
+  createSlot,
   deleteSlot,
+  getSlots,
+  getUniverseFiles,
   renameSlot,
 } from "./worlds.service";
 import type {
-  FilesResponse,
-  SlotsResponse,
-  CreateSlotResponse,
   ActivateResponse,
+  CreateSlotResponse,
+  FilesResponse,
   RenameSlotResponse,
+  SlotsResponse,
 } from "./worlds.types";
 
 /**

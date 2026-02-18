@@ -1,3 +1,4 @@
+import { getProviders } from "./providers";
 import type {
   AggregatedSearchResult,
   ModProvider,
@@ -5,7 +6,6 @@ import type {
   ProviderConfig,
   SearchParams,
 } from "./types";
-import { getProviders } from "./providers";
 
 /**
  * Run aggregated search across enabled providers (server-side).

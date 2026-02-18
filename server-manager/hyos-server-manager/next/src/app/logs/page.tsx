@@ -1,163 +1,38 @@
 "use client";
 
-import useSWR from "swr";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  LEVEL_COLORS,
+  LOG_LEVELS,
+  useLogs,
+} from "@/lib/services/logs";
 import { cn } from "@/lib/utils";
 
-interface LogsResponse {
-  logs: string;
-  auth: {
-    waiting: boolean;
-    url: string | null;
-    code: string | null;
-  };
-  source: string;
-  timestamp: number;
-}
-
-interface ParsedLogLine {
-  date: string;
-  time: string;
-  level: string;
-  message: string;
-  raw: string;
-  timestamp: number;
-}
-
-const fetcher = async (url: string): Promise<LogsResponse> => {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch logs: ${response.statusText}`);
-  }
-  return response.json();
-};
-
-const LEVEL_COLORS: Record<
-  string,
-  { text: string; bg: string; border: string }
-> = {
-  INFO: {
-    text: "text-chart-1",
-    bg: "bg-chart-1/10",
-    border: "border-l-chart-1",
-  },
-  PLAYER: {
-    text: "text-chart-4",
-    bg: "bg-chart-4/10",
-    border: "border-l-chart-4",
-  },
-  WARNING: {
-    text: "text-status-warning",
-    bg: "bg-status-warning/10",
-    border: "border-l-status-warning",
-  },
-  ERROR: {
-    text: "text-destructive",
-    bg: "bg-destructive/10",
-    border: "border-l-destructive",
-  },
-  SYSTEM: {
-    text: "text-status-online",
-    bg: "bg-status-online/10",
-    border: "border-l-status-online",
-  },
-  WARN: {
-    text: "text-status-warning",
-    bg: "bg-status-warning/10",
-    border: "border-l-status-warning",
-  },
-  DEBUG: {
-    text: "text-chart-2",
-    bg: "bg-chart-2/10",
-    border: "border-l-chart-2",
-  },
-};
-
-function parseLogLine(line: string): ParsedLogLine {
-  // Match: [YYYY/MM/DD HH:MM:SS   LEVEL] message
-  const match = line.match(
-    /^\[(\d{4}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s+(\w+)\]\s+(.*)$/,
-  );
-  if (match) {
-    const dateStr = match[1]; // YYYY/MM/DD
-    const timeStr = match[2]; // HH:MM:SS
-    const level = match[3]; // INFO, WARN, ERROR, etc.
-    const message = match[4];
-
-    // Parse timestamp for time filtering
-    let timestamp = 0;
-    try {
-      // Convert YYYY/MM/DD HH:MM:SS to Date
-      timestamp = new Date(
-        `${dateStr.replace(/\//g, "-")} ${timeStr}`,
-      ).getTime();
-    } catch {
-      // If parsing fails, timestamp remains 0
-    }
-
-    return {
-      date: dateStr,
-      time: timeStr,
-      level,
-      message,
-      raw: line,
-      timestamp,
-    };
-  }
-  // If no match, return as raw line
-  return {
-    date: "",
-    time: "",
-    level: "",
-    message: line,
-    raw: line,
-    timestamp: 0,
-  };
-}
-
 export default function LogsPage() {
-  const [autoScroll, setAutoScroll] = useState(true);
-  const [logsTail, setLogsTail] = useState(200);
+  const [logLimit, setLogLimit] = useState(2000);
+  const {
+    entries,
+    source,
+    error,
+    isLoading,
+    clear,
+    resetAndReload,
+  } = useLogs({ initialLimit: logLimit });
+
   const [levelFilter, setLevelFilter] = useState("all");
   const [timeRange, setTimeRange] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isPaused, setIsPaused] = useState(false);
-  const [displayedLogs, setDisplayedLogs] = useState<string>("");
+  const [autoScroll, setAutoScroll] = useState(true);
+
   const logContainerRef = useRef<HTMLDivElement>(null);
+  const prevEntryCountRef = useRef<number>(0);
 
-  const { data, error, isLoading } = useSWR<LogsResponse>(
-    `/api/server/logs?tail=${logsTail}`,
-    fetcher,
-    {
-      refreshInterval: isPaused ? 0 : 5000,
-      revalidateOnFocus: !isPaused,
-    },
-  );
-
-  // Update displayed logs when new data arrives
-  useEffect(() => {
-    if (data?.logs) {
-      setDisplayedLogs(data.logs);
-    }
-  }, [data?.logs]);
-
-  // Auto-scroll to bottom when new logs arrive
-  useEffect(() => {
-    if (autoScroll && logContainerRef.current && displayedLogs) {
-      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
-    }
-  }, [displayedLogs, autoScroll]);
-
-  // Parse and filter logs
-  const filteredLogs = useMemo(() => {
-    if (!displayedLogs) return [];
-
-    const lines = displayedLogs.split("\n").filter((line) => line.trim());
-    const parsed = lines.map(parseLogLine);
-
+  // Filter logs based on level, time range, and search query
+  const filteredEntries = useMemo(() => {
     const now = Date.now();
 
-    return parsed.filter((log) => {
+    return entries.filter((log) => {
       // Level filter
       if (levelFilter !== "all" && log.level !== levelFilter) {
         return false;
@@ -181,11 +56,12 @@ export default function LogsPage() {
         }
       }
 
-      // Search filter
+      // Search filter - matches message, component, level, time, and date
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         return (
           log.message.toLowerCase().includes(query) ||
+          log.component?.toLowerCase().includes(query) ||
           log.level.toLowerCase().includes(query) ||
           log.time.includes(query) ||
           log.date.includes(query)
@@ -194,10 +70,41 @@ export default function LogsPage() {
 
       return true;
     });
-  }, [displayedLogs, levelFilter, timeRange, searchQuery]);
+  }, [entries, levelFilter, timeRange, searchQuery]);
 
+  // Auto-scroll to bottom only when new entries are appended
+  useEffect(() => {
+    if (autoScroll && logContainerRef.current && entries.length > prevEntryCountRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    }
+    prevEntryCountRef.current = entries.length;
+  }, [entries.length, autoScroll]);
+
+  // Detect scroll position — disable auto-scroll when user scrolls up, re-enable at bottom
+  useEffect(() => {
+    const container = logContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const atBottom = scrollHeight - scrollTop - clientHeight < 50;
+      setAutoScroll(atBottom);
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Handle clear button
   const handleClear = () => {
-    setDisplayedLogs("");
+    clear();
+    setAutoScroll(true);
+  };
+
+  // Handle reset and reload
+  const handleResetAndReload = () => {
+    resetAndReload();
+    setAutoScroll(true);
   };
 
   return (
@@ -213,7 +120,7 @@ export default function LogsPage() {
 
       {/* Filter Bar */}
       <div className="bg-card border border-border p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Level */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -225,11 +132,11 @@ export default function LogsPage() {
               className="w-full bg-input border border-border px-3 py-2 text-sm text-foreground"
             >
               <option value="all">All Levels</option>
-              <option value="INFO">INFO</option>
-              <option value="WARNING">WARNING</option>
-              <option value="ERROR">ERROR</option>
-              <option value="PLAYER">PLAYER</option>
-              <option value="SYSTEM">SYSTEM</option>
+              {LOG_LEVELS.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -278,6 +185,22 @@ export default function LogsPage() {
               </svg>
             </div>
           </div>
+
+          {/* Log Limit */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              LOG LIMIT
+            </label>
+            <input
+              type="number"
+              min="100"
+              max="10000"
+              step="100"
+              value={logLimit}
+              onChange={(e) => setLogLimit(Math.max(100, Math.min(10000, parseInt(e.target.value) || 2000)))}
+              className="w-full bg-input border border-border px-3 py-2 text-sm text-foreground"
+            />
+          </div>
         </div>
       </div>
 
@@ -293,6 +216,11 @@ export default function LogsPage() {
                 <span className="size-2 bg-status-online" />
                 <span className="text-sm text-muted-foreground">Live</span>
               </div>
+            )}
+            {source !== "none" && (
+              <span className="text-sm text-muted-foreground">
+                Source: {source}
+              </span>
             )}
           </div>
           <div className="flex items-center gap-3">
@@ -316,6 +244,16 @@ export default function LogsPage() {
             >
               Clear
             </button>
+            <button
+              onClick={handleResetAndReload}
+              className={cn(
+                "px-4 py-2 text-sm font-medium border border-border",
+                "bg-input hover:bg-accent text-foreground",
+                "transition-colors",
+              )}
+            >
+              Reload
+            </button>
           </div>
         </div>
       </div>
@@ -326,7 +264,7 @@ export default function LogsPage() {
           ref={logContainerRef}
           className={cn(
             "bg-background-secondary border border-border p-4",
-            "font-mono text-xs overflow-auto h-[600px]",
+            "font-mono text-xs overflow-auto h-[calc(100vh-320px)] min-h-[400px]",
           )}
         >
           {isLoading && (
@@ -337,27 +275,21 @@ export default function LogsPage() {
               Error loading logs: {error.message}
             </div>
           )}
-          {!isLoading && !error && filteredLogs.length === 0 && (
+          {!isLoading && !error && filteredEntries.length === 0 && (
             <div className="text-muted-foreground">
-              {displayedLogs
+              {entries.length > 0
                 ? "No logs match the current filters."
                 : "No logs available. The container may not be running."}
             </div>
           )}
-          {!isLoading && !error && filteredLogs.length > 0 && (
+          {!isLoading && !error && filteredEntries.length > 0 && (
             <div className="space-y-0.5">
-              {filteredLogs.map((log, index) => {
-                const levelStyles = log.level
-                  ? LEVEL_COLORS[log.level] || {
-                      text: "text-foreground-secondary",
-                      bg: "bg-background-secondary",
-                      border: "border-l-border",
-                    }
-                  : {
-                      text: "text-foreground-secondary",
-                      bg: "bg-background-secondary",
-                      border: "border-l-border",
-                    };
+              {filteredEntries.map((log, index) => {
+                const levelStyles = LEVEL_COLORS[log.level] || {
+                  text: "text-foreground-secondary",
+                  bg: "bg-background-secondary",
+                  border: "border-l-border",
+                };
 
                 // Create unique key using timestamp, index, and first chars of message
                 const uniqueKey = `${log.timestamp}-${index}-${log.raw.slice(0, 30).replace(/\s/g, "")}`;
@@ -388,9 +320,18 @@ export default function LogsPage() {
                         {log.level}
                       </span>
                     )}
-                    <span className="text-foreground-secondary break-words flex-1">
-                      {log.message}
-                    </span>
+                    <div className="flex-1 min-w-0">
+                      {/* Component name (if present) */}
+                      {log.component && (
+                        <span className="text-foreground-secondary/60 text-[10px] font-mono block mb-0.5">
+                          [{log.component}]
+                        </span>
+                      )}
+                      {/* Main message */}
+                      <span className="text-foreground break-words">
+                        {log.message}
+                      </span>
+                    </div>
                   </div>
                 );
               })}

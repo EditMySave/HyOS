@@ -1,4 +1,3 @@
-import type { ModProviderAdapter } from "./provider.interface";
 import type {
   BrowsedMod,
   ModVersion,
@@ -6,11 +5,12 @@ import type {
   SearchParams,
 } from "../types";
 import {
-  searchModtale,
-  getModtaleModDetails,
   downloadModtaleFile,
+  getModtaleModDetails,
+  searchModtale,
 } from "./modtale.service";
-import type { MtMod, MtFile, MtProjectListItem } from "./modtale.types";
+import type { MtFile, MtMod, MtProjectListItem } from "./modtale.types";
+import type { ModProviderAdapter } from "./provider.interface";
 
 export class ModtaleProvider implements ModProviderAdapter {
   readonly id = "modtale" as const;

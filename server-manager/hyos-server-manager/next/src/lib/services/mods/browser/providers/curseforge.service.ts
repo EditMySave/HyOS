@@ -1,9 +1,9 @@
-import {
-  cfSearchResponseSchema,
-  cfModResponseSchema,
-  cfFilesResponseSchema,
-} from "./curseforge.types";
 import type { CfMod, CfModFile, CfSearchResponse } from "./curseforge.types";
+import {
+  cfFilesResponseSchema,
+  cfModResponseSchema,
+  cfSearchResponseSchema,
+} from "./curseforge.types";
 
 const CURSEFORGE_API = "https://api.curseforge.com/v1";
 const HYTALE_GAME_ID = 70216;

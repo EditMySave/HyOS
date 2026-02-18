@@ -1,8 +1,8 @@
 import type { ModProvider } from "../types";
-import type { ModProviderAdapter } from "./provider.interface";
 import { CurseForgeProvider } from "./curseforge.provider";
 import { ModtaleProvider } from "./modtale.provider";
 import { NexusModsProvider } from "./nexusmods.provider";
+import type { ModProviderAdapter } from "./provider.interface";
 
 const curseforgeProvider = new CurseForgeProvider();
 const modtaleProvider = new ModtaleProvider();
