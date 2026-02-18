@@ -67,7 +67,7 @@ export function GameStats() {
 
   const getAddress = (): string => {
     const host = window.location.hostname;
-    const port = config?.gamePort ?? 5520;
+    const port = config?.gamePort;
     return `${host}:${port}`;
   };
 
