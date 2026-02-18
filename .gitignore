@@ -10,6 +10,7 @@ CLAUDE.md
 .cursor/**/*
 .claude/**/*
 .roo/**/*
+**/*/.claude
 
 # Website
 website/node_modules/
