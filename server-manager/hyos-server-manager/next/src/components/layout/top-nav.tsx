@@ -49,7 +49,7 @@ export function TopNav() {
           </nav>
 
           <div className="py-6 pl-10 text-sm text-muted-foreground hidden md:block">
-            {/* spacer to mimic Cablefied header layout */}
+            v{process.env.NEXT_PUBLIC_APP_VERSION ?? "dev"}
           </div>
         </div>
       </div>

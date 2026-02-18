@@ -31,6 +31,10 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Accept version arg and set env var for Next.js build-time injection
+ARG APP_VERSION=dev
+ENV NEXT_PUBLIC_APP_VERSION=$APP_VERSION
+
 # Build the application
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build

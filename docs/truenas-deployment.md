@@ -169,8 +169,16 @@ For users who prefer manual control, deploy using the `compose.yaml` directly.
    zfs create tank/apps/hytale
    chown -R 568:568 /mnt/tank/apps/hytale
    ```
+   
+   ![Datasets page](../screenshots/truenas-datasets-page.png)
 
 2. **Go to Apps > Discover Apps > Custom App**
+
+![Apps sidebar](../screenshots/truenas-apps-menu-expanded.png)
+
+![Discover Apps](../screenshots/truenas-apps-discover-expanded.png)
+
+![Custom App selection](../screenshots/truenas-custom-app-selected.png)
 
 3. **Click "Install via YAML"**
 
