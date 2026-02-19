@@ -7,6 +7,7 @@ import {
 } from "fumadocs-ui/page";
 import { notFound } from "next/navigation";
 import defaultMdxComponents from "fumadocs-ui/mdx";
+import { Mermaid } from "@/components/mdx/mermaid";
 import type { MDXContent } from "mdx/types";
 import type { TOCItemType } from "fumadocs-core/toc";
 
@@ -33,7 +34,7 @@ export default async function Page(props: {
       <DocsTitle>{data.title}</DocsTitle>
       <DocsDescription>{data.description}</DocsDescription>
       <DocsBody>
-        <MDX components={{ ...defaultMdxComponents }} />
+        <MDX components={{ ...defaultMdxComponents, Mermaid }} />
       </DocsBody>
     </DocsPage>
   );

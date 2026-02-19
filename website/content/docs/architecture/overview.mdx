@@ -54,9 +54,9 @@ graph LR
 ```mermaid
 graph TD
     subgraph Server Container
-        EP[Entrypoint Scripts] -->|writes| SF[State Files<br/>/data/.state/]
+        EP[Entrypoint Scripts] -->|writes| SF["State Files<br/>/data/.state/"]
         EP -->|generates| CF[config.json]
-        EP -->|manages| MODS[/data/mods/]
+        EP -->|manages| MODS["/data/mods/"]
         JAVA[Java Server Process] -->|logs| LOGS[stdout/stderr]
         APIP[API Plugin] -->|reads| JAVA
     end
@@ -68,7 +68,7 @@ graph TD
     end
 
     subgraph Host
-        VOL[/data Volume] --- SF
+        VOL["/data Volume"] --- SF
         VOL --- CF
         VOL --- MODS
         SOCK[docker.sock] --- DOCK

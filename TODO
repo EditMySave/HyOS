@@ -1,3 +1,10 @@
+Check that it will not be necessary to create a dataset in the submitted app version
+
+Docs HyOS image updates - Animations?
+Instructions for truenas images
+demo platform
+Documentation diagrams not working
+
 New Tabs:
 Connected Players
 Backups 
@@ -8,6 +15,7 @@ Mod Search
 File Manager
 
 
+Mod privder UI / button
 Mod Search - Recommended
 Mod Upload as top button
 Modtale error
@@ -26,6 +34,8 @@ Logs filtering on plugins
 
 Ngrokking
 Bcrypt Auth
+Add more accounts
+
 
 Notifications - Load Failures, Server Crashes
 
@@ -35,7 +45,7 @@ Anonymous heartbeat
 Analytics - Anonymous
 Error Reporting
 
-Automatic installation script?
+Automatic installation script? One touch install for docker compose? CURL Download compose?
 My Installations - Link your MineOS installations to your account. Your installation ID is shown during setup.
 SSO
 
