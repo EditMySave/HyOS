@@ -66,7 +66,10 @@ async function readHytaleLogFiles(
 
     return { logs, totalLines };
   } catch (error: unknown) {
-    if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {
+    if (
+      error instanceof Error &&
+      (error as NodeJS.ErrnoException).code !== "ENOENT"
+    ) {
       console.error("Error reading log files:", error);
     }
     return { logs: "", totalLines: 0 };

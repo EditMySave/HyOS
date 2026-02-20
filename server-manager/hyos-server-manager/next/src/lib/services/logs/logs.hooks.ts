@@ -68,8 +68,7 @@ export function useLogs({
           setEntries(parsedEntries);
           offsetRef.current = response.totalLines;
           totalLinesRef.current = response.totalLines;
-          lastRawLineRef.current =
-            parsedEntries[parsedEntries.length - 1].raw;
+          lastRawLineRef.current = parsedEntries[parsedEntries.length - 1].raw;
         } else {
           // Append new entries
           setEntries((prev) => {
@@ -82,8 +81,7 @@ export function useLogs({
           });
           offsetRef.current = response.totalLines;
           totalLinesRef.current = response.totalLines;
-          lastRawLineRef.current =
-            parsedEntries[parsedEntries.length - 1].raw;
+          lastRawLineRef.current = parsedEntries[parsedEntries.length - 1].raw;
         }
       } else {
         // No new lines — just update the ref
@@ -92,7 +90,9 @@ export function useLogs({
 
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Unknown error fetching logs"));
+      setError(
+        err instanceof Error ? err : new Error("Unknown error fetching logs"),
+      );
     } finally {
       setIsLoading(false);
     }

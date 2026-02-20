@@ -1,7 +1,10 @@
 "use client";
 
+import { LogOut } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { logout } from "@/lib/services/auth";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -15,6 +18,12 @@ const NAV_ITEMS = [
 
 export function TopNav() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleLogout() {
+    await logout();
+    router.replace("/login");
+  }
 
   return (
     <header className="w-full border-b border-border bg-transparent">
@@ -48,8 +57,18 @@ export function TopNav() {
             })}
           </nav>
 
-          <div className="py-6 pl-10 text-sm text-muted-foreground hidden md:block">
-            v{process.env.NEXT_PUBLIC_APP_VERSION ?? "dev"}
+          <div className="py-6 pl-10 flex items-center gap-3 hidden md:flex">
+            <span className="text-sm text-muted-foreground">
+              v{process.env.NEXT_PUBLIC_APP_VERSION ?? "dev"}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleLogout}
+              title="Sign out"
+            >
+              <LogOut className="size-4" />
+            </Button>
           </div>
         </div>
       </div>

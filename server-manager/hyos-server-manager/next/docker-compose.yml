@@ -23,6 +23,7 @@ services:
       - HYTALE_SERVER_PORT=8080
       - REST_API_CLIENT_ID=hyos-manager
       - REST_API_CLIENT_SECRET=changeme123
+      - SESSION_SECRET=a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
       - NODE_ENV=development
     volumes:
       # Mount local state directory for testing

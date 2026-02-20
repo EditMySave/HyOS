@@ -1,23 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  LEVEL_COLORS,
-  LOG_LEVELS,
-  useLogs,
-} from "@/lib/services/logs";
+import { LEVEL_COLORS, LOG_LEVELS, useLogs } from "@/lib/services/logs";
 import { cn } from "@/lib/utils";
 
 export default function LogsPage() {
   const [logLimit, setLogLimit] = useState(2000);
-  const {
-    entries,
-    source,
-    error,
-    isLoading,
-    clear,
-    resetAndReload,
-  } = useLogs({ initialLimit: logLimit });
+  const { entries, source, error, isLoading, clear, resetAndReload } = useLogs({
+    initialLimit: logLimit,
+  });
 
   const [levelFilter, setLevelFilter] = useState("all");
   const [timeRange, setTimeRange] = useState("all");
@@ -74,7 +65,11 @@ export default function LogsPage() {
 
   // Auto-scroll to bottom only when new entries are appended
   useEffect(() => {
-    if (autoScroll && logContainerRef.current && entries.length > prevEntryCountRef.current) {
+    if (
+      autoScroll &&
+      logContainerRef.current &&
+      entries.length > prevEntryCountRef.current
+    ) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
     prevEntryCountRef.current = entries.length;
@@ -197,7 +192,14 @@ export default function LogsPage() {
               max="10000"
               step="100"
               value={logLimit}
-              onChange={(e) => setLogLimit(Math.max(100, Math.min(10000, parseInt(e.target.value) || 2000)))}
+              onChange={(e) =>
+                setLogLimit(
+                  Math.max(
+                    100,
+                    Math.min(10000, parseInt(e.target.value) || 2000),
+                  ),
+                )
+              }
               className="w-full bg-input border border-border px-3 py-2 text-sm text-foreground"
             />
           </div>

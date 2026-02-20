@@ -1,9 +1,10 @@
 Check that it will not be necessary to create a dataset in the submitted app version
 
-Docs HyOS image updates - Animations?
-Instructions for truenas images
-demo platform
-Documentation diagrams not working
+Update HyOS Website docs with step by step images for Truenas - Animations?
+Update website homepage Hyos Imagery
+Demo Platform - Offer a demo button on the 
+
+Security Audit
 
 New Tabs:
 Connected Players
@@ -23,6 +24,8 @@ Visit website button on mods
 Mods page has gutters
 Disable mods without deleting them
 Pick up on mod loading errors and isolate
+
+Pick up on the shutdown log for state updates
 
 Create new world
 
@@ -133,29 +136,9 @@ SSO
   - Virtual scrolling - Use react-window or @tanstack/react-virtual to handle rendering thousands of lines without DOM bloat                             
   - Export logs - Download filtered logs as .txt or .log file                                                                                            
   - Persistent scroll position - Remember position when switching tabs                                                                                   
-                                                                                                                                                         
+                                                                                                                                                                                                                                                                                              
   ---                                                                                                                                                    
-  7. Better Installed Mods Button Detection                                                                                                              
-                                                                                                                                                         
-  Current state: isModLoaded() in mods/page.tsx:153 matches by stripping .jar and doing a case-insensitive comparison against                            
-  loadedPlugins.plugins[].name. In mod-browse.tsx:292, installed detection compares m.name === mod.latestVersion?.fileName.                              
-                                                                                                                                                         
-  Problems: The matching is fragile - mod filenames often include version strings (e.g., hytale-api-1.0.0.jar) that don't match plugin names (HytaleAPI).
-   Browse page only checks filename exact match.                                                                                                         
-                                                                                                                                                         
-  What to build:                                                                                                                                         
-  - Fuzzy matching - Normalize names by stripping version numbers, hyphens, and casing: hytale-api-1.0.0.jar -> hytaleapi matches plugin HytaleAPI       
-  - Metadata-based matching - Store a manifest (installed-mods.json) when installing from a provider that maps {provider, providerModId, fileName,       
-  installedAt}. Then match browse results against provider+ID rather than filename                                                                       
-  - Plugin ID matching - If the server API returns a plugin ID or namespace (e.g., com.hytale.HytaleAPI), match against that                             
-  - Status indicators in browse results:                                                                                                                 
-    - "Installed" (file exists and loaded)                                                                                                               
-    - "Installed - Not Loaded" (file exists but plugin not in loaded list)                                                                               
-    - "Update Available" (installed version < latest version)                                                                                            
-    - "Install" (not installed)                                                                                                                          
-                                                                                                                                                         
-  ---                                                                                                                                                    
-  8. Visit Website Button on Mods                                                                                                                        
+  1. Visit Website Button on Mods                                                                                                                        
                                                                                                                                                          
   Current state: The ModCard component shows a "View on website" link only as a fallback when latestVersion is null (no installable version). When a mod 
   is installable, only the Install button shows.                                                                                                         
