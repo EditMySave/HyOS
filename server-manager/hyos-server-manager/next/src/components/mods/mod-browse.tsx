@@ -6,6 +6,7 @@ import {
   Download,
   ExternalLink,
   FileArchive,
+  KeyRound,
   Loader2,
   Search,
   Settings,
@@ -235,7 +236,7 @@ export function ModBrowse({ className }: { className?: string }) {
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
-          {hydrated && hasNoProviders && (
+          {hydrated && hasNoProviders && submittedParams && (
             <div className="flex items-center gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
               <AlertCircle className="h-5 w-5 shrink-0" />
               <span>
@@ -273,6 +274,41 @@ export function ModBrowse({ className }: { className?: string }) {
               Search
             </Button>
           </div>
+
+          {!submittedParams && !isLoading && hydrated && (
+            hasNoProviders ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                  <KeyRound className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium">
+                  Connect your mod sources
+                </h3>
+                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                  Add API keys for CurseForge, NexusMods, or other providers to
+                  search and install mods from their catalogs.
+                </p>
+                <Button
+                  className="mt-6"
+                  onClick={() => setSettingsOpen(true)}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Configure providers
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                  <Search className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium">Search for mods</h3>
+                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                  Enter a query above to browse mods across your enabled
+                  sources.
+                </p>
+              </div>
+            )
+          )}
 
           {error && (
             <div className="flex items-center gap-2 text-destructive">
