@@ -83,7 +83,7 @@ HyOS runs two containers that share a single `/data` volume:
 
 The server container handles authentication, updates, mod validation, and config generation before launching the Java process. The Manager reads state files from `/data/.state/` and communicates with the embedded API plugin over HTTP.
 
-See [Architecture](website/content/docs/architecture/overview.mdx) for diagrams and the full security model.
+See [Architecture](website/content/docs/architecture/overview.mdx) for diagrams and data flow. For the security model, see [Security](website/content/docs/security/index.mdx).
 
 ## Docker Images
 
@@ -103,6 +103,7 @@ See [Architecture](website/content/docs/architecture/overview.mdx) for diagrams 
 | [Server Manager](website/content/docs/server-management/dashboard.mdx) | Web UI user guide |
 | [Mods & Plugins](website/content/docs/mods/index.mdx) | Installing mods, content-only patching, API plugin |
 | [Architecture](website/content/docs/architecture/overview.mdx) | System design, diagrams, state files, security model |
+| [Security](website/content/docs/security/index.mdx) | Authentication, hardening, and known limitations |
 | [Scripts Reference](website/content/docs/scripts-reference/index.mdx) | Entrypoint, library scripts, and command scripts |
 | [Troubleshooting](website/content/docs/troubleshooting/index.mdx) | Common issues and solutions |
 
@@ -113,9 +114,11 @@ HyOS/
 ├── hytale-docker-server/       # Docker configs for the game server
 │   ├── config-truenas/         # TrueNAS-optimized build (primary)
 │   ├── config-developer/       # Developer build with TypeScript/Bun
-│   └── config-minimal/         # Lightweight build for testing
+│   ├── config-minimal/         # Lightweight build for testing
+│   └── truenas-app/            # TrueNAS SCALE app metadata
 ├── hytale-api-plugin/          # REST API plugin (Java, bundled in server image)
 ├── server-manager/             # Next.js web dashboard
+├── website/                    # Documentation site (Fumadocs)
 ├── .github/workflows/          # CI/CD pipeline (builds + publishes to GHCR)
 └── README.md
 ```

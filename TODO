@@ -1,10 +1,20 @@
-Check that it will not be necessary to create a dataset in the submitted app version
-
+Pre-Release:
 Update HyOS Website docs with step by step images for Truenas - Animations?
-Update website homepage Hyos Imagery
-Demo Platform - Offer a demo button on the 
 
-Security Audit
+Tesst all the documentation commands
+Make sure all commands make sense
+
+Disable non working commands in server manager
+
+Make OP has an error
+
+Platform
+Anonymous heartbeat
+Analytics - Anonymous
+Error Reporting
+
+Post-Release:
+Demo Platform - Offer a demo button on the 
 
 New Tabs:
 Connected Players
@@ -23,7 +33,6 @@ Mods page has gutters
 
 Create new world
 
-Make OP has an error
 
 Config.json confifurator winternode.com
 
@@ -33,14 +42,7 @@ Ngrokking
 Bcrypt Auth
 Add more accounts
 
-
 Notifications - Load Failures, Server Crashes
-
-
-Platform
-Anonymous heartbeat
-Analytics - Anonymous
-Error Reporting
 
 Automatic installation script? One touch install for docker compose? CURL Download compose?
 My Installations - Link your MineOS installations to your account. Your installation ID is shown during setup.
