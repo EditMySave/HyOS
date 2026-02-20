@@ -36,6 +36,9 @@ function getStateColor(state: string): string {
     case "starting":
     case "stopping":
       return "bg-status-warning";
+    case "crashed":
+    case "error":
+      return "bg-destructive";
     default:
       return "bg-muted";
   }

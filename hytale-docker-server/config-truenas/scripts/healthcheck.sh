@@ -42,6 +42,11 @@ else
     }
 fi
 
+# Source state.sh for state correction
+if [[ -f "${SCRIPTS_DIR}/lib/state.sh" ]]; then
+    source "${SCRIPTS_DIR}/lib/state.sh"
+fi
+
 # =============================================================================
 # Health Checks
 # =============================================================================
@@ -91,6 +96,17 @@ check_process() {
         overall_healthy=false
         overall_status="unhealthy"
         message="Server process not running"
+
+        # Safety net: correct stale "running" state to "crashed"
+        local state_file="${DATA_DIR}/.state/server.json"
+        if [[ -f "$state_file" ]]; then
+            local current_status
+            current_status=$(jq -r '.status // empty' "$state_file" 2>/dev/null || echo "")
+            if [[ "$current_status" == "running" ]] && command -v state_set_server > /dev/null 2>&1; then
+                state_set_server "crashed"
+            fi
+        fi
+
         return 1
     fi
 }

@@ -7,6 +7,7 @@ import {
   getModUpdates,
   linkModToProvider,
   patchMod,
+  toggleMod,
   uploadMod,
 } from "./mods.service";
 import type { LinkModData } from "./mods.types";
@@ -81,6 +82,18 @@ export function useDeleteMod() {
       // This is handled by SWR's cache revalidation
     },
   });
+}
+
+/**
+ * Hook to toggle a mod between enabled and disabled
+ */
+export function useToggleMod() {
+  return useSWRMutation<
+    Awaited<ReturnType<typeof toggleMod>>,
+    Error,
+    string,
+    { modId: string; enabled: boolean }
+  >("toggle-mod", async (_, { arg }) => toggleMod(arg.modId, arg.enabled));
 }
 
 /**

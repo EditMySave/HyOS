@@ -8,6 +8,7 @@ import {
   LayoutList,
   Link,
   Loader2,
+  Power,
   Puzzle,
   Search,
   Settings,
@@ -39,6 +40,7 @@ import {
   useModInstall,
   useModUpdates,
   usePatchMod,
+  useToggleMod,
 } from "@/lib/services/mods";
 import { cn } from "@/lib/utils";
 import { ModDetailsDialog } from "./mod-details-dialog";
@@ -71,7 +73,7 @@ function getModHue(name: string): number {
 
 const ITEMS_PER_PAGE = 8;
 
-type FilterType = "all" | "active" | "inactive" | "updates";
+type FilterType = "all" | "active" | "inactive" | "disabled" | "updates";
 type SortType = "name" | "size" | "version" | "modified";
 type ViewType = "list" | "grid";
 
@@ -163,6 +165,8 @@ function ModGridCard({
   hasUpdate,
   onUpdate,
   isUpdating,
+  onToggle,
+  isToggling,
   onDetails,
   onDelete,
   isDeleting,
@@ -172,12 +176,19 @@ function ModGridCard({
   hasUpdate: boolean;
   onUpdate?: () => void;
   isUpdating: boolean;
+  onToggle: () => void;
+  isToggling: boolean;
   onDetails: () => void;
   onDelete: () => void;
   isDeleting: boolean;
 }) {
   return (
-    <Card className="group relative py-4 transition-shadow hover:shadow-md">
+    <Card
+      className={cn(
+        "group relative py-4 transition-shadow hover:shadow-md",
+        mod.disabled && "opacity-50",
+      )}
+    >
       <CardContent className="flex flex-col items-center gap-3 px-4 text-center">
         <ModIcon mod={mod} size="lg" />
         <div className="min-w-0 w-full">
@@ -189,8 +200,22 @@ function ModGridCard({
             <p className="text-xs text-muted-foreground">{mod.author}</p>
           )}
         </div>
-        <div className="flex gap-1.5">
-          {isLoaded ? (
+        <div className="flex flex-wrap justify-center gap-1.5">
+          {mod.disabled ? (
+            <>
+              <Badge variant="destructive">Disabled</Badge>
+              {mod.disableReason === "crashed" && (
+                <Badge variant="outline" className="border-red-500 text-red-500">
+                  Caused Crash
+                </Badge>
+              )}
+              {mod.disableReason === "invalid_version" && (
+                <Badge variant="outline" className="border-amber-500 text-amber-500">
+                  Bad Version
+                </Badge>
+              )}
+            </>
+          ) : isLoaded ? (
             <Badge
               className="bg-green-500 hover:bg-green-600"
               variant="default"
@@ -210,6 +235,23 @@ function ModGridCard({
           )}
         </div>
         <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={onToggle}
+            disabled={isToggling}
+            className={
+              mod.disabled
+                ? "text-green-500 hover:text-green-600"
+                : "text-amber-500 hover:text-amber-600"
+            }
+          >
+            {isToggling ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Power className="h-3.5 w-3.5" />
+            )}
+          </Button>
           {onUpdate ? (
             <Button
               variant="ghost"
@@ -258,6 +300,7 @@ export function ModInstalled() {
   const { data: updatesData, mutate: refreshUpdates } = useModUpdates();
   const { trigger: deleteMod, isMutating: isDeleting } = useDeleteMod();
   const { trigger: patchMod, isMutating: isPatching } = usePatchMod();
+  const { trigger: toggleMod } = useToggleMod();
   const { trigger: installMod } = useModInstall();
 
   const [search, setSearch] = useState("");
@@ -269,6 +312,7 @@ export function ModInstalled() {
   const [patchingModId, setPatchingModId] = useState<string | null>(null);
   const [isPatchingAll, setIsPatchingAll] = useState(false);
   const [updatingModId, setUpdatingModId] = useState<string | null>(null);
+  const [togglingModId, setTogglingModId] = useState<string | null>(null);
 
   const mods = installedMods?.mods ?? [];
   const updates = updatesData?.updates ?? [];
@@ -346,7 +390,9 @@ export function ModInstalled() {
     if (filter === "active") {
       list = list.filter((m) => isModLoaded(m));
     } else if (filter === "inactive") {
-      list = list.filter((m) => !isModLoaded(m));
+      list = list.filter((m) => !isModLoaded(m) && !m.disabled);
+    } else if (filter === "disabled") {
+      list = list.filter((m) => m.disabled);
     } else if (filter === "updates") {
       list = list.filter((m) => updateMap.has(m.fileName));
     }
@@ -382,6 +428,7 @@ export function ModInstalled() {
 
   // Stat computations
   const activeCount = mods.filter((m) => isModLoaded(m)).length;
+  const disabledCount = mods.filter((m) => m.disabled).length;
   const criticalCount = updates.filter((u) => u.isCritical).length;
   const totalSize = mods.reduce((acc, m) => acc + m.size, 0);
 
@@ -397,6 +444,21 @@ export function ModInstalled() {
       }
     },
     [deleteMod, refreshInstalled],
+  );
+
+  const handleToggle = useCallback(
+    async (mod: InstalledMod) => {
+      setTogglingModId(mod.id);
+      try {
+        await toggleMod({ modId: mod.id, enabled: mod.disabled });
+        refreshInstalled();
+      } catch (error) {
+        console.error("Toggle failed:", error);
+      } finally {
+        setTogglingModId(null);
+      }
+    },
+    [toggleMod, refreshInstalled],
   );
 
   const handlePatch = useCallback(
@@ -489,7 +551,11 @@ export function ModInstalled() {
         <StatCard
           label="Installed Mods"
           primary={mods.length}
-          secondary={`${activeCount} active`}
+          secondary={
+            disabledCount > 0
+              ? `${activeCount} active / ${disabledCount} disabled`
+              : `${activeCount} active`
+          }
           icon={Puzzle}
           iconColorClass="text-violet-500"
           iconBgClass="bg-violet-500/10"
@@ -579,7 +645,9 @@ export function ModInstalled() {
         </div>
 
         <div className="flex gap-1">
-          {(["all", "active", "inactive", "updates"] as const).map((f) => (
+          {(
+            ["all", "active", "inactive", "disabled", "updates"] as const
+          ).map((f) => (
             <Button
               key={f}
               variant={filter === f ? "default" : "outline"}
@@ -590,6 +658,11 @@ export function ModInstalled() {
               }}
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
+              {f === "disabled" && disabledCount > 0 && (
+                <Badge variant="secondary" className="ml-1.5 h-5 min-w-5 px-1">
+                  {disabledCount}
+                </Badge>
+              )}
               {f === "updates" && updates.length > 0 && (
                 <Badge variant="secondary" className="ml-1.5 h-5 min-w-5 px-1">
                   {updates.length}
@@ -657,7 +730,10 @@ export function ModInstalled() {
                 const update = updateMap.get(mod.fileName);
 
                 return (
-                  <TableRow key={mod.id}>
+                  <TableRow
+                    key={mod.id}
+                    className={cn(mod.disabled && "opacity-50")}
+                  >
                     <TableCell className="pl-4">
                       <div className="flex items-center gap-3">
                         <ModIcon mod={mod} />
@@ -690,7 +766,28 @@ export function ModInstalled() {
                       {formatBytes(mod.size)}
                     </TableCell>
                     <TableCell>
-                      {mod.needsPatch ? (
+                      {mod.disabled ? (
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-2 w-2 rounded-full bg-red-500" />
+                          <span className="text-sm text-red-500">Disabled</span>
+                          {mod.disableReason === "crashed" && (
+                            <Badge
+                              variant="destructive"
+                              className="text-[10px] px-1.5 py-0"
+                            >
+                              Caused Crash
+                            </Badge>
+                          )}
+                          {mod.disableReason === "invalid_version" && (
+                            <Badge
+                              variant="outline"
+                              className="border-amber-500 text-amber-500 text-[10px] px-1.5 py-0"
+                            >
+                              Bad Version
+                            </Badge>
+                          )}
+                        </div>
+                      ) : mod.needsPatch ? (
                         <Badge
                           variant="outline"
                           className="border-amber-500 text-amber-500"
@@ -713,6 +810,23 @@ export function ModInstalled() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => handleToggle(mod)}
+                          disabled={togglingModId === mod.id}
+                          className={
+                            mod.disabled
+                              ? "text-green-500 hover:text-green-600"
+                              : "text-amber-500 hover:text-amber-600"
+                          }
+                        >
+                          {togglingModId === mod.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Power className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
                         {mod.needsPatch && (
                           <Button
                             variant="ghost"
@@ -784,6 +898,8 @@ export function ModInstalled() {
                     : undefined
                 }
                 isUpdating={updatingModId === mod.id}
+                onToggle={() => handleToggle(mod)}
+                isToggling={togglingModId === mod.id}
                 onDetails={() => setDetailsMod(mod)}
                 onDelete={() => handleDelete(mod.id)}
                 isDeleting={isDeleting}

@@ -28,13 +28,20 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     // Sanitize the ID to prevent directory traversal
     const safeId = path.basename(id);
     const fileName = `${safeId}.jar`;
-    const filePath = path.join(modsPath, fileName);
+    let filePath = path.join(modsPath, fileName);
 
-    // Verify the file exists
+    // Verify the file exists — check mods/ then .disabled/
     try {
       await fs.access(filePath);
     } catch {
-      return NextResponse.json({ error: "Mod not found" }, { status: 404 });
+      // Fall back to .disabled/ directory
+      const disabledPath = path.join(modsPath, ".disabled", fileName);
+      try {
+        await fs.access(disabledPath);
+        filePath = disabledPath;
+      } catch {
+        return NextResponse.json({ error: "Mod not found" }, { status: 404 });
+      }
     }
 
     // Verify it's a file (not a directory)

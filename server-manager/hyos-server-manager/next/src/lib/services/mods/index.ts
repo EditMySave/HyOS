@@ -27,6 +27,7 @@ export {
   useModLink,
   useModUpdates,
   usePatchMod,
+  useToggleMod,
   useUploadMod,
 } from "./mods.hooks";
 // Services
@@ -37,6 +38,7 @@ export {
   getModUpdates,
   linkModToProvider,
   patchMod,
+  toggleMod,
   uploadMod,
 } from "./mods.service";
 export type {
@@ -52,5 +54,6 @@ export type {
   ModUpdate,
   ModUpdatesResponse,
   PatchModResponse,
+  ToggleModResponse,
   UploadModResponse,
 } from "./mods.types";

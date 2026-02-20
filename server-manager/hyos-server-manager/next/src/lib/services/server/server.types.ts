@@ -9,6 +9,7 @@ export const serverStateSchema = z.enum([
   "running",
   "stopping",
   "stopped",
+  "crashed",
   "error",
   "unknown",
 ]);

@@ -193,6 +193,20 @@ validate_mods() {
             warn_count=$((warn_count + 1))
         fi
 
+        # Check ServerVersion — raw build versions (YYYY.MM.DD-hexhash) crash SemverRange.fromString()
+        local server_ver
+        server_ver=$(echo "$manifest" | jq -r '.ServerVersion // empty' 2>/dev/null)
+
+        if [[ -n "$server_ver" ]] && [[ "$server_ver" != "*" ]]; then
+            if [[ "$server_ver" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}-[0-9a-f]+$ ]]; then
+                log_warn "Mod $name: invalid ServerVersion \"$server_ver\" (raw build version, not a semver range) — quarantining"
+                mkdir -p "${mods_dir}/.disabled"
+                mv "$jar" "${mods_dir}/.disabled/${name}"
+                warn_count=$((warn_count + 1))
+                continue
+            fi
+        fi
+
         log_debug "Mod $name: ${group:-?}:${mod_name:-?} -> ${main_class:-(no Main class)}"
     done
 
@@ -300,6 +314,34 @@ skip_broken_mods() {
 }
 
 # =============================================================================
+# Launch and Wait (replaces exec — captures exit code for crash detection)
+# =============================================================================
+launch_and_wait() {
+    "$@" &
+    JAVA_PID=$!
+
+    state_set_server "running" "$JAVA_PID"
+    monitor_mod_loading "$(get_current_version)"
+
+    local exit_code=0
+    wait $JAVA_PID || exit_code=$?
+
+    if [[ $exit_code -eq 0 ]]; then
+        log_info "Server exited cleanly (exit code 0)"
+        state_set_server "stopped"
+    elif [[ $exit_code -ge 128 ]]; then
+        log_info "Server killed by signal $((exit_code - 128)) (exit code $exit_code)"
+        state_set_server "stopped"
+    else
+        log_error "Server crashed (exit code $exit_code)"
+        state_set_server "crashed"
+    fi
+
+    stop_localtonet || true
+    exit $exit_code
+}
+
+# =============================================================================
 # Server Launch
 # =============================================================================
 start_server() {
@@ -323,15 +365,11 @@ start_server() {
     state_set_server "starting"
     
     cd "$SERVER_DIR"
-    
+
     # Execute server
     log_info "Starting Java process..."
-    state_set_server "running" "$$"
 
-    # Start mod loading monitor in background
-    monitor_mod_loading "$(get_current_version)"
-
-    exec java $java_args -jar "$SERVER_JAR" $server_args
+    launch_and_wait java $java_args -jar "$SERVER_JAR" $server_args
 }
 
 # =============================================================================
@@ -440,12 +478,8 @@ main() {
         server_args=$(build_server_args)
         
         cd "$SERVER_DIR"
-        state_set_server "running" "$$"
 
-        # Start mod loading monitor in background
-        monitor_mod_loading "$(get_current_version)"
-
-        exec su-exec hytale:hytale java $java_args -jar "$SERVER_JAR" $server_args
+        launch_and_wait su-exec hytale:hytale java $java_args -jar "$SERVER_JAR" $server_args
     else
         start_server
     fi
@@ -456,9 +490,15 @@ main() {
 # =============================================================================
 cleanup() {
     log_info "Received shutdown signal"
-    stop_localtonet || true
-    state_set_server "stopped"
-    exit 0
+    if [[ -n "${JAVA_PID:-}" ]] && kill -0 "$JAVA_PID" 2>/dev/null; then
+        log_info "Forwarding SIGTERM to Java (PID: $JAVA_PID)"
+        kill -TERM "$JAVA_PID" 2>/dev/null || true
+        # Don't exit here — wait in launch_and_wait will return with exit code 143
+    else
+        stop_localtonet || true
+        state_set_server "stopped"
+        exit 0
+    fi
 }
 
 trap cleanup SIGTERM SIGINT

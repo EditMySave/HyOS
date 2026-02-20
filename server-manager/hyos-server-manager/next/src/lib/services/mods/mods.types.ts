@@ -31,6 +31,10 @@ export const installedModSchema = z.object({
   path: z.string(),
   needsPatch: z.boolean(),
   isPatched: z.boolean(),
+  disabled: z.boolean(),
+  disableReason: z
+    .enum(["manual", "crashed", "invalid_version"])
+    .nullable(),
   manifestInfo: manifestInfoSchema.optional(),
   dependencies: z.array(z.string()),
   iconUrl: z.string().nullable(),
@@ -101,6 +105,17 @@ export const patchModResponseSchema = z.object({
 });
 
 export type PatchModResponse = z.infer<typeof patchModResponseSchema>;
+
+// ============================================================================
+// Toggle Types
+// ============================================================================
+
+export const toggleModResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+
+export type ToggleModResponse = z.infer<typeof toggleModResponseSchema>;
 
 // ============================================================================
 // Combined Mod Status

@@ -21,10 +21,10 @@ interface ApiStatusResponse {
 
 // Response for when server is stopped/unreachable
 function stoppedResponse(
-  state: "stopped" | "starting" | "running" = "stopped",
+  state: "stopped" | "starting" | "running" | "crashed" = "stopped",
 ) {
   return {
-    online: state === "running",
+    online: false,
     name: "",
     motd: "",
     version: "",
@@ -32,7 +32,7 @@ function stoppedResponse(
     maxPlayers: 0,
     uptime: null,
     memory: null,
-    state,
+    state: state === "running" ? "starting" : state,
   };
 }
 
@@ -56,16 +56,33 @@ async function readStateFile(): Promise<{ status: string } | null> {
  * Determine server state by checking state file, then Docker container when API is unavailable.
  * Falls back to "stopped" if neither is available.
  */
-async function getOfflineState(): Promise<"stopped" | "starting" | "running"> {
+async function getOfflineState(): Promise<
+  "stopped" | "starting" | "running" | "crashed"
+> {
   // First try reading from state file
   const stateFile = await readStateFile();
   if (stateFile) {
     const status = stateFile.status?.toLowerCase();
     if (status === "running") {
+      // Cross-check Docker: if state file says "running" but container is dead, it crashed
+      try {
+        const dockerAvailable = await isDockerAvailable();
+        if (dockerAvailable) {
+          const containerState = await getContainerState();
+          if (!containerState.running) {
+            return "crashed";
+          }
+        }
+      } catch {
+        /* trust state file if Docker check fails */
+      }
       return "running";
     }
     if (status === "starting") {
       return "starting";
+    }
+    if (status === "crashed") {
+      return "crashed";
     }
   }
 

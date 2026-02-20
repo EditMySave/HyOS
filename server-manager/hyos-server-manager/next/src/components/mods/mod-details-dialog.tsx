@@ -208,6 +208,27 @@ export function ModDetailsDialog({
             />
             <Row label="Path" value={mod.path} />
             <div className="flex gap-2">
+              {mod.disabled ? (
+                <>
+                  <Badge
+                    variant="outline"
+                    className="border-red-500 text-red-500"
+                  >
+                    Disabled
+                  </Badge>
+                  {mod.disableReason === "crashed" && (
+                    <Badge variant="destructive">Caused Crash</Badge>
+                  )}
+                  {mod.disableReason === "invalid_version" && (
+                    <Badge
+                      variant="outline"
+                      className="border-amber-500 text-amber-500"
+                    >
+                      Bad Version
+                    </Badge>
+                  )}
+                </>
+              ) : null}
               {mod.needsPatch ? (
                 <Badge
                   variant="outline"

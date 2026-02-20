@@ -12,6 +12,8 @@ import {
   modUpdatesResponseSchema,
   type PatchModResponse,
   patchModResponseSchema,
+  type ToggleModResponse,
+  toggleModResponseSchema,
   type UploadModResponse,
   uploadModResponseSchema,
 } from "./mods.types";
@@ -102,6 +104,31 @@ export async function patchMod(modId: string): Promise<PatchModResponse> {
 
   const data = await response.json();
   return patchModResponseSchema.parse(data);
+}
+
+/**
+ * Toggle a mod between enabled and disabled
+ */
+export async function toggleMod(
+  modId: string,
+  enabled: boolean,
+): Promise<ToggleModResponse> {
+  const response = await fetch(`/api/mods/${modId}/toggle`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(
+      (error as { error?: string })?.error ??
+        `Failed to toggle mod: ${response.statusText}`,
+    );
+  }
+
+  const data = await response.json();
+  return toggleModResponseSchema.parse(data);
 }
 
 /**

@@ -66,7 +66,7 @@ export function QuickActions() {
   const [broadcastMessage, setBroadcastMessage] = useState("");
 
   const isRunning = status?.state === "running";
-  const isStopped = status?.state === "stopped";
+  const isStopped = status?.state === "stopped" || status?.state === "crashed";
   const isStartingUp = status?.state === "starting";
   const isLoading = isStarting || isStopping || isRestarting || isStartingUp;
   const hasError = !!statusError;

@@ -1,7 +1,7 @@
 # =============================================================================
 # HyOS - Local Development & Testing
 # =============================================================================
-# Manager builds from local source. Server pulls from GHCR.
+# Both services build from local source.
 #
 # Usage:
 #   docker compose -f docker-compose.yml build --no-cache && docker compose -f docker-compose.yml up --force-recreate -d
@@ -25,13 +25,14 @@ services:
   # Hytale Server
   # ---------------------------------------------------------------------------
   hyos-server:
-    # Uncomment build block for local source builds:
-    # build:
-    #   context: .
-    #   dockerfile: Dockerfile
-    #   platforms:
-    #     - linux/amd64
-    image: ghcr.io/editmysave/hyos/server:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+    # To use pre-built GHCR image instead of local build, comment out
+    # the build block above and uncomment the line below:
+    # image: ghcr.io/editmysave/hyos/server:latest
     platform: linux/amd64
     container_name: hyos-server
 
