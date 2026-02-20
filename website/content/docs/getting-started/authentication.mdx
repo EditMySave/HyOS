@@ -48,6 +48,10 @@ This skips the interactive device flow entirely. See the [Configuration Referenc
 
 Tokens are stored at `/data/.auth/tokens.json` inside the container. This path is within the mounted volume, so tokens persist across container restarts.
 
+## Security Considerations
+
+For security-specific analysis of token storage permissions, auto-refresh behavior, and CI/CD token injection caveats, see the [Security — Hytale Platform OAuth](/docs/security/authentication#hytale-platform-oauth) documentation.
+
 ## Troubleshooting
 
 - **Token expired and refresh fails**: Delete `/data/.auth/tokens.json` and restart the container to re-authenticate

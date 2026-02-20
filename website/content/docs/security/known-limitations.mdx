@@ -1,0 +1,136 @@
+---
+title: Known Limitations
+description: Honest documentation of current security gaps, risk levels, and recommended mitigations.
+---
+
+HyOS is pre-1.0 software. This page honestly documents known security limitations, their risk levels, and recommended mitigations. These will be addressed in future releases.
+
+## Summary
+
+| Limitation | Risk | Component | Mitigation |
+|---|---|---|---|
+| [No CSRF tokens](#no-csrf-tokens) | Medium | Manager | `sameSite=lax` cookies; reverse proxy CSRF |
+| [No brute-force protection on login](#no-brute-force-protection-on-login) | Medium | Manager | Rate limiting at reverse proxy |
+| [CORS defaults to `["*"]`](#cors-defaults-to-wildcard) | Medium | API Plugin | Restrict to specific origins |
+| [Middleware checks cookie presence only](#middleware-checks-cookie-presence-only) | Low | Manager | iron-session validates on route handler use |
+| [No TLS by default on API](#no-tls-by-default-on-api) | Medium | API Plugin | Reverse proxy for TLS termination |
+| [No automatic secret rotation](#no-automatic-secret-rotation) | Low | All | Manual rotation process |
+| [Env vars pass secrets as plaintext](#environment-variables-pass-secrets-as-plaintext) | Medium | All | Docker secrets where possible |
+| [No security headers configured](#no-security-headers-configured) | Medium | Manager | Configure via `next.config` or reverse proxy |
+
+---
+
+## No CSRF Tokens
+
+**Risk:** Medium — **Component:** Manager
+
+The Manager dashboard does not include CSRF tokens in forms or API mutations. An attacker on a different origin could attempt to submit requests to the Manager while the admin has an active session.
+
+**Why it exists:** The initial authentication implementation prioritized core session management. CSRF token integration adds complexity across all mutation endpoints.
+
+**Practical risk:** The `sameSite=lax` cookie attribute provides significant protection — browsers will not send the session cookie on cross-origin POST requests initiated by forms or JavaScript. The risk is limited to top-level GET navigations, which do not perform mutations in HyOS.
+
+**Mitigation:** For additional protection, configure your reverse proxy to add CSRF validation headers. A future release will add built-in CSRF tokens.
+
+## No Brute-Force Protection on Login
+
+**Risk:** Medium — **Component:** Manager
+
+The Manager login endpoint (`POST /api/auth/login`) does not implement rate limiting or account lockout. An attacker with network access could attempt unlimited password guesses.
+
+**Why it exists:** The Manager is designed for trusted local networks where brute-force attacks are less likely. Server-side rate limiting will be added in a future release.
+
+**Practical risk:** On a trusted local network, the risk is low. If the Manager is exposed to a wider network (even accidentally), this becomes a significant risk.
+
+**Mitigation:** Apply rate limiting at your reverse proxy. For example, with nginx:
+
+```nginx
+limit_req_zone $binary_remote_addr zone=login:10m rate=5r/m;
+
+location /api/auth/login {
+    limit_req zone=login burst=3 nodelay;
+    proxy_pass http://manager:3000;
+}
+```
+
+## CORS Defaults to Wildcard
+
+**Risk:** Medium — **Component:** API Plugin
+
+The REST API plugin defaults to allowing all origins (`["*"]`) for CORS. This means any website could make authenticated API requests if the user has a valid token.
+
+**Why it exists:** The default is permissive for ease of development and local testing. Production deployments should always restrict this.
+
+**Practical risk:** Since the API uses Bearer token authentication (not cookies), CORS is less critical than for cookie-based auth — an attacker would need to obtain a valid JWT first. However, in combination with other vulnerabilities, permissive CORS increases the attack surface.
+
+**Mitigation:** Restrict to specific origins in the API plugin configuration:
+
+```json
+{
+  "cors": {
+    "allowedOrigins": ["https://your-manager-domain.com"]
+  }
+}
+```
+
+## Middleware Checks Cookie Presence Only
+
+**Risk:** Low — **Component:** Manager
+
+The Next.js middleware checks whether the `hyos_session` cookie exists, but does not decrypt or validate it. An attacker could set a cookie named `hyos_session` with arbitrary content and pass the middleware check.
+
+**Why it exists:** Next.js middleware runs in the Edge Runtime, which has limited crypto capabilities. Full iron-session validation happens in route handlers.
+
+**Practical risk:** Very low. The middleware is a performance optimization — it provides a fast redirect for unauthenticated users. All route handlers that access session data call `getIronSession()`, which performs full cryptographic validation. A forged cookie will pass middleware but fail at the route handler level with no data access.
+
+**Mitigation:** No action needed. This is a defense-in-depth design where the middleware is the first layer (fast reject) and iron-session is the authoritative layer (cryptographic validation).
+
+## No TLS by Default on API
+
+**Risk:** Medium — **Component:** API Plugin
+
+The REST API plugin serves HTTP by default. Without TLS, API credentials and JWT tokens are transmitted in plaintext on the network.
+
+**Why it exists:** The API plugin supports optional built-in TLS, but it's disabled by default to simplify initial setup. Most deployments use a reverse proxy for TLS termination.
+
+**Practical risk:** On a trusted local network, the risk is moderate — any device on the same network segment could sniff API traffic. This is especially relevant on shared networks.
+
+**Mitigation:** Either enable built-in TLS in the API plugin configuration or (recommended) place a reverse proxy with TLS termination in front of the API. See [Hardening](/docs/security/hardening#reverse-proxy).
+
+## No Automatic Secret Rotation
+
+**Risk:** Low — **Component:** All
+
+Neither the Manager's `SESSION_SECRET` nor the API plugin's RSA key pair supports automatic rotation. Rotation requires manual intervention and restarts.
+
+**Why it exists:** Automatic rotation adds significant complexity (key versioning, grace periods, distributed coordination) that is not warranted for the current deployment model.
+
+**Practical risk:** Low for most deployments. The primary risk is that a compromised secret remains valid indefinitely until manually rotated.
+
+**Mitigation:** Document and periodically execute a manual rotation process:
+- **SESSION_SECRET:** Change the value and restart the Manager. All sessions will be invalidated.
+- **RSA key pair:** Delete `jwt-keypair.pem` and restart the server. All existing JWTs will be invalidated. Clients must re-authenticate.
+
+## Environment Variables Pass Secrets as Plaintext
+
+**Risk:** Medium — **Component:** All
+
+Secrets like `SESSION_SECRET` and injected OAuth tokens are passed as environment variables, which are visible in `docker inspect` output and `/proc/<pid>/environ` inside the container.
+
+**Why it exists:** Environment variables are the standard configuration mechanism for Docker containers. Docker secrets are an alternative but require Docker Swarm or Compose v2 secrets support.
+
+**Practical risk:** Anyone with access to `docker inspect` on the host or shell access inside the container can read all environment variables. In multi-tenant environments or shared hosts, this is a meaningful risk.
+
+**Mitigation:** Use Docker secrets where possible. See [Hardening](/docs/security/hardening#docker-secrets) for configuration examples.
+
+## No Security Headers Configured
+
+**Risk:** Medium — **Component:** Manager
+
+The Manager does not set security headers like `Content-Security-Policy`, `X-Frame-Options`, or `Strict-Transport-Security` by default.
+
+**Why it exists:** Security headers require careful tuning for each deployment (especially CSP). Incorrect headers can break functionality.
+
+**Practical risk:** Without these headers, the Manager is more susceptible to clickjacking (`X-Frame-Options`), MIME type confusion (`X-Content-Type-Options`), and resource injection (`Content-Security-Policy`). The impact is moderate since the Manager is intended for trusted networks.
+
+**Mitigation:** Add headers via your reverse proxy or `next.config.ts`. See [Hardening](/docs/security/hardening#security-headers) for recommended values.

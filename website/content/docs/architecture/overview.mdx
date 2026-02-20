@@ -292,6 +292,8 @@ Host ports use the 30xxx range to avoid conflicts with other TrueNAS apps. The d
 
 ## Security Model
 
+> For comprehensive security documentation including authentication details, production hardening, and known limitations, see [Security](/docs/security).
+
 ### Non-Root Execution
 
 The container starts as root for initial setup (user creation, permission fixes), then drops privileges using `su-exec`:

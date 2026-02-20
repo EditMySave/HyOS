@@ -1,0 +1,54 @@
+---
+title: Security Overview
+description: Threat model, defense in depth, and authentication layers in HyOS.
+---
+
+> **Pre-1.0 Disclaimer:** HyOS is pre-release software under active development. The server manager should **not** be exposed to the public internet until the 1.0.0 release. It is designed for use on trusted local networks or behind a VPN.
+
+HyOS is a multi-container system with several trust boundaries and authentication layers. This section documents the security model, provides hardening guidance, and honestly catalogues known limitations.
+
+## Threat Model
+
+A typical HyOS deployment has four trust boundaries:
+
+| Boundary | Description | Example Threats |
+|----------|-------------|-----------------|
+| **External Network → Docker Host** | Traffic from the internet or LAN reaching exposed ports | Unauthorized access, port scanning, DDoS |
+| **Docker Host → Containers** | Isolation between the host OS and container workloads | Container escape, Docker socket abuse |
+| **Container → Container** | Communication between the server and manager containers | API impersonation, shared volume tampering |
+| **Container Internals** | Processes within a single container | Privilege escalation, token theft |
+
+HyOS is designed for **trusted local networks**. The primary assumption is that users deploying HyOS control the network segment and restrict external access via firewall rules or VPN.
+
+## Defense in Depth
+
+Each trust boundary is protected by one or more controls:
+
+| Boundary | Controls |
+|----------|----------|
+| External → Host | Firewall rules, reverse proxy with TLS, VPN access |
+| Host → Container | Non-root execution, `no-new-privileges`, capability dropping, read-only socket mount |
+| Container → Container | API authentication (JWT), shared volume file permissions |
+| Container Internals | Privilege dropping via `su-exec`, restricted token file permissions (`600`/`700`), bcrypt password hashing |
+
+See [Hardening](/docs/security/hardening) for actionable configuration steps.
+
+## Authentication Layers
+
+HyOS has three independent authentication mechanisms:
+
+| Layer | Mechanism | Protects | Details |
+|-------|-----------|----------|---------|
+| Manager Dashboard | iron-session encrypted cookies + bcrypt | Web UI access | [Authentication Details](/docs/security/authentication#manager-dashboard) |
+| REST API Plugin | OAuth2 client credentials + RS256 JWT | API endpoints | [Authentication Details](/docs/security/authentication#rest-api-plugin) |
+| Hytale Platform | OAuth 2.0 Device Authorization Flow | Server identity | [Authentication Details](/docs/security/authentication#hytale-platform-oauth) |
+
+## Vulnerability Reporting
+
+If you discover a security vulnerability, please report it privately — do not create a public GitHub issue. See [SECURITY.md](https://github.com/editmysave/hyOS/blob/main/SECURITY.md) for reporting instructions.
+
+## Quick Links
+
+- [Authentication](/docs/security/authentication) — Detailed analysis of all three auth layers
+- [Hardening](/docs/security/hardening) — Production hardening checklist
+- [Known Limitations](/docs/security/known-limitations) — Honest documentation of security gaps and mitigations

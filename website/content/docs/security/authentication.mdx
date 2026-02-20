@@ -1,0 +1,153 @@
+---
+title: Authentication
+description: Security analysis of the three authentication layers in HyOS.
+---
+
+HyOS uses three independent authentication mechanisms. This page provides a security-focused analysis of each layer.
+
+## Manager Dashboard
+
+The HyOS Manager web dashboard uses [iron-session](https://github.com/vvo/iron-session) for session management and bcrypt for password hashing.
+
+### Session Management
+
+iron-session stores encrypted session data directly in a cookie — there is no server-side session store. The cookie is sealed using the `SESSION_SECRET` and can only be decrypted by the server.
+
+**Cookie configuration:**
+
+| Setting | Value | Notes |
+|---------|-------|-------|
+| Cookie name | `hyos_session` | |
+| `httpOnly` | `true` | Prevents JavaScript access (XSS mitigation) |
+| `secure` | `true` in production | Cookies sent over HTTPS only |
+| `sameSite` | `lax` | Partial CSRF protection |
+| `path` | `/` | |
+| TTL | 7 days | Session expires after 7 days |
+
+### Password Hashing
+
+Passwords are hashed using bcrypt with **12 rounds** before storage. User records are stored in `/data/.state/users.json` with the following structure:
+
+```json
+{
+  "users": [
+    {
+      "id": "uuid",
+      "username": "admin",
+      "passwordHash": "$2b$12$...",
+      "createdAt": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+The first user is created during initial setup via the `/setup` page. Subsequent user management will be available in a future release.
+
+### Session Secret
+
+The `SESSION_SECRET` environment variable is used to encrypt session cookies. Requirements:
+
+- **Minimum 32 characters** (iron-session enforced)
+- Must be cryptographically random in production
+- Generate with: `openssl rand -base64 48`
+- Rotating the secret invalidates all existing sessions
+
+If `SESSION_SECRET` is not set, the manager falls back to generating a random secret stored at `/data/.state/.session-secret` (mode `0600`). While this works, it means sessions are invalidated on every container rebuild. Always set `SESSION_SECRET` explicitly in production.
+
+### Input Validation
+
+All authentication inputs are validated with Zod schemas before processing:
+
+- **Setup:** Username 3–32 chars (alphanumeric, hyphens, underscores), password 8–128 chars
+- **Login:** Both fields required (non-empty)
+- Validation errors return generic messages to prevent account enumeration
+
+### Middleware
+
+The Next.js middleware checks for the presence of the `hyos_session` cookie on every non-public request:
+
+- **Public paths:** `/login`, `/setup`, `/api/auth/`
+- **Page requests** without a session cookie are redirected to `/login`
+- **API requests** without a session cookie receive a `401 Unauthorized` JSON response
+
+The middleware only checks cookie **presence** — the actual session data is validated by iron-session when route handlers call `getIronSession()`. This is a defense-in-depth approach: the middleware provides a fast reject for unauthenticated requests, while iron-session provides cryptographic validation.
+
+## REST API Plugin
+
+The [Hytale API Plugin](/docs/architecture/overview) provides a REST and WebSocket API authenticated via OAuth2 client credentials and RS256 JWT tokens.
+
+### Authentication Flow
+
+1. Client sends credentials to `POST /auth/token`
+2. Server validates the client secret against bcrypt hash in `config.json`
+3. Server returns a signed JWT (RS256, 2048-bit RSA key pair)
+4. Client includes `Authorization: Bearer <token>` on subsequent requests
+5. Server validates JWT signature, expiry, and issuer on each request
+
+### Token Configuration
+
+| Setting | Value |
+|---------|-------|
+| Algorithm | RS256 (2048-bit RSA) |
+| Access token lifetime | 1 hour |
+| Refresh token lifetime | 24 hours |
+| Key storage | `jwt-keypair.pem` (auto-generated) |
+
+The RSA key pair is generated automatically on first startup. The private key file must be protected — it is already in `.gitignore`.
+
+### Client Secrets
+
+Client secrets are bcrypt-hashed (12 rounds) before storage in the plugin's `config.json`. The raw secret is never stored. Generate hashes with:
+
+```bash
+htpasswd -bnBC 12 "" yourpassword | tr -d ':'
+```
+
+### Rate Limiting
+
+Requests are rate-limited per endpoint tier:
+
+| Tier | Limit | Endpoints |
+|------|-------|-----------|
+| Default | 300/min (50 burst) | Most endpoints |
+| Auth | 30/min | `/auth/token` |
+
+### Permission System
+
+The API uses a hierarchical wildcard permission system:
+
+- `api.*` — grants all permissions
+- `api.admin.*` — grants all admin actions
+- `api.players.read` — grants read access to player data
+
+Each client is configured with a specific set of permissions. Follow the principle of least privilege: grant only the permissions each client actually needs.
+
+### WebSocket Authentication
+
+WebSocket clients authenticate by sending a JSON message after connection:
+
+```json
+{"type": "auth", "token": "<jwt>"}
+```
+
+Unauthenticated clients cannot subscribe to events. Subscriptions use wildcard patterns (e.g., `player.*`, `server.log`).
+
+### Additional Security Features
+
+- **CORS:** Configurable allowed origins (default: `["*"]` — restrict in production)
+- **Audit logging:** Optional request logging (`audit.enabled: true` in config)
+- **TLS:** Optional built-in TLS support, or use a reverse proxy
+
+For the full API plugin security policy, see [`hytale-api-plugin/SECURITY.md`](https://github.com/editmysave/hyOS/blob/main/hytale-api-plugin/SECURITY.md).
+
+## Hytale Platform OAuth
+
+The Hytale server authenticates with the Hytale platform using the [OAuth 2.0 Device Authorization Flow](/docs/getting-started/authentication).
+
+### Security Considerations
+
+**Token file permissions:** OAuth tokens are cached at `/data/.auth/tokens.json` with mode `600` inside a directory with mode `700`. Only the server process user can read them.
+
+**Auto-refresh:** Tokens are automatically refreshed on expiry. If the refresh fails, the container will re-initiate the device flow and block until the user authorizes.
+
+**CI/CD token injection:** For automated deployments, tokens can be injected via environment variables (`HYTALE_SERVER_SESSION_TOKEN`, `HYTALE_SERVER_IDENTITY_TOKEN`). These are visible in the container's environment — use Docker secrets (`/run/secrets/`) instead of plain environment variables where possible. Never log or expose injected tokens in CI/CD pipeline output.

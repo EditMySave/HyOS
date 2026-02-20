@@ -1,0 +1,230 @@
+---
+title: Production Hardening
+description: Actionable security hardening checklist for HyOS deployments.
+---
+
+This page provides an actionable hardening checklist for production HyOS deployments. Recommendations are drawn from OWASP, Docker, Next.js, and TrueNAS security guidelines.
+
+## Security Headers
+
+The HyOS Manager does not configure security headers by default. Add these headers via `next.config.ts` or your reverse proxy:
+
+### Recommended Headers
+
+| Header | Value | Purpose |
+|--------|-------|---------|
+| `X-Content-Type-Options` | `nosniff` | Prevents MIME type sniffing |
+| `X-Frame-Options` | `DENY` | Prevents clickjacking |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Limits referrer information |
+| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains` | Enforces HTTPS (only behind TLS) |
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self' 'unsafe-inline'` | Restricts resource loading |
+
+### API Response Headers
+
+API endpoints should also include:
+
+- `Cache-Control: no-store` — prevents caching of authenticated responses
+- `X-Content-Type-Options: nosniff` — prevents MIME sniffing of JSON responses
+
+## Container Hardening
+
+### Non-Root Execution
+
+HyOS already implements non-root execution:
+
+```yaml
+security_opt:
+  - no-new-privileges:true
+```
+
+The container starts as root for setup, then drops privileges to `PUID:PGID` via `su-exec`. The `no-new-privileges` flag prevents re-escalation.
+
+### Additional Docker Hardening
+
+Add these options to your `compose.yaml` for a more restrictive security posture:
+
+```yaml
+services:
+  server:
+    # Drop all capabilities, add back only what's needed
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE   # Bind to ports < 1024 (if needed)
+      - CHOWN              # Fix file ownership on startup
+      - SETUID             # su-exec privilege drop
+      - SETGID             # su-exec privilege drop
+
+    # Read-only root filesystem (optional — test thoroughly)
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: "4.0"
+```
+
+### Image Tags
+
+In production, pin to a specific image digest or version tag instead of `:latest`:
+
+```yaml
+image: ghcr.io/editmysave/hyos/server:0.1.0
+```
+
+This prevents unexpected updates and ensures reproducible deployments.
+
+### Docker Socket
+
+The Manager container mounts the Docker socket read-only:
+
+```yaml
+volumes:
+  - /var/run/docker.sock:/var/run/docker.sock:ro
+```
+
+The socket provides container lifecycle control (start, stop, restart, logs). Never expose the Docker socket over TCP. If you don't need the Manager, don't mount the socket at all.
+
+## Session and Secret Management
+
+### SESSION_SECRET
+
+Always set `SESSION_SECRET` explicitly in production:
+
+```bash
+# Generate a secure random secret
+openssl rand -base64 48
+```
+
+```yaml
+environment:
+  - SESSION_SECRET=your-generated-secret-here
+```
+
+Requirements:
+- Minimum 32 characters, cryptographically random
+- Rotating the secret invalidates all active sessions
+- Without an explicit secret, the manager generates one at `/data/.state/.session-secret` — but this is lost on container rebuilds
+
+### Docker Secrets
+
+Where possible, use Docker secrets instead of environment variables for sensitive values:
+
+```yaml
+services:
+  manager:
+    secrets:
+      - session_secret
+    environment:
+      - SESSION_SECRET_FILE=/run/secrets/session_secret
+
+secrets:
+  session_secret:
+    file: ./secrets/session_secret.txt
+```
+
+Environment variables are visible in `docker inspect` output and process listings. Docker secrets are mounted as files accessible only inside the container.
+
+## API Plugin Hardening
+
+The API plugin has its own security configuration. See [`hytale-api-plugin/SECURITY.md`](https://github.com/editmysave/hyOS/blob/main/hytale-api-plugin/SECURITY.md) for the full policy.
+
+### Key Steps
+
+1. **Change default credentials** — generate proper bcrypt hashes before deployment:
+   ```bash
+   htpasswd -bnBC 12 "" yourpassword | tr -d ':'
+   ```
+
+2. **Enable TLS** or place behind a reverse proxy for encrypted transport
+
+3. **Restrict bind address** — bind to `127.0.0.1` if behind a reverse proxy:
+   ```json
+   { "bindAddress": "127.0.0.1" }
+   ```
+
+4. **Minimize client permissions** — grant only the permissions each client needs, not `api.*`
+
+5. **Restrict CORS origins** — change from the default `["*"]` to specific origins:
+   ```json
+   { "cors": { "allowedOrigins": ["https://your-domain.com"] } }
+   ```
+
+## Network Security
+
+### Reverse Proxy
+
+Place a reverse proxy (nginx, Caddy, or Traefik) in front of both the Manager and API:
+
+- Terminates TLS with valid certificates
+- Adds security headers (see above)
+- Provides rate limiting for the Manager login endpoint
+- Restricts access by IP or subnet
+
+### Firewall Rules
+
+Only expose the minimum required ports:
+
+| Port | Protocol | Service | Exposure |
+|------|----------|---------|----------|
+| 5520 (or 30520) | UDP | Hytale game server | Public (players need this) |
+| 443 | TCP | Reverse proxy | Admins only (or VPN) |
+
+Do **not** expose:
+- The Manager port (3000/30300) directly — use the reverse proxy
+- The API port (8080/30080) directly — use the reverse proxy
+- The Docker socket over TCP — ever
+
+### Dedicated Docker Network
+
+Use a dedicated Docker network to isolate HyOS containers:
+
+```yaml
+networks:
+  hyos:
+    driver: bridge
+
+services:
+  server:
+    networks: [hyos]
+  manager:
+    networks: [hyos]
+```
+
+## TrueNAS-Specific Hardening
+
+If deploying on TrueNAS SCALE:
+
+- **Restrict management interfaces** to private subnets — do not expose the TrueNAS web UI to the internet
+- **Enable two-factor authentication** for the TrueNAS admin account
+- **Review audit logs** regularly via the TrueNAS dashboard
+- **Keep TrueNAS updated** alongside container images — TrueNAS security patches are independent of HyOS updates
+- **Avoid cleartext passwords** in custom scripts — debug files and logs can inadvertently expose them
+
+## Monitoring and Audit
+
+### API Audit Logging
+
+Enable audit logging in the API plugin configuration:
+
+```json
+{ "audit": { "enabled": true } }
+```
+
+This logs all API requests with timestamps, client identity, endpoint, and response status.
+
+### Health Checks
+
+The server container includes built-in health checks that write to `/data/.state/health.json`. Monitor this file or the Manager dashboard for degraded states.
+
+### External Alerting
+
+For production deployments, consider:
+
+- Monitoring Docker container health status via your infrastructure monitoring tool
+- Setting up alerts for repeated authentication failures in API audit logs
+- Watching for unexpected container restarts (may indicate crashes or OOM kills)
