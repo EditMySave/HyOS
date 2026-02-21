@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const SLIDES = [
   {
-    src: "/screenshots/screenshot-1.png",
+    src: "/screenshots/screenshot-1-dashboard.png",
     title: "Server Dashboard",
     bullets: [
       "Real-time server stats and performance graphs",
@@ -16,7 +16,7 @@ const SLIDES = [
     ],
   },
   {
-    src: "/screenshots/screenshot-2.png",
+    src: "/screenshots/screenshot-2-commands.png",
     title: "Command Console",
     bullets: [
       "Execute raw commands directly from the UI",
@@ -25,16 +25,7 @@ const SLIDES = [
     ],
   },
   {
-    src: "/screenshots/screenshot-3.png",
-    title: "Mod Management",
-    bullets: [
-      "Search CurseForge, Modtale, and NexusMods",
-      "Upload custom mod JARs with validation",
-      "Track installed mods and manage updates",
-    ],
-  },
-  {
-    src: "/screenshots/screenshot-4.png",
+    src: "/screenshots/screenshot-3-permissions.png",
     title: "Permissions System",
     bullets: [
       "Manage operators with live server sync",
@@ -43,7 +34,25 @@ const SLIDES = [
     ],
   },
   {
-    src: "/screenshots/screenshot-5.png",
+    src: "/screenshots/screenshot-4-mods-search.png",
+    title: "Mod Search",
+    bullets: [
+      "Search CurseForge, Modtale, and NexusMods",
+      "Find and compare mods from multiple sources",
+      "View mod details and compatibility info",
+    ],
+  },
+  {
+    src: "/screenshots/screenshot-5-mod-management.png",
+    title: "Mod Management",
+    bullets: [
+      "Upload custom mod JARs with validation",
+      "Track installed mods and manage updates",
+      "Enable or disable mods with one click",
+    ],
+  },
+  {
+    src: "/screenshots/screenshot-6-logs.png",
     title: "Log Viewer",
     bullets: [
       "Live log streaming with pause and reload",
@@ -52,7 +61,7 @@ const SLIDES = [
     ],
   },
   {
-    src: "/screenshots/screenshot-6.png",
+    src: "/screenshots/screenshot-7-world-management.png",
     title: "World Management",
     bullets: [
       "Upload world zip files to named slots",
