@@ -27,11 +27,12 @@ export async function login(
 export async function setup(
   username: string,
   password: string,
+  telemetryOptOut = false,
 ): Promise<{ success: boolean; error?: string }> {
   const response = await fetch("/api/auth/setup", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username, password, telemetryOptOut }),
   });
   const data = await response.json();
   if (!response.ok) {

@@ -20,6 +20,7 @@ export default function SetupPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [telemetryOptOut, setTelemetryOptOut] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -41,7 +42,7 @@ export default function SetupPage() {
 
     setSubmitting(true);
 
-    const result = await setup(username, password);
+    const result = await setup(username, password, telemetryOptOut);
     if (result.success) {
       router.replace("/");
     } else {
@@ -119,6 +120,23 @@ export default function SetupPage() {
               minLength={8}
               maxLength={128}
             />
+          </div>
+          <div className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              id="telemetry-opt-out"
+              checked={telemetryOptOut}
+              onChange={(e) => setTelemetryOptOut(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded-none border-input"
+            />
+            <label
+              htmlFor="telemetry-opt-out"
+              className="text-sm text-muted-foreground"
+            >
+              Opt out of anonymous analytics. HyOS collects anonymous error
+              reports and heartbeat data to improve the project. No personal
+              information is collected.
+            </label>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full" disabled={submitting}>

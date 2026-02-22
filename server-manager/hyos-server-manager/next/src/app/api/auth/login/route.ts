@@ -1,6 +1,7 @@
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { trackServerError } from "@/lib/services/analytics/umami.server";
 import {
   findUserByUsername,
   verifyPassword,
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Login error:", err);
+    await trackServerError(err, "/api/auth/login");
     return NextResponse.json(
       { error: "An unexpected error occurred" },
       { status: 500 },

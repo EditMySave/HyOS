@@ -45,6 +45,7 @@ export const setupRequestSchema = z.object({
     .string()
     .min(8, "Password must be at least 8 characters")
     .max(128, "Password must be at most 128 characters"),
+  telemetryOptOut: z.boolean().optional().default(false),
 });
 
 export type SetupRequest = z.infer<typeof setupRequestSchema>;

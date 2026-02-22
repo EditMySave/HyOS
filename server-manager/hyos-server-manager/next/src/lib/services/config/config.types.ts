@@ -8,6 +8,7 @@ export const managerConfigSchema = z.object({
   apiClientSecret: z.string().optional(),
   stateDir: z.string().default("/data/.state"),
   gamePort: z.coerce.number().default(30520),
+  telemetryEnabled: z.boolean().default(true),
   setupComplete: z.boolean().default(false),
   createdAt: z.string().nullable().default(null),
   updatedAt: z.string().nullable().default(null),

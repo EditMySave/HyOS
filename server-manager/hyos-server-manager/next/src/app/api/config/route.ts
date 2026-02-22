@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { trackServerError } from "@/lib/services/analytics/umami.server";
 import {
   getConfiguredVia,
   loadConfig,
@@ -57,6 +58,7 @@ export async function DELETE() {
     return NextResponse.json({ success: true, message: "Configuration reset" });
   } catch (err) {
     console.error("Config reset error:", err);
+    await trackServerError(err, "/api/config/DELETE");
     return NextResponse.json(
       { error: "Failed to reset configuration" },
       { status: 500 },
