@@ -2,7 +2,7 @@ import umami from "@umami/node";
 import { loadConfig } from "@/lib/services/config/config.loader";
 
 const websiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
-const hostUrl = process.env.NEXT_PUBLIC_UMAMI_HOST;
+const hostUrl = process.env.UMAMI_HOST;
 
 let initialized = false;
 let enabledCache: boolean | null = null;
@@ -22,9 +22,12 @@ async function isEnabled(): Promise<boolean> {
     const config = await loadConfig();
     enabledCache = config.telemetryEnabled;
     // Cache for 5 minutes then re-check
-    setTimeout(() => {
-      enabledCache = null;
-    }, 5 * 60 * 1000);
+    setTimeout(
+      () => {
+        enabledCache = null;
+      },
+      5 * 60 * 1000,
+    );
     return enabledCache;
   } catch {
     return true; // Default to enabled if config can't be read

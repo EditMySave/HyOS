@@ -15,7 +15,6 @@ declare global {
 }
 
 const UMAMI_WEBSITE_ID = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
-const UMAMI_HOST = process.env.NEXT_PUBLIC_UMAMI_HOST;
 const HEARTBEAT_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 
 export function UmamiProvider() {
@@ -24,7 +23,7 @@ export function UmamiProvider() {
   const { data: mods } = useInstalledMods();
   const heartbeatSent = useRef(false);
 
-  const enabled = !!UMAMI_WEBSITE_ID && !!UMAMI_HOST && config?.telemetryEnabled !== false;
+  const enabled = !!UMAMI_WEBSITE_ID && config?.telemetryEnabled !== false;
 
   // Heartbeat: send on mount + every 24 hours
   useEffect(() => {
@@ -62,8 +61,7 @@ export function UmamiProvider() {
 
     function handleRejection(event: PromiseRejectionEvent) {
       const reason = event.reason;
-      const message =
-        reason instanceof Error ? reason.message : String(reason);
+      const message = reason instanceof Error ? reason.message : String(reason);
       const stack = reason instanceof Error ? reason.stack : undefined;
 
       window.umami?.track("client-error", {
@@ -86,8 +84,9 @@ export function UmamiProvider() {
 
   return (
     <Script
-      src={`${UMAMI_HOST}/script.js`}
+      src="/stats/script"
       data-website-id={UMAMI_WEBSITE_ID}
+      data-host-url="/stats"
       data-auto-track="false"
       strategy="lazyOnload"
     />
