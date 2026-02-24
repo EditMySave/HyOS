@@ -8,7 +8,7 @@ import { useAuthState } from "@/lib/services/server";
 
 export function AuthNotification() {
   const [copied, setCopied] = useState(false);
-  const { data: authState } = useAuthState(true); // Poll frequently
+  const { data: authState } = useAuthState();
 
   // Reset copied state after 2 seconds
   useEffect(() => {

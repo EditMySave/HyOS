@@ -47,11 +47,13 @@ export function useServerVersion() {
 
 /**
  * Hook to get authentication state
- * Polls every 5 seconds when auth is pending, otherwise every 30 seconds
+ * Self-regulating: polls every 5s when auth is pending, otherwise every 30s
  */
-export function useAuthState(isPending = false) {
+export function useAuthState() {
   return useSWR<AuthState>("auth-state", getAuthState, {
-    refreshInterval: isPending ? 5000 : 30000,
+    refreshInterval: (latestData?: AuthState) =>
+      latestData?.status === "pending" ? 5000 : 30000,
+    dedupingInterval: 5000,
   });
 }
 
