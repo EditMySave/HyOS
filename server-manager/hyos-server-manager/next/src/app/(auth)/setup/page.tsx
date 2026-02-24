@@ -133,8 +133,7 @@ export default function SetupPage() {
               htmlFor="telemetry-opt-out"
               className="text-sm text-muted-foreground"
             >
-              Opt out of anonymous analytics. HyOS collects anonymous error
-              reports and heartbeat data to improve the project. No personal
+              Opt out of anonymous analytics. No personal
               information is collected.
             </label>
           </div>
