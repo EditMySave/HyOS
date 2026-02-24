@@ -25,6 +25,7 @@ services:
       - REST_API_CLIENT_SECRET=changeme123
       - SESSION_SECRET=a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
       - NODE_ENV=development
+      - COOKIE_SECURE=false
     volumes:
       # Mount local state directory for testing
       # Update this path to match your local Hytale server data

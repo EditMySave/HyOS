@@ -193,6 +193,7 @@ services:
 
       # Node environment
       NODE_ENV: production
+      COOKIE_SECURE: "false"
 
     # Web UI port
     ports:

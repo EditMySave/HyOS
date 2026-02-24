@@ -103,6 +103,7 @@ services:
       HYTALE_SERVER_PORT: "8080"
       REST_API_URL: http://hyos-server:8080
       NODE_ENV: production
+      COOKIE_SECURE: "false"
 
     volumes:
       - ./data:/data:rw

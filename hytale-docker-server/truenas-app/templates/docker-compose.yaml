@@ -115,6 +115,7 @@
 {% do mgr.environment.add_env("HYTALE_SERVER_PORT", values.consts.internal_api_port) %}
 {% do mgr.environment.add_env("API_CLIENT_SECRET", values.api.client_secret) %}
 {% do mgr.environment.add_env("API_CLIENT_ID", values.api.client_id) %}
+{% do mgr.environment.add_env("COOKIE_SECURE", "false") %}
 
 {# Manager port #}
 {% do mgr.add_port(values.network.manager_port, {"container_port": values.consts.internal_manager_port}) %}
