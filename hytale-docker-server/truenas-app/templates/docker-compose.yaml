@@ -126,7 +126,7 @@
 {% do mgr.add_docker_socket(read_only=False) %}
 
 {# Health check for manager #}
-{% do mgr.healthcheck.set_test("wget", {"port": 3000, "path": "/api/server/status"}) %}
+{% do mgr.healthcheck.set_test("wget", {"port": 3000, "path": "/api/health"}) %}
 {% do mgr.healthcheck.set_interval(30) %}
 {% do mgr.healthcheck.set_timeout(10) %}
 {% do mgr.healthcheck.set_start_period(60) %}
