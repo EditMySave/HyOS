@@ -110,6 +110,15 @@ Requirements:
 - Rotating the secret invalidates all active sessions
 - Without an explicit secret, the manager generates one at `/data/.state/.session-secret` — but this is lost on container rebuilds
 
+### COOKIE_SECURE
+
+Session cookies are **not** marked as `secure` by default, allowing them to work over plain HTTP on local networks. If you serve the Manager over HTTPS (e.g., behind a TLS-terminating reverse proxy), set `COOKIE_SECURE=true` to prevent cookies from being sent over unencrypted connections:
+
+```yaml
+environment:
+  - COOKIE_SECURE=true
+```
+
 ### Docker Secrets
 
 Where possible, use Docker secrets instead of environment variables for sensitive values:

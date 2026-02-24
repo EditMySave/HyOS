@@ -19,7 +19,7 @@ iron-session stores encrypted session data directly in a cookie — there is no 
 |---------|-------|-------|
 | Cookie name | `hyos_session` | |
 | `httpOnly` | `true` | Prevents JavaScript access (XSS mitigation) |
-| `secure` | `true` in production | Cookies sent over HTTPS only |
+| `secure` | `false` (opt-in via `COOKIE_SECURE=true`) | Cookies sent over HTTPS only when enabled |
 | `sameSite` | `lax` | Partial CSRF protection |
 | `path` | `/` | |
 | TTL | 7 days | Session expires after 7 days |

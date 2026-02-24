@@ -35,6 +35,8 @@ The Manager runs as a separate container alongside the Hytale server. It communi
 | `HYTALE_CONTAINER_NAME` | `hyos-server` | Docker container name (for start/stop/restart) |
 | `HYTALE_STATE_DIR` | `/data/.state` | Path to shared state files |
 | `ADAPTER_TYPE` | `rest` | Connection adapter (`rest` for API-based control) |
+| `SESSION_SECRET` | — | Encryption key for session cookies (32+ chars). Auto-generated if not set. |
+| `COOKIE_SECURE` | `false` | Set to `true` to require HTTPS for session cookies. |
 | `NODE_ENV` | `production` | Node.js environment |
 
 ### Docker Socket
