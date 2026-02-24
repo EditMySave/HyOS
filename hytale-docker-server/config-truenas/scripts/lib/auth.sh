@@ -259,6 +259,9 @@ perform_device_auth() {
                 if [[ -n "$ACCESS_TOKEN" ]] && [[ "$ACCESS_TOKEN" != "null" ]]; then
                     echo ""
                     log_step_status "authenticated" "$GREEN"
+                    # Clear pending state immediately so Web UI dismisses the auth popup
+                    # (authenticate() will update again with profile info once fetched)
+                    state_set_auth "authenticated"
                     break
                 fi
                 ;;
