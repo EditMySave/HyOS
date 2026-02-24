@@ -146,6 +146,7 @@ services:
 
       # Node environment
       NODE_ENV: production
+      COOKIE_SECURE: "false"
 
     # Web UI port
     ports:
@@ -159,7 +160,7 @@ services:
     depends_on:
       - hyos-server
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/server/status"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
