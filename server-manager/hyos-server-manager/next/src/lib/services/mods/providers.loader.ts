@@ -23,7 +23,7 @@ type ModProvidersFile = z.infer<typeof modProvidersFileSchema>;
 function defaultState(): ModProvidersFile {
   return {
     curseforge: { enabled: false, apiKey: null },
-    modtale: { enabled: true, apiKey: null },
+    modtale: { enabled: false, apiKey: null },
     nexusmods: { enabled: false, apiKey: null },
   };
 }

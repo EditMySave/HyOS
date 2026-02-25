@@ -26,6 +26,7 @@ export async function runSearch(
     const config = providerConfig[id];
     if (!config?.enabled) continue;
     if (id === "curseforge" && !config.apiKey) continue;
+    if (id === "modtale" && !config.apiKey) continue;
     if (id === "nexusmods" && !config.apiKey) continue;
     toRun.push(id);
   }

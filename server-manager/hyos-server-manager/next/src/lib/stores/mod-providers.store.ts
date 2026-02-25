@@ -17,7 +17,7 @@ interface ModProvidersState {
 
 const defaultProviders: Record<ModProvider, ProviderState> = {
   curseforge: { enabled: false, hasApiKey: false },
-  modtale: { enabled: true, hasApiKey: false },
+  modtale: { enabled: false, hasApiKey: false },
   nexusmods: { enabled: false, hasApiKey: false },
 };
 

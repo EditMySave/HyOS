@@ -40,7 +40,6 @@ const PROVIDERS: {
     description: "Official Hytale community repository",
     authType: "api_key",
     helpUrl: "https://modtale.net/api-docs",
-    optional: true,
   },
   {
     id: "nexusmods",
@@ -72,7 +71,7 @@ export function ModProviderSettingsDialog({
     Record<ModProvider, boolean>
   >({
     curseforge: false,
-    modtale: true,
+    modtale: false,
     nexusmods: false,
   });
   const [newKeyInput, setNewKeyInput] = useState<Record<ModProvider, string>>({
@@ -92,7 +91,7 @@ export function ModProviderSettingsDialog({
     if (open && settings) {
       const enabled: Record<ModProvider, boolean> = {
         curseforge: false,
-        modtale: true,
+        modtale: false,
         nexusmods: false,
       };
       for (const p of settings.providers) {
