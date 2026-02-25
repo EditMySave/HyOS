@@ -58,7 +58,7 @@ Deploy HyOS by pasting a compose file directly into TrueNAS. This gives you full
 # =============================================================================
 # ACCESS:
 # - Game Server: UDP port 30520
-# - Management UI: http://your-truenas-ip:30300
+# - Management UI: http://your-truenas-ip:30359
 #
 # PORT CONVENTION:
 # Host ports use the 30xxx range to avoid conflicts with other TrueNAS apps.
@@ -143,7 +143,7 @@ services:
 
     ports:
       - "30520:5520/udp"    # Game traffic (QUIC)
-      - "30080:8080/tcp"    # REST API
+      - "30358:8080/tcp"    # REST API
 
     # UPDATE THIS PATH to your dataset
     volumes:
@@ -185,7 +185,7 @@ services:
       COOKIE_SECURE: "false"
 
     ports:
-      - "30300:3000"        # Web UI
+      - "30359:3000"        # Web UI
 
     # UPDATE THIS PATH to your dataset (must match the server)
     volumes:
@@ -232,7 +232,7 @@ networks:
 Once both containers are running, open your browser to:
 
 ```
-http://your-truenas-ip:30300
+http://your-truenas-ip:30359
 ```
 
 The Manager UI provides server control, console access, and configuration management.
@@ -362,8 +362,8 @@ Toggle **Show Advanced Options** to reveal:
 | Port | Protocol | Default | Description |
 |------|----------|---------|-------------|
 | Game Port | UDP | `30520` | Hytale QUIC game traffic |
-| API Port | TCP | `30080` | REST API for the Manager |
-| Manager Port | TCP | `30300` | Web UI |
+| API Port | TCP | `30358` | REST API for the Manager |
+| Manager Port | TCP | `30359` | Web UI |
 
 Each port supports bind modes: `published` (accessible from host), `exposed` (container-only), or `none`.
 
@@ -395,7 +395,7 @@ Apply custom Docker labels to containers. Each label has a key, value, and targe
 2. Check container logs for the OAuth authentication prompt
 3. Complete the device code flow within 15 minutes
 4. The server will download game files and start automatically
-5. Access the Manager UI at `http://your-truenas-ip:30300`
+5. Access the Manager UI at `http://your-truenas-ip:30359`
 
 ---
 

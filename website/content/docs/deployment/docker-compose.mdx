@@ -28,7 +28,7 @@ services:
     tty: true
     ports:
       - "30520:5520/udp"    # Game server
-      - "30080:8080/tcp"    # API plugin
+      - "30358:8080/tcp"    # API plugin
     volumes:
       - ./data:/data
     environment:
@@ -53,7 +53,7 @@ services:
     image: ghcr.io/editmysave/hyos/manager:latest
     container_name: hyos-manager
     ports:
-      - "30300:3000"
+      - "30359:3000"
     volumes:
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -95,7 +95,7 @@ docker logs -f hyos-server
 
 2. Complete the OAuth device flow when prompted
 3. The server will download game files and start automatically
-4. Access the manager UI at `http://localhost:30300`
+4. Access the manager UI at `http://localhost:30359`
 
 ## Updating
 

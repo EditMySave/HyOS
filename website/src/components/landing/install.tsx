@@ -92,7 +92,7 @@ services:
     ports:
       # UDP port for Hytale QUIC protocol (game traffic)
       - "30520:5520/udp"
-      - "30080:8080/tcp"
+      - "30358:8080/tcp"
     volumes:
       # IMPORTANT: Update the host path to your TrueNAS dataset this holds your (world, config, mods, backups, auth)
       - /mnt/tank/apps/hytale:/data:rw
@@ -150,7 +150,7 @@ services:
 
     # Web UI port
     ports:
-      - "30300:3000"
+      - "30359:3000"
 
     # Volume mounts
     volumes:
@@ -192,7 +192,7 @@ const TRUENAS_STEPS = [
   "Adjust memory settings based on your system (minimum 8GB recommended)",
   "Click Save",
   "Game Server will be available on: UDP port 30520",
-  "Management UI will be available on: http://your-truenas-ip:30300",
+  "Management UI will be available on: http://your-truenas-ip:30359",
 ];
 
 type Tab = "docker-compose" | "truenas";
