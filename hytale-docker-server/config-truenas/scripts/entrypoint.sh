@@ -337,7 +337,6 @@ launch_and_wait() {
         state_set_server "crashed"
     fi
 
-    stop_localtonet || true
     exit $exit_code
 }
 
@@ -495,7 +494,6 @@ cleanup() {
         kill -TERM "$JAVA_PID" 2>/dev/null || true
         # Don't exit here — wait in launch_and_wait will return with exit code 143
     else
-        stop_localtonet || true
         state_set_server "stopped"
         exit 0
     fi
