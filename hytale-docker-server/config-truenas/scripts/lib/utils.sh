@@ -225,7 +225,7 @@ wait_for_file() {
     
     while [[ ! -f "$file" ]] && [[ $elapsed -lt $timeout ]]; do
         sleep 1
-        ((elapsed++))
+        elapsed=$((elapsed + 1))
     done
     
     [[ -f "$file" ]]

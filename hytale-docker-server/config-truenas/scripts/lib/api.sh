@@ -183,7 +183,7 @@ api_install_plugins() {
             cp "$jar" "$mods_dir/$name"
             chown hytale:hytale "$mods_dir/$name"
             log_debug "Installed plugin: $name"
-            ((count++))
+            count=$((count + 1))
         fi
     done
     

@@ -98,12 +98,19 @@ run_downloader_with_auth_state() {
     local download_args="$1"
     local downloader_exit
 
+    local _auth_pending=false
     hytale-downloader $download_args 2>&1 | while IFS= read -r line; do
         echo "$line"
         if [[ "$line" =~ (https://oauth\.accounts\.hytale\.com/oauth2/device/verify\?user_code=[A-Za-z0-9]+) ]]; then
             state_set_auth "pending" "" "" "${BASH_REMATCH[1]}" "${BASH_REMATCH[1]##*=}"
+            _auth_pending=true
         elif [[ "$line" =~ Authorization[[:space:]]code:[[:space:]]*([A-Za-z0-9]+) ]]; then
             state_set_auth "pending" "" "" "https://oauth.accounts.hytale.com/oauth2/device/verify?user_code=${BASH_REMATCH[1]}" "${BASH_REMATCH[1]}"
+            _auth_pending=true
+        elif [[ "$_auth_pending" == "true" ]] && [[ "$line" =~ [Dd]ownloading ]]; then
+            # Download started = OAuth succeeded, dismiss the auth popup
+            state_set_auth "authenticated"
+            _auth_pending=false
         fi
     done
     downloader_exit=${PIPESTATUS[0]}
