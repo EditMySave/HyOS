@@ -43,8 +43,8 @@ services:
     environment:
       PUID: 568
       PGID: 568
-      JAVA_XMS: 4G
-      JAVA_XMX: 8G
+      JAVA_XMS: 1G
+      JAVA_XMX: 3G
       SERVER_NAME: "My Hytale Server"
     ports:
       - "5520:5520/udp"
