@@ -64,6 +64,20 @@ source "${SCRIPTS_DIR}/lib/api.sh"
 # Now enable strict mode (after sourcing)
 set -eo pipefail
 
+# API port detection
+# When API_PORT is not explicitly set and SERVER_PORT is non-default,
+# we're likely in a remapped-port environment (e.g., TrueNAS catalog)
+# where the port mapping convention is host_port:host_port.
+# Derive API_PORT as SERVER_PORT+1 to match the sequential convention.
+if [[ -z "${API_PORT}" ]]; then
+    if [[ "${SERVER_PORT}" != "5520" ]]; then
+        export API_PORT=$((SERVER_PORT + 1))
+        log_info "API_PORT derived from SERVER_PORT: ${API_PORT}"
+    else
+        export API_PORT=8080
+    fi
+fi
+
 # =============================================================================
 # Architecture Check
 # =============================================================================
