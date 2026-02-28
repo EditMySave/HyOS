@@ -37,15 +37,15 @@ services:
     container_name: hyos-server
 
     ports:
-      - "30520:5520/udp"
-      - "30358:8080/tcp"
+      - "30380:5520/udp"
+      - "30381:8080/tcp"
 
     environment:
       <<: *api-config
       PUID: 568
       PGID: 568
-      JAVA_XMS: 8G
-      JAVA_XMX: 12G
+      JAVA_XMS: 1G
+      JAVA_XMX: 3G
       SERVER_PORT: "5520"
       TZ: UTC
       API_ENABLED: "true"
@@ -90,7 +90,7 @@ services:
       - "0"
 
     ports:
-      - "30359:3000"
+      - "30382:3000"
 
     environment:
       <<: *api-config

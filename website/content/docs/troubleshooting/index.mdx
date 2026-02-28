@@ -60,8 +60,8 @@ If using a non-default UID, set both `PUID`/`PGID` environment variables and the
 **Fix**:
 
 ```bash
-# Check what's using port 30520
-ss -tulnp | grep 30520
+# Check what's using port 30380
+ss -tulnp | grep 30380
 
 # Use a different host port in compose.yaml:
 # ports:

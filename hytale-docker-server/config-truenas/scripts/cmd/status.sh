@@ -134,6 +134,6 @@ else
     echo ""
     echo "Configuration:"
     echo "  Port:    ${SERVER_PORT:-5520}/udp"
-    echo "  Memory:  ${JAVA_XMS:-4G} - ${JAVA_XMX:-8G}"
+    echo "  Memory:  ${JAVA_XMS:-1G} - ${JAVA_XMX:-3G}"
     echo ""
 fi

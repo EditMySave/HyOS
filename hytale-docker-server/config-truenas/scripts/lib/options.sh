@@ -18,7 +18,7 @@ build_java_args() {
     local args=""
     
     # Memory settings
-    args="$args -Xms${JAVA_XMS:-4G} -Xmx${JAVA_XMX:-8G}"
+    args="$args -Xms${JAVA_XMS:-1G} -Xmx${JAVA_XMX:-3G}"
     
     # Container support
     args="$args -XX:+UseContainerSupport"
@@ -285,8 +285,8 @@ build_server_args() {
 
 get_options_json() {
     json_object \
-        "java_xms" "${JAVA_XMS:-4G}" \
-        "java_xmx" "${JAVA_XMX:-8G}" \
+        "java_xms" "${JAVA_XMS:-1G}" \
+        "java_xmx" "${JAVA_XMX:-3G}" \
         "gc_type" "$(is_true "${USE_ZGC:-false}" && echo "ZGC" || echo "G1GC")" \
         "aot_enabled" "${ENABLE_AOT:-true}" \
         "server_port" "${SERVER_PORT:-5520}" \

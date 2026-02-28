@@ -23,8 +23,8 @@ const config = {
 
   // Server settings
   serverPort: process.env.SERVER_PORT || "5520",
-  javaXms: process.env.JAVA_XMS || "4G",
-  javaXmx: process.env.JAVA_XMX || "8G",
+  javaXms: process.env.JAVA_XMS || "1G",
+  javaXmx: process.env.JAVA_XMX || "3G",
   enableAot: process.env.ENABLE_AOT !== "false",
   disableSentry: process.env.DISABLE_SENTRY !== "false",
   patchline: process.env.PATCHLINE || "release",

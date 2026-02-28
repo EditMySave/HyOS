@@ -57,8 +57,8 @@ Deploy HyOS by pasting a compose file directly into TrueNAS. This gives you full
 # HyOS - Hytale Server + Manager - TrueNAS SCALE Custom App
 # =============================================================================
 # ACCESS:
-# - Game Server: UDP port 30520
-# - Management UI: http://your-truenas-ip:30359
+# - Game Server: UDP port 30380
+# - Management UI: http://your-truenas-ip:30382
 #
 # PORT CONVENTION:
 # Host ports use the 30xxx range to avoid conflicts with other TrueNAS apps.
@@ -94,8 +94,8 @@ services:
       TZ: UTC
 
       # --- JVM Memory ---
-      JAVA_XMS: 8G
-      JAVA_XMX: 12G
+      JAVA_XMS: 1G
+      JAVA_XMX: 3G
       USE_ZGC: "false"
       G1_MAX_PAUSE: "200"
 
@@ -142,8 +142,8 @@ services:
       NO_COLOR: "false"
 
     ports:
-      - "30520:5520/udp"    # Game traffic (QUIC)
-      - "30358:8080/tcp"    # REST API
+      - "30380:5520/udp"    # Game traffic (QUIC)
+      - "30381:8080/tcp"    # REST API
 
     # UPDATE THIS PATH to your dataset
     volumes:
@@ -185,7 +185,7 @@ services:
       COOKIE_SECURE: "false"
 
     ports:
-      - "30359:3000"        # Web UI
+      - "30382:3000"        # Web UI
 
     # UPDATE THIS PATH to your dataset (must match the server)
     volumes:
@@ -232,7 +232,7 @@ networks:
 Once both containers are running, open your browser to:
 
 ```
-http://your-truenas-ip:30359
+http://your-truenas-ip:30382
 ```
 
 The Manager UI provides server control, console access, and configuration management.
@@ -244,14 +244,14 @@ The Manager UI provides server control, console access, and configuration manage
 | Server name | `SERVER_NAME` | `Hytale Server` | Shown in the server list |
 | Max players | `MAX_PLAYERS` | `100` | Concurrent player limit |
 | Gamemode | `DEFAULT_GAMEMODE` | `Adventure` | `Adventure`, `Creative`, or `Survival` |
-| Heap memory | `JAVA_XMX` | `12G` | Set to 50-75% of total system RAM |
+| Heap memory | `JAVA_XMX` | `3G` | Set to 50-75% of total system RAM |
 | Timezone | `TZ` | `UTC` | e.g. `America/New_York` |
 | Auto-update | `AUTO_UPDATE` | `false` | Check for updates at startup |
-| Game port | Host port mapping | `30520` | Change the left side of `30520:5520/udp` |
+| Game port | Host port mapping | `30380` | Change the left side of `30380:5520/udp` |
 
 ### Tips
 
-- Set container memory limits at least **2 GB higher** than `JAVA_XMX` to account for JVM overhead. Example: `JAVA_XMX=8G` needs ~10 GB container memory.
+- Set container memory limits at least **2 GB higher** than `JAVA_XMX` to account for JVM overhead. Example: `JAVA_XMX=3G` needs ~4 GB container memory.
 - The Manager container needs Docker socket access (`/var/run/docker.sock`) to start/stop the server. It's mounted read-only.
 - Both containers log to `json-file` with size limits to prevent filling your ZFS pool.
 
@@ -302,8 +302,8 @@ The TrueNAS UI presents settings in organized groups:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| Initial Heap (XMS) | `4G` | Starting heap size |
-| Max Heap (XMX) | `8G` | Maximum heap size — set to 50–75% of allocated RAM |
+| Initial Heap (XMS) | `1G` | Starting heap size |
+| Max Heap (XMX) | `3G` | Maximum heap size — set to 50–75% of allocated RAM |
 | Use ZGC | `false` | ZGC for low-latency (needs more RAM) |
 | G1 Max Pause | `200` | G1GC max pause time in ms (when not using ZGC) |
 
@@ -361,9 +361,9 @@ Toggle **Show Advanced Options** to reveal:
 
 | Port | Protocol | Default | Description |
 |------|----------|---------|-------------|
-| Game Port | UDP | `30520` | Hytale QUIC game traffic |
-| API Port | TCP | `30358` | REST API for the Manager |
-| Manager Port | TCP | `30359` | Web UI |
+| Game Port | UDP | `30380` | Hytale QUIC game traffic |
+| API Port | TCP | `30381` | REST API for the Manager |
+| Manager Port | TCP | `30382` | Web UI |
 
 Each port supports bind modes: `published` (accessible from host), `exposed` (container-only), or `none`.
 
@@ -387,7 +387,7 @@ Apply custom Docker labels to containers. Each label has a key, value, and targe
 | Setting | Default | Description |
 |---------|---------|-------------|
 | CPUs | `4` | CPU core limit |
-| Memory (MB) | `12288` | Memory limit — should be at least 2 GB more than `JAVA_XMX` |
+| Memory (MB) | `4096` | Memory limit — should be at least 2 GB more than `JAVA_XMX` |
 
 ### Post-Installation
 
@@ -395,7 +395,7 @@ Apply custom Docker labels to containers. Each label has a key, value, and targe
 2. Check container logs for the OAuth authentication prompt
 3. Complete the device code flow within 15 minutes
 4. The server will download game files and start automatically
-5. Access the Manager UI at `http://your-truenas-ip:30359`
+5. Access the Manager UI at `http://your-truenas-ip:30382`
 
 ---
 
@@ -456,7 +456,7 @@ Set container memory limits at least **2 GB higher** than `JAVA_XMX` to account 
 - Operating system overhead
 - The entrypoint scripts and helper processes
 
-Example: `JAVA_XMX=8G` → container memory limit = 10240 MB (10 GB).
+Example: `JAVA_XMX=3G` → container memory limit = 4096 MB (4 GB).
 
 ### Log Management
 

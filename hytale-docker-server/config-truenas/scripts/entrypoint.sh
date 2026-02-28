@@ -38,8 +38,8 @@ export UMASK="${UMASK:-002}"
 
 # Server defaults
 export SERVER_PORT="${SERVER_PORT:-5520}"
-export JAVA_XMS="${JAVA_XMS:-4G}"
-export JAVA_XMX="${JAVA_XMX:-8G}"
+export JAVA_XMS="${JAVA_XMS:-1G}"
+export JAVA_XMX="${JAVA_XMX:-3G}"
 export ENABLE_AOT="${ENABLE_AOT:-true}"
 export PATCHLINE="${PATCHLINE:-release}"
 

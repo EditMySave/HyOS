@@ -27,7 +27,7 @@ function defaults(): ManagerConfig {
     containerName: "hyos-server",
     apiClientId: "hyos-manager",
     stateDir: defaultStateDir(),
-    gamePort: 30520,
+    gamePort: 30380,
     telemetryEnabled: true,
     setupComplete: false,
     createdAt: null,

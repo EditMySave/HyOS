@@ -180,12 +180,12 @@ Only expose the minimum required ports:
 
 | Port | Protocol | Service | Exposure |
 |------|----------|---------|----------|
-| 5520 (or 30520) | UDP | Hytale game server | Public (players need this) |
+| 5520 (or 30380) | UDP | Hytale game server | Public (players need this) |
 | 443 | TCP | Reverse proxy | Admins only (or VPN) |
 
 Do **not** expose:
-- The Manager port (3000/30359) directly — use the reverse proxy
-- The API port (8080/30358) directly — use the reverse proxy
+- The Manager port (3000/30382) directly — use the reverse proxy
+- The API port (8080/30381) directly — use the reverse proxy
 - The Docker socket over TCP — ever
 
 ### Dedicated Docker Network

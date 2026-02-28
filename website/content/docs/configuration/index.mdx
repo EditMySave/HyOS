@@ -44,15 +44,15 @@ environment:
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `JAVA_XMS` | string | `4G` | Initial heap size. Minimum 4G recommended. |
-| `JAVA_XMX` | string | `8G` | Maximum heap size. Set to 50-75% of available RAM. |
+| `JAVA_XMS` | string | `1G` | Initial heap size. |
+| `JAVA_XMX` | string | `3G` | Maximum heap size. Set to 50-75% of available RAM. |
 | `JAVA_OPTS` | string | — | Additional JVM options (appended to the command). |
 | `JVM_XX_OPTS` | string | — | Additional `-XX:` JVM options (appended). |
 
 ```yaml
 environment:
-  JAVA_XMS: 4G
-  JAVA_XMX: 8G
+  JAVA_XMS: 1G
+  JAVA_XMX: 3G
   JAVA_OPTS: -Dfile.encoding=UTF-8
 ```
 

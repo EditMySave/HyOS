@@ -55,15 +55,15 @@ run_as:
 network:
   game_port:
     bind_mode: published
-    port_number: 30520
+    port_number: 30380
     host_ips: []
   api_port:
     bind_mode: published
-    port_number: 30358
+    port_number: 30381
     host_ips: []
   manager_port:
     bind_mode: published
-    port_number: 30359
+    port_number: 30382
     host_ips: []
   host_network: false
 

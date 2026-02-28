@@ -15,11 +15,11 @@ const COMPOSE_YAML = `services:
     environment:
       PUID: 568
       PGID: 568
-      JAVA_XMS: 4G
-      JAVA_XMX: 8G
+      JAVA_XMS: 1G
+      JAVA_XMX: 3G
       SERVER_NAME: "My Hytale Server"
     ports:
-      - "30520:5520/udp"
+      - "30380:5520/udp"
     volumes:
       - /opt/hytale:/data:rw
     healthcheck:
@@ -55,8 +55,8 @@ services:
       PGID: 568
       UMASK: "002"
       TZ: \${TZ:-UTC}
-      JAVA_XMS: \${JAVA_XMS:-8G}
-      JAVA_XMX: \${JAVA_XMX:-12G}
+      JAVA_XMS: \${JAVA_XMS:-1G}
+      JAVA_XMX: \${JAVA_XMX:-3G}
       USE_ZGC: "false"
       G1_MAX_PAUSE: "200"
       SERVER_PORT: "5520"
@@ -91,8 +91,8 @@ services:
       NO_COLOR: "false"
     ports:
       # UDP port for Hytale QUIC protocol (game traffic)
-      - "30520:5520/udp"
-      - "30358:8080/tcp"
+      - "30380:5520/udp"
+      - "30381:8080/tcp"
     volumes:
       # IMPORTANT: Update the host path to your TrueNAS dataset this holds your (world, config, mods, backups, auth)
       - /mnt/tank/apps/hytale:/data:rw
@@ -150,7 +150,7 @@ services:
 
     # Web UI port
     ports:
-      - "30359:3000"
+      - "30382:3000"
 
     # Volume mounts
     volumes:
@@ -191,8 +191,8 @@ const TRUENAS_STEPS = [
   "Replace changeme123 with a secure API password",
   "Adjust memory settings based on your system (minimum 8GB recommended)",
   "Click Save",
-  "Game Server will be available on: UDP port 30520",
-  "Management UI will be available on: http://your-truenas-ip:30359",
+  "Game Server will be available on: UDP port 30380",
+  "Management UI will be available on: http://your-truenas-ip:30382",
 ];
 
 type Tab = "docker-compose" | "truenas";

@@ -14,8 +14,8 @@ services:
     # Environment configuration
     environment:
       # JVM Memory
-      JAVA_XMS: "${JAVA_XMS:-4G}"
-      JAVA_XMX: "${JAVA_XMX:-8G}"
+      JAVA_XMS: "${JAVA_XMS:-1G}"
+      JAVA_XMX: "${JAVA_XMX:-3G}"
 
       # Server settings
       SERVER_PORT: "5520"

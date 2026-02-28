@@ -11,8 +11,8 @@
 # 5. Adjust memory settings based on your system (minimum 8GB recommended)
 #
 # ACCESS:
-# - Game Server: UDP port 30520
-# - Management UI: http://your-truenas-ip:30359
+# - Game Server: UDP port 30380
+# - Management UI: http://your-truenas-ip:30382
 #
 # PORT CONVENTION:
 # Host ports use the 30xxx range to avoid conflicts with other TrueNAS apps.
@@ -62,8 +62,8 @@ services:
 
       # --- JVM Memory Settings ---
       # Minimum 8G recommended, increase for larger worlds
-      JAVA_XMS: ${JAVA_XMS:-8G}
-      JAVA_XMX: ${JAVA_XMX:-12G}
+      JAVA_XMS: ${JAVA_XMS:-1G}
+      JAVA_XMX: ${JAVA_XMX:-3G}
 
       # --- JVM Garbage Collector ---
       USE_ZGC: "false"
@@ -130,9 +130,9 @@ services:
     # Exposed ports
     ports:
       # UDP port for Hytale QUIC protocol (game traffic)
-      - "30520:5520/udp"
+      - "30380:5520/udp"
       # HTTP port for REST API (optional - comment out if not using API)
-      - "30358:8080/tcp"
+      - "30381:8080/tcp"
 
     # Volume mounts
     # IMPORTANT: Update the host path to your TrueNAS dataset
@@ -197,7 +197,7 @@ services:
 
     # Web UI port
     ports:
-      - "30359:3000"
+      - "30382:3000"
 
     # Volume mounts
     volumes:
