@@ -71,6 +71,7 @@ ENV SKIP_CONFIG_GENERATION=false \
 
 # API Plugin environment variables
 ENV API_ENABLED=true \
+    API_PORT=8080 \
     API_CLIENT_ID=hyos-manager \
     API_CLIENT_SECRET="" \
     API_WEBSOCKET_ENABLED=true
@@ -136,7 +137,7 @@ WORKDIR /data
 
 # Expose UDP port (QUIC protocol) and API port (HTTP)
 EXPOSE ${SERVER_PORT}/udp
-EXPOSE 8080/tcp
+EXPOSE ${API_PORT}/tcp
 
 # Health check using new modular script
 HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=3 \
