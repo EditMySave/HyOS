@@ -3,6 +3,7 @@
 import {
   AuthNotification,
   GameStats,
+  HealthNotification,
   PerformanceChart,
   PlayerCountChart,
   PlayersTable,
@@ -15,6 +16,7 @@ export default function Home() {
     <div className="min-h-screen p-6 space-y-6">
       {/* Auth notification - shows when authentication is needed */}
       <AuthNotification />
+      <HealthNotification />
 
       {/* Top row: Stats and Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -5,6 +5,7 @@ import {
   checkForUpdates,
   executeCommand,
   getAuthState,
+  getHealthState,
   getScheduledUpdate,
   getServerStatus,
   getServerVersion,
@@ -19,6 +20,7 @@ import {
 import type {
   AuthState,
   CommandResult,
+  HealthState,
   ScheduledUpdateStatus,
   ServerStatus,
   UpdateCheckResult,
@@ -161,4 +163,14 @@ export function useCancelScheduledUpdate() {
     "cancel-scheduled-update",
     async () => cancelScheduledUpdate(),
   );
+}
+
+/**
+ * Hook to get health state with auto-refresh
+ */
+export function useHealthState(refreshInterval = 30000) {
+  return useSWR<HealthState>("health-state", getHealthState, {
+    refreshInterval,
+    dedupingInterval: 10000,
+  });
 }

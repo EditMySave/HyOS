@@ -3,6 +3,8 @@ import {
   authStateSchema,
   type CommandResult,
   commandResultSchema,
+  type HealthState,
+  healthStateSchema,
   type ScheduledUpdateStatus,
   type ServerStatus,
   scheduledUpdateStatusSchema,
@@ -207,4 +209,16 @@ export async function cancelScheduledUpdate(): Promise<ScheduledUpdateStatus> {
   }
   const data = await response.json();
   return scheduledUpdateStatusSchema.parse(data);
+}
+
+/**
+ * Get health state
+ */
+export async function getHealthState(): Promise<HealthState> {
+  const response = await fetch("/api/server/health");
+  if (!response.ok) {
+    throw new Error(`Failed to fetch health state: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return healthStateSchema.parse(data);
 }

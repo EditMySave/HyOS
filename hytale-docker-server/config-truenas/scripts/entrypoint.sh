@@ -38,8 +38,6 @@ export UMASK="${UMASK:-002}"
 
 # Server defaults
 export SERVER_PORT="${SERVER_PORT:-5520}"
-export JAVA_XMS="${JAVA_XMS:-1G}"
-export JAVA_XMX="${JAVA_XMX:-3G}"
 export ENABLE_AOT="${ENABLE_AOT:-true}"
 export PATCHLINE="${PATCHLINE:-release}"
 
@@ -63,6 +61,35 @@ source "${SCRIPTS_DIR}/lib/api.sh"
 
 # Now enable strict mode (after sourcing)
 set -eo pipefail
+
+# =============================================================================
+# JVM Memory Auto-Derivation
+# =============================================================================
+# When CONTAINER_MEMORY_MB is set (e.g., by TrueNAS app template),
+# derive JVM heap sizes from the container memory limit.
+# Reserve 25% for JVM overhead (metaspace, off-heap, GC, native memory).
+if [[ -n "${CONTAINER_MEMORY_MB:-}" ]] && [[ "${CONTAINER_MEMORY_MB}" =~ ^[0-9]+$ ]] && [[ "${CONTAINER_MEMORY_MB}" -gt 0 ]]; then
+    auto_xmx=$((CONTAINER_MEMORY_MB * 75 / 100))
+    auto_xms=$((auto_xmx / 4))
+    [[ $auto_xmx -lt 512 ]] && auto_xmx=512
+    [[ $auto_xms -lt 256 ]] && auto_xms=256
+    export JAVA_XMS="${auto_xms}M"
+    export JAVA_XMX="${auto_xmx}M"
+    log_info "JVM memory auto-derived from container limit (${CONTAINER_MEMORY_MB}MB): -Xms${JAVA_XMS} -Xmx${JAVA_XMX}"
+
+    # Warn if allocated memory is low
+    if [[ $auto_xmx -lt 2048 ]]; then
+        log_warn "Low memory: JVM max heap is ${auto_xmx}MB. Minimum 3GB recommended for stable gameplay."
+        warn_checks=$(json_array "$(json_object \
+            "name" "memory_allocation" \
+            "status" "warn" \
+            "message" "Low memory: JVM max heap is ${auto_xmx}MB (container limit: ${CONTAINER_MEMORY_MB}MB). Increase the container memory limit to at least 4096MB for stable gameplay.")")
+        state_set_health "healthy" "Low memory allocation" "$warn_checks"
+    fi
+else
+    export JAVA_XMS="${JAVA_XMS:-1G}"
+    export JAVA_XMX="${JAVA_XMX:-3G}"
+fi
 
 # =============================================================================
 # Architecture Check

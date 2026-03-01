@@ -137,3 +137,24 @@ export const scheduledUpdateStatusSchema = z.object({
 });
 
 export type ScheduledUpdateStatus = z.infer<typeof scheduledUpdateStatusSchema>;
+
+// ============================================================================
+// Health Types
+// ============================================================================
+
+export const healthCheckSchema = z.object({
+  name: z.string(),
+  status: z.enum(["pass", "fail", "warn", "skip"]),
+  message: z.string(),
+});
+
+export const healthStateSchema = z.object({
+  status: z.string(),
+  healthy: z.boolean(),
+  message: z.string(),
+  checks: z.array(healthCheckSchema),
+  checkedAt: z.string().nullable(),
+});
+
+export type HealthCheck = z.infer<typeof healthCheckSchema>;
+export type HealthState = z.infer<typeof healthStateSchema>;
