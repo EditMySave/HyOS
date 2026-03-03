@@ -63,32 +63,57 @@ source "${SCRIPTS_DIR}/lib/api.sh"
 set -eo pipefail
 
 # =============================================================================
-# JVM Memory Auto-Derivation
+# JVM Memory Configuration
 # =============================================================================
-# When CONTAINER_MEMORY_MB is set (e.g., by TrueNAS app template),
-# derive JVM heap sizes from the container memory limit.
-# Reserve 25% for JVM overhead (metaspace, off-heap, GC, native memory).
-if [[ -n "${CONTAINER_MEMORY_MB:-}" ]] && [[ "${CONTAINER_MEMORY_MB}" =~ ^[0-9]+$ ]] && [[ "${CONTAINER_MEMORY_MB}" -gt 0 ]]; then
-    auto_xmx=$((CONTAINER_MEMORY_MB * 75 / 100))
-    auto_xms=$((auto_xmx / 4))
-    [[ $auto_xmx -lt 512 ]] && auto_xmx=512
-    [[ $auto_xms -lt 256 ]] && auto_xms=256
-    export JAVA_XMS="${auto_xms}M"
-    export JAVA_XMX="${auto_xmx}M"
-    log_info "JVM memory auto-derived from container limit (${CONTAINER_MEMORY_MB}MB): -Xms${JAVA_XMS} -Xmx${JAVA_XMX}"
+# Priority:
+#   1. Explicit JAVA_XMS/JAVA_XMX env vars (user override — skip auto-derive)
+#   2. Auto-derive from cgroup memory limit (Docker/TrueNAS/K8s)
+#   3. Dockerfile defaults (1G/3G)
 
-    # Warn if allocated memory is low
-    if [[ $auto_xmx -lt 2048 ]]; then
-        log_warn "Low memory: JVM max heap is ${auto_xmx}MB. Minimum 3GB recommended for stable gameplay."
-        warn_checks=$(json_array "$(json_object \
-            "name" "memory_allocation" \
-            "status" "warn" \
-            "message" "Low memory: JVM max heap is ${auto_xmx}MB (container limit: ${CONTAINER_MEMORY_MB}MB). Increase the container memory limit to at least 4096MB for stable gameplay.")")
-        state_set_health "healthy" "Low memory allocation" "$warn_checks"
-    fi
+if [[ -n "${JAVA_XMS:-}" ]] && [[ -n "${JAVA_XMX:-}" ]]; then
+    # User explicitly set both — respect their choice, no auto-derive
+    log_info "JVM memory set by environment: -Xms${JAVA_XMS} -Xmx${JAVA_XMX}"
 else
-    export JAVA_XMS="${JAVA_XMS:-1G}"
-    export JAVA_XMX="${JAVA_XMX:-3G}"
+    # Try to read container memory limit from cgroup
+    cgroup_limit_mb=""
+    if [[ -f /sys/fs/cgroup/memory.max ]]; then
+        # cgroup v2
+        raw=$(cat /sys/fs/cgroup/memory.max 2>/dev/null) || true
+        if [[ "$raw" != "max" ]] && [[ "$raw" =~ ^[0-9]+$ ]]; then
+            cgroup_limit_mb=$((raw / 1024 / 1024))
+        fi
+    elif [[ -f /sys/fs/cgroup/memory/memory.limit_in_bytes ]]; then
+        # cgroup v1
+        raw=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null) || true
+        if [[ "$raw" =~ ^[0-9]+$ ]] && [[ "$raw" -lt 9000000000000000000 ]]; then
+            cgroup_limit_mb=$((raw / 1024 / 1024))
+        fi
+    fi
+
+    if [[ -n "$cgroup_limit_mb" ]] && [[ "$cgroup_limit_mb" -gt 0 ]]; then
+        # Auto-derive: 75% for XMX, 25% of XMX for XMS
+        auto_xmx=$((cgroup_limit_mb * 75 / 100))
+        auto_xms=$((auto_xmx / 4))
+        [[ $auto_xmx -lt 512 ]] && auto_xmx=512
+        [[ $auto_xms -lt 256 ]] && auto_xms=256
+        export JAVA_XMS="${auto_xms}M"
+        export JAVA_XMX="${auto_xmx}M"
+        log_info "JVM memory auto-derived from container limit (${cgroup_limit_mb}MB): -Xms${JAVA_XMS} -Xmx${JAVA_XMX}"
+
+        # Warn if allocated memory is low
+        if [[ $auto_xmx -lt 2048 ]]; then
+            log_warn "Low memory: JVM max heap is ${auto_xmx}MB. Minimum 3GB recommended for stable gameplay."
+            warn_checks=$(json_array "$(json_object \
+                "name" "memory_allocation" \
+                "status" "warn" \
+                "message" "Low memory: JVM max heap is ${auto_xmx}MB (container limit: ${cgroup_limit_mb}MB). Increase the container memory limit to at least 4096MB for stable gameplay.")")
+            state_set_health "healthy" "Low memory allocation" "$warn_checks"
+        fi
+    else
+        # No cgroup limit detected — use defaults
+        export JAVA_XMS="${JAVA_XMS:-1G}"
+        export JAVA_XMX="${JAVA_XMX:-3G}"
+    fi
 fi
 
 # =============================================================================

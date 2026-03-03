@@ -44,8 +44,6 @@ services:
       <<: *api-config
       PUID: 568
       PGID: 568
-      JAVA_XMS: 1G
-      JAVA_XMX: 3G
       SERVER_PORT: "5520"
       TZ: UTC
       API_ENABLED: "true"
