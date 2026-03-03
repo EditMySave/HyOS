@@ -29,7 +29,7 @@ graph LR
         MGR["HyOS Manager<br/>ghcr.io/editmysave/hyos/manager"]
 
         HS --- API
-        MGR -- "HTTP 8080<br/>REST API" --> API
+        MGR -- "HTTP 30381<br/>REST API" --> API
         MGR -- "/var/run/docker.sock<br/>(read-only)" --> Docker_Daemon["Docker Daemon"]
         HS -- "/data volume<br/>(shared)" --> Vol[("/data")]
         MGR -- "/data volume<br/>(shared)" --> Vol
@@ -283,7 +283,7 @@ interface UpdateState {
 | Host Port | Container Port | Protocol | Service | Description |
 |-----------|---------------|----------|---------|-------------|
 | 30380 | 5520 | UDP | Hytale Server | QUIC game traffic (player connections) |
-| 30381 | 8080 | TCP | API Plugin | REST API for server management |
+| 30381 | 30381 | TCP | API Plugin | REST API for server management |
 | 30382 | 3000 | TCP | HyOS Manager | Web UI dashboard |
 
 Host ports use the 30xxx range to avoid conflicts with other TrueNAS apps. The default Hytale server port is UDP 5520 — if no conflicts exist on your system, you can map host ports directly (e.g., `5520:5520/udp`). Internal container ports are configurable via environment variables (`SERVER_PORT`, `API_PORT`).

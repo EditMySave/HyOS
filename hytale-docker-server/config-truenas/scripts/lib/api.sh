@@ -87,7 +87,7 @@ api_generate_config() {
     cat > "$config_file" <<EOF
 {
   "enabled": ${API_ENABLED:-true},
-  "port": ${API_PORT:-8080},
+  "port": ${API_PORT:-30381},
   "bindAddress": "${API_BIND_ADDRESS:-0.0.0.0}",
   "tls": {
     "enabled": ${API_TLS_ENABLED:-false},

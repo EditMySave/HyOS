@@ -64,7 +64,7 @@ Deploy HyOS by pasting a compose file directly into TrueNAS. This gives you full
 # Host ports use the 30xxx range to avoid conflicts with other TrueNAS apps.
 # The Hytale server default is UDP 5520 — if you are not running other apps
 # that conflict, you can change the host ports back (e.g., "5520:5520/udp").
-# Internal container ports (5520, 8080, 3000) are unchanged.
+# Internal container ports (5520, 30381, 3000) match the host ports.
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -132,7 +132,7 @@ services:
 
       # --- REST API Plugin ---
       API_ENABLED: "true"
-      API_PORT: "8080"
+      API_PORT: "30381"
       API_WEBSOCKET_ENABLED: "true"
       API_WEBSOCKET_STATUS_INTERVAL: "1"
       API_REGENERATE_CONFIG: "true"
@@ -143,7 +143,7 @@ services:
 
     ports:
       - "30380:5520/udp"    # Game traffic (QUIC)
-      - "30381:8080/tcp"    # REST API
+      - "30381:30381/tcp"    # REST API
 
     # UPDATE THIS PATH to your dataset
     volumes:
@@ -180,7 +180,7 @@ services:
       HYTALE_CONTAINER_NAME: hyos-server
       HYTALE_STATE_DIR: /data/.state
       HYTALE_SERVER_HOST: hyos-server
-      HYTALE_SERVER_PORT: "8080"
+      HYTALE_SERVER_PORT: "30381"
       NODE_ENV: production
       COOKIE_SECURE: "false"
 

@@ -288,7 +288,7 @@ The built-in REST API plugin enables remote server management via the HyOS Manag
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
 | `API_ENABLED` | boolean | `true` | Enable the REST API plugin. |
-| `API_PORT` | integer | `8080` | HTTP port for the API. |
+| `API_PORT` | integer | `30381` | HTTP port for the API. |
 | `API_CLIENT_ID` | string | `hyos-manager` | Client ID for API authentication. |
 | `API_CLIENT_SECRET` | string | — | Client secret (password) for API authentication. **Required** if API is enabled. |
 | `API_WEBSOCKET_ENABLED` | boolean | `true` | Enable WebSocket support for real-time updates. |
@@ -298,7 +298,7 @@ The built-in REST API plugin enables remote server management via the HyOS Manag
 ```yaml
 environment:
   API_ENABLED: "true"
-  API_PORT: "8080"
+  API_PORT: "30381"
   API_CLIENT_SECRET: "your-secure-password"
   API_WEBSOCKET_ENABLED: "true"
 ```

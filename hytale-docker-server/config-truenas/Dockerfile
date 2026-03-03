@@ -71,7 +71,7 @@ ENV SKIP_CONFIG_GENERATION=false \
 
 # API Plugin environment variables
 ENV API_ENABLED=true \
-    API_PORT=8080 \
+    API_PORT=30381 \
     API_CLIENT_ID=hyos-manager \
     API_CLIENT_SECRET="" \
     API_WEBSOCKET_ENABLED=true

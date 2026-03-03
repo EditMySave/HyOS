@@ -70,7 +70,7 @@ For the full setup with the Manager UI and API plugin, see the [Quick Start guid
 | Hytale Account | Server hosting access required |
 | RAM | 8 GB minimum, 12 GB+ recommended |
 | Java | 25 (bundled in image, Eclipse Temurin) |
-| Network | UDP 5520 (game), TCP 8080 (API), TCP 3000 (manager UI) |
+| Network | UDP 5520 (game), TCP 30381 (API), TCP 3000 (manager UI) |
 
 ## Architecture
 
@@ -90,7 +90,7 @@ See [Architecture](website/content/docs/architecture/overview.mdx) for diagrams 
 | Image | Port | Protocol | Description |
 |---|---|---|---|
 | `ghcr.io/editmysave/hyos/server` | 5520 | UDP | Hytale game server (QUIC) |
-| `ghcr.io/editmysave/hyos/server` | 8080 | TCP | REST API plugin |
+| `ghcr.io/editmysave/hyos/server` | 30381 | TCP | REST API plugin |
 | `ghcr.io/editmysave/hyos/manager` | 3000 | TCP | Web management UI |
 
 ## Documentation

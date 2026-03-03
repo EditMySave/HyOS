@@ -20,7 +20,7 @@ services:
       - HYTALE_CONTAINER_NAME=hyos-server
       - HYTALE_STATE_DIR=/data/.state
       - HYTALE_SERVER_HOST=host.docker.internal
-      - HYTALE_SERVER_PORT=8080
+      - HYTALE_SERVER_PORT=30381
       - REST_API_CLIENT_ID=hyos-manager
       - REST_API_CLIENT_SECRET=changeme123
       - SESSION_SECRET=a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
