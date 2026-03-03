@@ -51,8 +51,6 @@ ENV PUID=${PUID} \
 
 # Server defaults
 ENV SERVER_PORT=5520 \
-    JAVA_XMS=1G \
-    JAVA_XMX=3G \
     ENABLE_AOT=true \
     DISABLE_SENTRY=false \
     PATCHLINE=release
