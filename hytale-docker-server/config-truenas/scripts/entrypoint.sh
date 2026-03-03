@@ -70,7 +70,7 @@ set -eo pipefail
 #   2. Auto-derive from cgroup memory limit (Docker/TrueNAS/K8s)
 #   3. Dockerfile defaults (1G/3G)
 
-if [[ -n "${JAVA_XMS:-}" ]] && [[ -n "${JAVA_XMX:-}" ]]; then
+if [[ -n "${JAVA_XMS:-}" ]] && [[ "${JAVA_XMS}" != "auto" ]] && [[ -n "${JAVA_XMX:-}" ]] && [[ "${JAVA_XMX}" != "auto" ]]; then
     # User explicitly set both — respect their choice, no auto-derive
     log_info "JVM memory set by environment: -Xms${JAVA_XMS} -Xmx${JAVA_XMX}"
 else

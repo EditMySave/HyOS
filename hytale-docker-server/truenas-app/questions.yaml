@@ -111,18 +111,18 @@ questions:
       attrs:
         - variable: xms
           label: Initial Heap Size (XMS)
-          description: Initial Java heap size (e.g., 4G, 2048M)
+          description: 'Initial Java heap size. Set "auto" to derive from container memory limit, or specify explicitly (e.g., 4G, 2048M).'
           schema:
             type: string
             required: true
-            default: "4G"
+            default: "auto"
         - variable: xmx
           label: Maximum Heap Size (XMX)
-          description: Maximum Java heap size (e.g., 8G, 4096M)
+          description: 'Maximum Java heap size. Set "auto" to derive from container memory limit, or specify explicitly (e.g., 8G, 4096M).'
           schema:
             type: string
             required: true
-            default: "8G"
+            default: "auto"
         - variable: use_zgc
           label: Use ZGC Garbage Collector
           description: Enable ZGC instead of G1GC (recommended for large heaps)
