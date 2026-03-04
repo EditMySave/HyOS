@@ -193,6 +193,9 @@ services:
 
       # Node environment
       NODE_ENV: production
+
+      # Umami Analytics proxy
+      UMAMI_HOST: https://stats.hyos.io
       COOKIE_SECURE: "false"
 
     # Web UI port

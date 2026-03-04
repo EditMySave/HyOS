@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useConfig } from "@/lib/services/config";
 import { useInstalledMods } from "@/lib/services/mods/mods.hooks";
 import { useServerStatus } from "@/lib/services/server";
@@ -15,22 +15,27 @@ declare global {
 }
 
 const UMAMI_WEBSITE_ID = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
-const HEARTBEAT_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
+const HEARTBEAT_INTERVAL = 60 * 60 * 1000; // 1 hour
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "dev";
 
 export function UmamiProvider() {
   const { data: config } = useConfig();
   const { data: serverStatus } = useServerStatus();
   const { data: mods } = useInstalledMods();
   const heartbeatSent = useRef(false);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
 
   const enabled = !!UMAMI_WEBSITE_ID && config?.telemetryEnabled !== false;
 
+  const onScriptLoad = useCallback(() => setScriptLoaded(true), []);
+
   // Heartbeat: send on mount + every 24 hours
   useEffect(() => {
-    if (!enabled || !window.umami) return;
+    if (!enabled || !scriptLoaded) return;
 
     function sendHeartbeat() {
       window.umami?.track("heartbeat", {
+        appVersion: APP_VERSION,
         version: serverStatus?.version ?? "unknown",
         uptime: serverStatus?.uptime ?? 0,
         modsInstalled: mods?.count ?? 0,
@@ -45,11 +50,11 @@ export function UmamiProvider() {
 
     const interval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
     return () => clearInterval(interval);
-  }, [enabled, serverStatus?.version, serverStatus?.uptime, mods?.count]);
+  }, [enabled, scriptLoaded, serverStatus?.version, serverStatus?.uptime, mods?.count]);
 
   // Capture client-side errors
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !scriptLoaded) return;
 
     function handleError(event: ErrorEvent) {
       window.umami?.track("client-error", {
@@ -78,7 +83,7 @@ export function UmamiProvider() {
       window.removeEventListener("error", handleError);
       window.removeEventListener("unhandledrejection", handleRejection);
     };
-  }, [enabled]);
+  }, [enabled, scriptLoaded]);
 
   if (!enabled) return null;
 
@@ -89,6 +94,7 @@ export function UmamiProvider() {
       data-host-url="/stats"
       data-auto-track="false"
       strategy="lazyOnload"
+      onLoad={onScriptLoad}
     />
   );
 }

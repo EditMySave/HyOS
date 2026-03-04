@@ -2,19 +2,23 @@ Pre-Release:
 Update HyOS Website docs with step by step images for Truenas - Animations?
 
 Tesst all the documentation commands
+Update README
+Update hyos.io tab order
 Make sure all commands make sense
 
 Special caracters in config json
 Mobile Breaking
 Low Ram message
 Update Available Message
+whats new section
+version suffix
 
 Disable non working commands in server manager
 
 Make OP has an error
 
 Platform
-Anonymous heartbeat
+Anonymous heartbeat - needs fixing
 Analytics - Anonymous
 Error Reporting
 
