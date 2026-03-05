@@ -64,18 +64,22 @@ async function sendHeartbeat(): Promise<void> {
 }
 
 export function startHeartbeat(): void {
-  isEnabled().then((enabled) => {
-    if (!enabled) {
-      console.log("[heartbeat] Analytics disabled, skipping");
-      return;
-    }
+  isEnabled()
+    .then((enabled) => {
+      if (!enabled) {
+        console.log("[heartbeat] Analytics disabled, skipping");
+        return;
+      }
 
-    ensureInit();
+      ensureInit();
 
-    // Send immediately, then every hour
-    sendHeartbeat();
-    setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
+      // Send immediately, then every hour
+      sendHeartbeat();
+      setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
 
-    console.log("[heartbeat] Started (interval: 1h)");
-  });
+      console.log("[heartbeat] Started (interval: 1h)");
+    })
+    .catch((error) => {
+      console.error("[heartbeat] Failed to start:", error);
+    });
 }

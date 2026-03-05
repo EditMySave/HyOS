@@ -2,7 +2,7 @@ import umami from "@umami/node";
 import { loadConfig } from "@/lib/services/config/config.loader";
 
 const websiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
-const hostUrl = process.env.UMAMI_HOST;
+const hostUrl = process.env.UMAMI_HOST ?? "https://stats.hyos.io";
 
 let initialized = false;
 let enabledCache: boolean | null = null;
