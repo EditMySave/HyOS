@@ -7,14 +7,14 @@ const hostUrl = process.env.UMAMI_HOST;
 let initialized = false;
 let enabledCache: boolean | null = null;
 
-function ensureInit() {
+export function ensureInit() {
   if (!initialized && websiteId && hostUrl) {
     umami.init({ websiteId, hostUrl });
     initialized = true;
   }
 }
 
-async function isEnabled(): Promise<boolean> {
+export async function isEnabled(): Promise<boolean> {
   if (!websiteId || !hostUrl) return false;
   if (enabledCache !== null) return enabledCache;
 
