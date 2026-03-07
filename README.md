@@ -29,11 +29,18 @@ HyOS is a multi-container system for running and managing Hytale dedicated serve
 
 ## Quick Start
 
+<details>
+<summary><strong>Docker Compose (Linux / macOS / Windows)</strong></summary>
+
 Create a `compose.yaml`:
 
 ```yaml
+x-api-config: &api-config
+  API_CLIENT_SECRET: ${API_CLIENT_SECRET:-changeme123}   # change me!
+  API_CLIENT_ID: ${API_CLIENT_ID:-hyos-manager}
+
 services:
-  hytale:
+  server:
     image: ghcr.io/editmysave/hyos/server:latest
     container_name: hyos-server
     user: "568:568"
@@ -41,16 +48,70 @@ services:
     stdin_open: true
     tty: true
     environment:
+      <<: *api-config
       PUID: 568
       PGID: 568
-      JAVA_XMS: 1G
-      JAVA_XMX: 3G
       SERVER_NAME: "My Hytale Server"
+      MAX_PLAYERS: 100
+      DEFAULT_GAMEMODE: Adventure
+      API_ENABLED: "true"
+      API_WEBSOCKET_ENABLED: "true"
+      API_REGENERATE_CONFIG: "true"
     ports:
       - "5520:5520/udp"
+      - "30381:30381/tcp"
     volumes:
       - ./data:/data:rw
+    healthcheck:
+      test: ["CMD", "/opt/scripts/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+
+  manager:
+    image: ghcr.io/editmysave/hyos/manager:latest
+    container_name: hyos-manager
+    user: "568:568"
+    group_add: ["0"]
+    restart: unless-stopped
+    environment:
+      <<: *api-config
+      NODE_ENV: production
+      ADAPTER_TYPE: rest
+      HYTALE_CONTAINER_NAME: server
+      HYTALE_STATE_DIR: /data/.state
+      HYTALE_SERVER_HOST: server
+      HYTALE_SERVER_PORT: "30381"
+      COOKIE_SECURE: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - server
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
 ```
 
 ```bash
@@ -58,7 +119,108 @@ docker compose up -d
 docker logs -f hyos-server  # Complete OAuth when prompted
 ```
 
-For the full setup with the Manager UI and API plugin, see the [Quick Start guide](website/content/docs/getting-started/index.mdx).
+</details>
+
+<details>
+<summary><strong>TrueNAS SCALE (Custom App)</strong></summary>
+
+Create a Custom App in **Apps → Discover → Custom App** with this `compose.yaml`:
+
+```yaml
+x-api-config: &api-config
+  API_CLIENT_SECRET: changeme123   # change me!
+  API_CLIENT_ID: hyos-manager
+
+services:
+  server:
+    image: ghcr.io/editmysave/hyos/server:latest
+    container_name: hyos-server
+    user: "568:568"
+    restart: unless-stopped
+    pull_policy: always
+    stdin_open: true
+    tty: true
+    environment:
+      <<: *api-config
+      PUID: 568
+      PGID: 568
+      JAVA_XMS: 4G
+      JAVA_XMX: 8G
+      SERVER_NAME: "My Hytale Server"
+      MAX_PLAYERS: 100
+      DEFAULT_GAMEMODE: Adventure
+      PATCHLINE: release
+      API_ENABLED: "true"
+      API_WEBSOCKET_ENABLED: "true"
+      API_REGENERATE_CONFIG: "true"
+    ports:
+      - "30380:5520/udp"
+      - "30381:30381/tcp"
+    volumes:
+      - /mnt/pool/apps/hyos/data:/data:rw
+    healthcheck:
+      test: ["CMD", "/opt/scripts/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 12288M
+
+  manager:
+    image: ghcr.io/editmysave/hyos/manager:latest
+    container_name: hyos-manager
+    user: "568:568"
+    group_add: ["0"]
+    restart: unless-stopped
+    pull_policy: always
+    environment:
+      <<: *api-config
+      NODE_ENV: production
+      ADAPTER_TYPE: rest
+      HYTALE_CONTAINER_NAME: server
+      HYTALE_STATE_DIR: /data/.state
+      HYTALE_SERVER_HOST: server
+      HYTALE_SERVER_PORT: "30381"
+      COOKIE_SECURE: "false"
+    ports:
+      - "30382:3000"
+    volumes:
+      - /mnt/pool/apps/hyos/data:/data:rw
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+    depends_on:
+      - server
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+```
+
+> **Note:** Replace `/mnt/pool/apps/hyos/data` with your actual dataset path. For the native TrueNAS app catalog (with the full configuration UI), see [config-truenas/SETUP.md](hytale-docker-server/config-truenas/SETUP.md).
+
+</details>
+
+For the full configuration reference, see the [Quick Start guide](website/content/docs/getting-started/index.mdx).
 
 ## Compatibility
 
@@ -76,22 +238,14 @@ For the full setup with the Manager UI and API plugin, see the [Quick Start guid
 
 HyOS runs two containers that share a single `/data` volume:
 
-| Container | Image | Role |
-|---|---|---|
-| Hytale Server | `ghcr.io/editmysave/hyos/server` | Game server, entrypoint scripts, API plugin |
-| HyOS Manager | `ghcr.io/editmysave/hyos/manager` | Next.js web dashboard, Docker socket for lifecycle control |
+| Container | Image | Ports | Role |
+|---|---|---|---|
+| Hytale Server | `ghcr.io/editmysave/hyos/server` | 5520/UDP, 30381/TCP | Game server (QUIC), REST API plugin |
+| HyOS Manager | `ghcr.io/editmysave/hyos/manager` | 3000/TCP | Next.js web dashboard, Docker socket for lifecycle control |
 
 The server container handles authentication, updates, mod validation, and config generation before launching the Java process. The Manager reads state files from `/data/.state/` and communicates with the embedded API plugin over HTTP.
 
 See [Architecture](website/content/docs/architecture/overview.mdx) for diagrams and data flow. For the security model, see [Security](website/content/docs/security/index.mdx).
-
-## Docker Images
-
-| Image | Port | Protocol | Description |
-|---|---|---|---|
-| `ghcr.io/editmysave/hyos/server` | 5520 | UDP | Hytale game server (QUIC) |
-| `ghcr.io/editmysave/hyos/server` | 30381 | TCP | REST API plugin |
-| `ghcr.io/editmysave/hyos/manager` | 3000 | TCP | Web management UI |
 
 ## Documentation
 
