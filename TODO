@@ -13,6 +13,8 @@ Update Available Message
 whats new section
 version suffix
 
+Add warning if password for API Server is weak or default
+
 Disable non working commands in server manager
 
 Make OP has an error
