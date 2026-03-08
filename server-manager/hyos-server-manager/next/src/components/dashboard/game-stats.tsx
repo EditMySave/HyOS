@@ -16,8 +16,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useConfig } from "@/lib/services/config";
 import { useServerStatus, useServerVersion } from "@/lib/services/server";
 
-function formatUptime(seconds: number | null): string {
-  if (seconds === null) return "N/A";
+function formatUptime(ms: number | null): string {
+  if (ms === null) return "N/A";
+  const seconds = Math.floor(ms / 1000);
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
