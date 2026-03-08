@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "generate:llms": "tsx scripts/generate-llms.ts",
+    "generate:images": "tsx scripts/generate-images.ts",
+    "prebuild": "tsx scripts/generate-llms.ts && tsx scripts/generate-images.ts",
     "build": "next build",
     "start": "next start",
     "lint": "biome check",
@@ -30,7 +33,9 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "sharp": "^0.34.5",
     "tailwindcss": "4.2.1",
+    "tsx": "^4.21.0",
     "typescript": "5.9.3"
   },
   "pnpm": {

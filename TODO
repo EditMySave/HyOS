@@ -1,13 +1,17 @@
 Pre-Release:
 Update HyOS Website docs with step by step images for Truenas - Animations?
 
-Tesst all the documentation commands
-Update README
-Update hyos.io tab order
+Create new world
+
+Have download progress shown
+
+2FA Expiration download failed
+
+Test all the documentation commands
+Update hyos.io tab order - truenas vs custom
 Make sure all commands make sense
 
 Special caracters in config json
-Mobile Breaking
 Low Ram message
 Update Available Message
 whats new section
@@ -20,8 +24,6 @@ Disable non working commands in server manager
 Make OP has an error
 
 Platform
-Anonymous heartbeat - needs fixing
-Analytics - Anonymous
 Error Reporting
 
 Post-Release:

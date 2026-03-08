@@ -3,6 +3,10 @@ import localFont from "next/font/local";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
+import {
+  OrganizationSchema,
+  SoftwareApplicationSchema,
+} from "@/components/seo/json-ld";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,6 +17,26 @@ export const metadata: Metadata = {
   },
   description:
     "Open-source Docker-based Hytale dedicated server management ecosystem with web dashboard, mod support, and automated updates.",
+  keywords: [
+    "Hytale server",
+    "Hytale dedicated server",
+    "Hytale server manager",
+    "Hytale Docker",
+    "HyOS",
+  ],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: "https://hyos.io",
+  },
   openGraph: {
     title: "HyOS - Hytale Server Management",
     description:
@@ -30,8 +54,15 @@ export const metadata: Metadata = {
     images: ["/og-image.png"],
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
+  manifest: "/site.webmanifest",
 };
 
 const inter = Inter({
@@ -53,6 +84,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       suppressHydrationWarning
     >
       <body className="flex min-h-screen flex-col">
+        <OrganizationSchema />
+        <SoftwareApplicationSchema />
         <RootProvider
           theme={{
             enabled: true,

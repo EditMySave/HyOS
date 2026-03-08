@@ -18,7 +18,7 @@ export function Hero() {
             Hytale Server Management
           </p>
           <h1 className="font-cablefied text-3xl leading-[1.1] tracking-tight text-foreground sm:text-4xl lg:text-6xl">
-            About HyOS
+            HyOS - Hytale Server Manager
           </h1>
           <p className="mt-6 max-w-lg text-base leading-relaxed text-muted-foreground">
             A Docker-based Hytale dedicated server management ecosystem. One
