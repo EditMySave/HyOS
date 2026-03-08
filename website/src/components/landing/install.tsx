@@ -219,7 +219,7 @@ function CopyButton({ text }: { text: string }) {
 }
 
 export function Install() {
-  const [activeTab, setActiveTab] = useState<Tab>("docker-compose");
+  const [activeTab, setActiveTab] = useState<Tab>("truenas");
 
   return (
     <section id="install" className="border-b border-border">
@@ -235,20 +235,6 @@ export function Install() {
           <button
             type="button"
             role="tab"
-            aria-selected={activeTab === "docker-compose"}
-            aria-controls="panel-docker-compose"
-            onClick={() => setActiveTab("docker-compose")}
-            className={`px-5 py-2.5 text-sm font-medium transition ${
-              activeTab === "docker-compose"
-                ? "border-b-2 border-foreground text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Docker Compose
-          </button>
-          <button
-            type="button"
-            role="tab"
             aria-selected={activeTab === "truenas"}
             aria-controls="panel-truenas"
             onClick={() => setActiveTab("truenas")}
@@ -260,10 +246,28 @@ export function Install() {
           >
             TrueNAS Custom App
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "docker-compose"}
+            aria-controls="panel-docker-compose"
+            onClick={() => setActiveTab("docker-compose")}
+            className={`px-5 py-2.5 text-sm font-medium transition ${
+              activeTab === "docker-compose"
+                ? "border-b-2 border-foreground text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Docker Compose
+          </button>
         </div>
 
         {activeTab === "docker-compose" && (
-          <div id="panel-docker-compose" role="tabpanel" className="mt-10 grid gap-6 overflow-hidden lg:grid-cols-2">
+          <div
+            id="panel-docker-compose"
+            role="tabpanel"
+            className="mt-10 grid gap-6 overflow-hidden lg:grid-cols-2"
+          >
             <div className="min-w-0 border border-border bg-card">
               <div className="border-b border-border px-5 py-3">
                 <span className="text-sm font-medium text-foreground">
@@ -280,9 +284,7 @@ export function Install() {
 
             <div className="min-w-0 border border-border bg-card">
               <div className="border-b border-border px-5 py-3">
-                <span className="text-sm font-medium text-foreground">
-                  Run
-                </span>
+                <span className="text-sm font-medium text-foreground">Run</span>
               </div>
               <div className="relative p-5">
                 <pre className="overflow-x-auto text-sm leading-relaxed text-muted-foreground">
@@ -300,7 +302,11 @@ export function Install() {
         )}
 
         {activeTab === "truenas" && (
-          <div id="panel-truenas" role="tabpanel" className="mt-10 grid gap-6 overflow-hidden lg:grid-cols-[5fr_7fr]">
+          <div
+            id="panel-truenas"
+            role="tabpanel"
+            className="mt-10 grid gap-6 overflow-hidden lg:grid-cols-[5fr_7fr]"
+          >
             <div className="min-w-0 border border-border bg-card">
               <div className="border-b border-border px-5 py-3">
                 <span className="text-sm font-medium text-foreground">

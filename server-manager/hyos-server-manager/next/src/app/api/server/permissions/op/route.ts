@@ -3,7 +3,7 @@ import { apiRequest } from "@/lib/hytale-api";
 
 interface CommandResponse {
   success: boolean;
-  output: string;
+  output?: string;
 }
 
 export async function POST(request: Request) {

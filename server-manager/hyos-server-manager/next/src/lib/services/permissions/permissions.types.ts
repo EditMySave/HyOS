@@ -21,7 +21,7 @@ export const groupResponseSchema = z.object({
 
 export const commandResponseSchema = z.object({
   success: z.boolean(),
-  output: z.string(),
+  output: z.string().optional(),
 });
 
 export type GroupEntry = z.infer<typeof groupEntrySchema>;
