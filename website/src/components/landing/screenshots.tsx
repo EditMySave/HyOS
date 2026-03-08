@@ -80,11 +80,11 @@ export function Screenshots() {
 
   return (
     <section className="border-b border-border">
-      <div className="mx-auto max-w-7xl px-6 py-24">
+      <div className="mx-auto max-w-7xl px-6 py-12 sm:py-16 lg:py-24">
         <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
           Screenshots
         </p>
-        <h2 className="font-cablefied text-4xl tracking-tight text-foreground">
+        <h2 className="font-cablefied text-3xl tracking-tight text-foreground sm:text-4xl">
           What it looks like
         </h2>
 
@@ -101,6 +101,7 @@ export function Screenshots() {
               <button
                 type="button"
                 onClick={prev}
+                aria-label="Previous screenshot"
                 className="border border-border bg-background/80 p-2 backdrop-blur transition hover:bg-secondary"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -108,6 +109,7 @@ export function Screenshots() {
               <button
                 type="button"
                 onClick={next}
+                aria-label="Next screenshot"
                 className="border border-border bg-background/80 p-2 backdrop-blur transition hover:bg-secondary"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -163,6 +165,8 @@ export function Screenshots() {
               key={i}
               type="button"
               onClick={() => setCurrent(i)}
+              aria-label={`Go to screenshot ${i + 1}`}
+              aria-current={i === current ? "true" : undefined}
               className={`h-1.5 w-1.5 transition ${
                 i === current ? "bg-foreground" : "bg-border"
               }`}

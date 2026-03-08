@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -26,6 +28,7 @@ function GitHubIcon({ className }: { className?: string }) {
 
 export function Navbar() {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-sm">
@@ -33,14 +36,14 @@ export function Navbar() {
         <div className="flex items-stretch justify-between">
           <Link
             href="/"
-            className="flex items-center py-5 pr-10"
+            className="flex items-center py-5 pr-4 md:pr-10"
           >
             <span className="font-cablefied text-2xl leading-none tracking-tight text-foreground">
               HyOS
             </span>
           </Link>
 
-          <nav className="flex items-stretch border-x border-dashed border-border">
+          <nav className="flex items-stretch border-x border-dashed border-border max-md:hidden">
             {NAV_ITEMS.map((item) => {
               const active = pathname === item.href;
               return (
@@ -60,20 +63,56 @@ export function Navbar() {
             })}
           </nav>
 
-          <div className="flex items-center py-5 pl-10">
-            <Link
-              href="https://github.com/editmysave/hyOS"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center whitespace-nowrap text-muted-foreground transition hover:text-foreground"
-              aria-label="GitHub repository"
+          <div className="flex items-center gap-4">
+            <div className="flex items-center py-5 pl-4 md:pl-10">
+              <Link
+                href="https://github.com/editmysave/hyOS"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center whitespace-nowrap text-muted-foreground transition hover:text-foreground"
+                aria-label="GitHub repository"
+              >
+                <GitHubIcon className="h-5 w-5" />
+                <span className="ml-2 max-sm:hidden text-sm font-medium sm:inline">GitHub</span>
+              </Link>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="max-md:flex items-center text-muted-foreground transition hover:text-foreground md:hidden"
+              aria-label="Toggle menu"
             >
-              <GitHubIcon className="h-5 w-5" />
-              <span className="ml-2 text-sm font-medium">GitHub</span>
-            </Link>
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
       </div>
+
+      {mobileOpen && (
+        <div className="border-t border-border bg-background max-md:block md:hidden">
+          <nav className="mx-auto max-w-7xl px-6 py-4">
+            {NAV_ITEMS.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={cn(
+                    "block py-3 text-sm font-medium tracking-tight border-b border-dashed border-border last:border-b-0",
+                    active
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

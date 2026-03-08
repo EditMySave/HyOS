@@ -210,6 +210,7 @@ function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={copy}
+      aria-label={copied ? "Copied" : "Copy to clipboard"}
       className="absolute right-3 top-3 border border-border p-1.5 text-muted-foreground transition hover:bg-secondary hover:text-foreground"
     >
       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -222,17 +223,20 @@ export function Install() {
 
   return (
     <section id="install" className="border-b border-border">
-      <div className="mx-auto max-w-7xl px-6 py-24">
-        <h2 className="font-cablefied text-4xl tracking-tight text-foreground">
+      <div className="mx-auto max-w-7xl px-6 py-12 sm:py-16 lg:py-24">
+        <h2 className="font-cablefied text-3xl tracking-tight text-foreground sm:text-4xl">
           Install HyOS
         </h2>
         <p className="mt-3 text-base text-muted-foreground">
           Choose your deployment method, then follow the steps below.
         </p>
 
-        <div className="mt-6 flex gap-0 border-b border-border">
+        <div className="mt-6 flex gap-0 border-b border-border" role="tablist">
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "docker-compose"}
+            aria-controls="panel-docker-compose"
             onClick={() => setActiveTab("docker-compose")}
             className={`px-5 py-2.5 text-sm font-medium transition ${
               activeTab === "docker-compose"
@@ -244,6 +248,9 @@ export function Install() {
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "truenas"}
+            aria-controls="panel-truenas"
             onClick={() => setActiveTab("truenas")}
             className={`px-5 py-2.5 text-sm font-medium transition ${
               activeTab === "truenas"
@@ -256,8 +263,8 @@ export function Install() {
         </div>
 
         {activeTab === "docker-compose" && (
-          <div className="mt-10 grid gap-6 lg:grid-cols-2">
-            <div className="border border-border bg-card">
+          <div id="panel-docker-compose" role="tabpanel" className="mt-10 grid gap-6 overflow-hidden lg:grid-cols-2">
+            <div className="min-w-0 border border-border bg-card">
               <div className="border-b border-border px-5 py-3">
                 <span className="text-sm font-medium text-foreground">
                   compose.yaml
@@ -271,7 +278,7 @@ export function Install() {
               </div>
             </div>
 
-            <div className="border border-border bg-card">
+            <div className="min-w-0 border border-border bg-card">
               <div className="border-b border-border px-5 py-3">
                 <span className="text-sm font-medium text-foreground">
                   Run
@@ -293,8 +300,8 @@ export function Install() {
         )}
 
         {activeTab === "truenas" && (
-          <div className="mt-10 grid gap-6 lg:grid-cols-[5fr_7fr]">
-            <div className="border border-border bg-card">
+          <div id="panel-truenas" role="tabpanel" className="mt-10 grid gap-6 overflow-hidden lg:grid-cols-[5fr_7fr]">
+            <div className="min-w-0 border border-border bg-card">
               <div className="border-b border-border px-5 py-3">
                 <span className="text-sm font-medium text-foreground">
                   Steps

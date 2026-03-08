@@ -12,12 +12,12 @@ const GLANCE_ROWS = [
 export function Hero() {
   return (
     <section className="border-b border-border">
-      <div className="mx-auto grid max-w-7xl gap-12 px-6 py-24 lg:grid-cols-2 lg:gap-16">
+      <div className="mx-auto grid max-w-7xl gap-8 px-6 py-12 sm:py-16 lg:grid-cols-2 lg:gap-16 lg:py-24">
         <div className="flex flex-col justify-center">
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
             Hytale Server Management
           </p>
-          <h1 className="font-cablefied text-5xl leading-[1.1] tracking-tight text-foreground lg:text-6xl">
+          <h1 className="font-cablefied text-3xl leading-[1.1] tracking-tight text-foreground sm:text-4xl lg:text-6xl">
             About HyOS
           </h1>
           <p className="mt-6 max-w-lg text-base leading-relaxed text-muted-foreground">
@@ -25,7 +25,7 @@ export function Hero() {
             command to deploy, authenticate, and manage your server with a
             full web dashboard, mod support, and automated updates.
           </p>
-          <div className="mt-8 flex gap-4">
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
             <Link
               href="#install"
               className="border border-status-online px-6 py-3 text-sm font-medium text-status-online transition hover:bg-status-online/10"

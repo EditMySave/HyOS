@@ -49,8 +49,8 @@ const FEATURES = [
 export function Features() {
   return (
     <section id="features" className="border-b border-border">
-      <div className="mx-auto max-w-7xl px-6 py-24">
-        <h2 className="font-cablefied text-4xl tracking-tight text-foreground">
+      <div className="mx-auto max-w-7xl px-6 py-12 sm:py-16 lg:py-24">
+        <h2 className="font-cablefied text-3xl tracking-tight text-foreground sm:text-4xl">
           What you can do with it
         </h2>
         <p className="mt-3 text-base text-muted-foreground">

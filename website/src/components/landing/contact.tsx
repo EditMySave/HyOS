@@ -37,8 +37,8 @@ export function Contact() {
 
   return (
     <section id="contact" className="border-b border-border">
-      <div className="mx-auto max-w-7xl px-6 py-24">
-        <h2 className="font-cablefied text-4xl tracking-tight text-foreground">
+      <div className="mx-auto max-w-7xl px-6 py-12 sm:py-16 lg:py-24">
+        <h2 className="font-cablefied text-3xl tracking-tight text-foreground sm:text-4xl">
           Get in touch
         </h2>
         <p className="mt-3 text-base text-muted-foreground">
@@ -142,12 +142,12 @@ export function Contact() {
             </div>
 
             {status === "sent" && (
-              <p className="text-sm text-status-online">
+              <p role="status" className="text-sm text-status-online">
                 Message sent. We&apos;ll get back to you soon.
               </p>
             )}
             {status === "error" && (
-              <p className="text-sm text-destructive">
+              <p role="alert" className="text-sm text-destructive">
                 Failed to send. Please try GitHub Issues instead.
               </p>
             )}
