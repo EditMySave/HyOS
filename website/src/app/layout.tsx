@@ -1,4 +1,5 @@
 import { RootProvider } from "fumadocs-ui/provider/next";
+import Script from "next/script";
 import localFont from "next/font/local";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
@@ -83,6 +84,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       className={`${inter.variable} ${cablefied.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <Script
+          defer
+          src="https://stats.hyos.io/script.js"
+          data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+          strategy="afterInteractive"
+        />
+      </head>
       <body className="flex min-h-screen flex-col">
         <OrganizationSchema />
         <SoftwareApplicationSchema />
