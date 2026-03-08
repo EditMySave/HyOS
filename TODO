@@ -1,29 +1,26 @@
 Pre-Release:
-Update HyOS Website docs with step by step images for Truenas - Animations?
+Documentation - Update HyOS Website docs with step by step images for Truenas - Animations?
+Documentation - Test all the documentation commands
+Documentation - Update hyos.io tab order - truenas vs custom
+Documentation - Make sure all commands make sense
+Docs - Implement Umami Stats
 
-Create new world
+Worlds Tab - Create new world
 
-Have download progress shown
+Dashboard - After first auth have download progress shown
+Dashboard - Don't show crashed in the initial state
+Dashboard - Add warning if password for API Server is weak or default
+Dashboard / Notifications - 2FA Time Expirationm download,failed
+Dashboard / Notifications - Low Ram message
+Dashboard / Notifications - Update Available Message
+Dashboard / Notifications - Whats new section
+Dashboard / Notifications - Add version suffix
 
-2FA Expiration download failed
+Support Special caracters in config json
 
-Test all the documentation commands
-Update hyos.io tab order - truenas vs custom
-Make sure all commands make sense
+Commands Tab - Disable non working commands in server manager
+Commands Tab - Make OP has an error
 
-Special caracters in config json
-Low Ram message
-Update Available Message
-whats new section
-version suffix
-
-Add warning if password for API Server is weak or default
-
-Disable non working commands in server manager
-
-Make OP has an error
-
-Platform
 Error Reporting
 
 Post-Release:
@@ -44,9 +41,6 @@ Modtale error
 Visit website button on mods
 Mods page has gutters
 
-Create new world
-
-
 Config.json confifurator winternode.com
 
 Logs filtering on plugins
@@ -60,7 +54,6 @@ Notifications - Load Failures, Server Crashes
 Automatic installation script? One touch install for docker compose? CURL Download compose?
 My Installations - Link your MineOS installations to your account. Your installation ID is shown during setup.
 SSO
-
 
 
 
