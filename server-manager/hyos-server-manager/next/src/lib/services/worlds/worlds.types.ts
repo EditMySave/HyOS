@@ -121,6 +121,13 @@ export type CreateSlotResponse = z.infer<typeof createSlotResponseSchema>;
 export type RenameSlotRequest = z.infer<typeof renameSlotRequestSchema>;
 export type RenameSlotResponse = z.infer<typeof renameSlotResponseSchema>;
 
+export const worldConfigResponseSchema = z.object({
+  config: z.record(z.string(), z.unknown()),
+  slotName: z.string(),
+});
+
+export type WorldConfigResponse = z.infer<typeof worldConfigResponseSchema>;
+
 // ============================================================================
 // World Config Creation Types
 // ============================================================================

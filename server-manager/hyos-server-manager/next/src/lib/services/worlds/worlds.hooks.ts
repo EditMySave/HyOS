@@ -7,7 +7,9 @@ import {
   deleteSlot,
   getSlots,
   getUniverseFiles,
+  getWorldConfig,
   renameSlot,
+  updateWorldConfig,
 } from "./worlds.service";
 import type {
   ActivateResponse,
@@ -16,6 +18,7 @@ import type {
   FilesResponse,
   RenameSlotResponse,
   SlotsResponse,
+  WorldConfigResponse,
 } from "./worlds.types";
 
 /**
@@ -35,6 +38,36 @@ export function useSlots() {
   return useSWR<SlotsResponse>("universe-slots", () => getSlots(), {
     refreshInterval: 0, // Manual refresh only
     revalidateOnFocus: false,
+  });
+}
+
+/**
+ * Hook to fetch world config for a slot
+ */
+export function useWorldConfig(slotId: string) {
+  return useSWR<WorldConfigResponse>(
+    slotId ? `world-config-${slotId}` : null,
+    () => getWorldConfig(slotId),
+    {
+      revalidateOnFocus: false,
+    },
+  );
+}
+
+/**
+ * Hook to update world config for a slot
+ */
+export function useUpdateWorldConfig() {
+  return useSWRMutation<
+    { success: boolean; message: string },
+    Error,
+    string,
+    { slotId: string; config: CreateWorldConfigRequest }
+  >("update-world-config", async (_, { arg }) => {
+    const result = await updateWorldConfig(arg.slotId, arg.config);
+    await mutate(`world-config-${arg.slotId}`);
+    await mutate("universe-slots");
+    return result;
   });
 }
 

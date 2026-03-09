@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import { Pencil, Settings } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -437,6 +437,15 @@ export default function WorldsPage() {
                       >
                         <Pencil className="size-4" />
                       </button>
+                      {slot.type === "world-config" && (
+                        <Link
+                          href={`/worlds/${slot.id}/edit`}
+                          className="p-1 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                          title="Edit world config"
+                        >
+                          <Settings className="size-4" />
+                        </Link>
+                      )}
                       {slot.type === "world-config" && (
                         <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary">
                           Config

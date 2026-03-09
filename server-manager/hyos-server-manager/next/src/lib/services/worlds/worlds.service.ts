@@ -16,6 +16,8 @@ import {
   slotsResponseSchema,
   type UploadResponse,
   uploadResponseSchema,
+  type WorldConfigResponse,
+  worldConfigResponseSchema,
 } from "./worlds.types";
 
 /**
@@ -181,6 +183,48 @@ export async function deleteSlot(
     throw new Error(
       (error as { error?: string })?.error ??
         `Failed to delete slot: ${response.statusText}`,
+    );
+  }
+
+  return await response.json();
+}
+
+/**
+ * Get world config for a slot
+ */
+export async function getWorldConfig(
+  slotId: string,
+): Promise<WorldConfigResponse> {
+  const response = await fetch(`/api/worlds/slots/${slotId}/config`);
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(
+      (error as { error?: string })?.error ??
+        `Failed to fetch world config: ${response.statusText}`,
+    );
+  }
+  const data = await response.json();
+  return worldConfigResponseSchema.parse(data);
+}
+
+/**
+ * Update world config for a slot
+ */
+export async function updateWorldConfig(
+  slotId: string,
+  config: CreateWorldConfigRequest,
+): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(`/api/worlds/slots/${slotId}/config`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(
+      (error as { error?: string })?.error ??
+        `Failed to update world config: ${response.statusText}`,
     );
   }
 
