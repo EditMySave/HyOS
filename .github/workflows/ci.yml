@@ -261,6 +261,8 @@ jobs:
 
       - name: Build
         working-directory: website
+        env:
+          NEXT_PUBLIC_UMAMI_WEBSITE_ID: ${{ vars.UMAMI_WEBSITE_WEBSITE_ID }}
         run: pnpm build
 
       - name: Deploy to Cloudflare Pages

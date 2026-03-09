@@ -4,7 +4,6 @@
     "date": "2026-03-08",
     "entries": [
       { "type": "feature", "text": "World slot management" },
-      { "type": "fix", "text": "Fixed memory leak in stats polling" }
     ]
   }
 ]
