@@ -34,6 +34,7 @@ function getUniversePath(): string {
 interface SlotMetadata {
   slots: SlotInfo[];
   nextSlotNumber: number;
+  activeWorldName?: string;
 }
 
 async function loadMetadata(): Promise<SlotMetadata> {
@@ -167,7 +168,10 @@ export async function GET() {
       });
     }
 
-    const response = slotsResponseSchema.parse({ slots: slotsWithSize });
+    const response = slotsResponseSchema.parse({
+      slots: slotsWithSize,
+      activeWorldName: metadata.activeWorldName,
+    });
     return NextResponse.json(response);
   } catch (error) {
     console.error("[worlds/slots] Error listing slots:", error);

@@ -6,3 +6,4 @@ export { PlayerCountChart } from "./player-count-chart";
 export { PlayersTable } from "./players-table";
 export { QuickActions } from "./quick-actions";
 export { ServerStats } from "./server-stats";
+export { WhatsNew } from "./whats-new";

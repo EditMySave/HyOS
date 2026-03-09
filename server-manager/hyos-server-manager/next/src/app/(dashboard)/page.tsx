@@ -9,6 +9,7 @@ import {
   PlayersTable,
   QuickActions,
   ServerStats,
+  WhatsNew,
 } from "@/components/dashboard";
 
 export default function Home() {
@@ -25,10 +26,11 @@ export default function Home() {
         <QuickActions />
       </div>
 
-      {/* Middle row: Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Middle row: Charts + What's New */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <PerformanceChart />
         <PlayerCountChart />
+        <WhatsNew />
       </div>
 
       {/* Bottom row: Players Table */}

@@ -282,7 +282,7 @@ export default function WorldsPage() {
         <CardHeader>
           <CardTitle>Upload World Files</CardTitle>
           <CardDescription>
-            Upload a zip file to create a new world slot
+          Upload a zip file to create a new world slot - Should contain the whole /universe folder (universe.zip)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -342,7 +342,14 @@ export default function WorldsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Current Universe Files</CardTitle>
+              <CardTitle>
+                Current Universe Files
+                {slotsData?.activeWorldName && (
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    — {slotsData.activeWorldName}
+                  </span>
+                )}
+              </CardTitle>
               <CardDescription>
                 Browse the current universe folder structure
               </CardDescription>

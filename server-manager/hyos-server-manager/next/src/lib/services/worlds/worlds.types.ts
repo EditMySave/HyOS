@@ -80,6 +80,7 @@ export const slotInfoSchema = z.object({
 
 export const slotsResponseSchema = z.object({
   slots: z.array(slotInfoSchema),
+  activeWorldName: z.string().optional(),
 });
 
 export const activateResponseSchema = z.object({
