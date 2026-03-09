@@ -232,6 +232,45 @@ export async function updateWorldConfig(
 }
 
 /**
+ * Get world config for the active world
+ */
+export async function getActiveWorldConfig(): Promise<WorldConfigResponse> {
+  const response = await fetch("/api/worlds/active/config");
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(
+      (error as { error?: string })?.error ??
+        `Failed to fetch active world config: ${response.statusText}`,
+    );
+  }
+  const data = await response.json();
+  return worldConfigResponseSchema.parse(data);
+}
+
+/**
+ * Update world config for the active world
+ */
+export async function updateActiveWorldConfig(
+  config: CreateWorldConfigRequest,
+): Promise<{ success: boolean; message: string }> {
+  const response = await fetch("/api/worlds/active/config", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(
+      (error as { error?: string })?.error ??
+        `Failed to update active world config: ${response.statusText}`,
+    );
+  }
+
+  return await response.json();
+}
+
+/**
  * Rename a slot
  */
 export async function renameSlot(
