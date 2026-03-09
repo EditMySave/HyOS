@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 import { activateResponseSchema } from "@/lib/services/worlds/worlds.types";
 
 function getBasePath(): string {
@@ -69,12 +70,10 @@ async function copyDirectory(src: string, dest: string): Promise<void> {
   }
 }
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
+export const POST = withErrorTracking(
+  "/api/worlds/slots/[id]/activate",
+  async (_request, ctx) => {
+    const { id } = await ctx!.params;
     const metadata = await loadMetadata();
 
     // Find the slot
@@ -203,14 +202,5 @@ export async function POST(
     });
 
     return NextResponse.json(response);
-  } catch (error) {
-    console.error("[worlds/slots/activate] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to activate slot",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

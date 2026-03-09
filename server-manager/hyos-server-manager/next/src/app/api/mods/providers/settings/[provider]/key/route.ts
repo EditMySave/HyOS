@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 import { modProviderSchema } from "@/lib/services/mods/browser/types";
 import {
   loadProviderSettings,
   resetProviderKey,
 } from "@/lib/services/mods/providers.loader";
 
-export async function DELETE(
-  _request: Request,
-  context: { params: Promise<{ provider: string }> },
-) {
-  try {
-    const { provider } = await context.params;
+export const DELETE = withErrorTracking(
+  "/api/mods/providers/settings/[provider]/key",
+  async (_request, ctx) => {
+    const { provider } = await ctx!.params;
     const parsed = modProviderSchema.safeParse(provider);
     if (!parsed.success) {
       return NextResponse.json(
@@ -21,16 +20,5 @@ export async function DELETE(
     await resetProviderKey(parsed.data);
     const settings = await loadProviderSettings();
     return NextResponse.json(settings);
-  } catch (err) {
-    console.error(
-      "[mods/providers/settings/[provider]/key] DELETE error:",
-      err,
-    );
-    return NextResponse.json(
-      {
-        error: err instanceof Error ? err.message : "Failed to reset API key",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

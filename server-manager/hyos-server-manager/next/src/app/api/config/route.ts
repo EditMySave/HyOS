@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { trackServerError } from "@/lib/services/analytics/umami.server";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 import {
   getConfiguredVia,
   loadConfig,
@@ -20,15 +20,15 @@ function toGetResponse(
   };
 }
 
-export async function GET() {
+export const GET = withErrorTracking("/api/config", async () => {
   const [config, configuredVia] = await Promise.all([
     loadConfig(),
     getConfiguredVia(),
   ]);
   return NextResponse.json(toGetResponse(config, configuredVia));
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withErrorTracking("/api/config", async (request) => {
   try {
     const body = await request.json();
     const parsed = managerConfigUpdateSchema.safeParse(body);
@@ -50,18 +50,9 @@ export async function POST(request: Request) {
       err instanceof Error ? err.message : "Failed to save configuration";
     return NextResponse.json({ error: message }, { status: 400 });
   }
-}
+});
 
-export async function DELETE() {
-  try {
-    await resetConfig();
-    return NextResponse.json({ success: true, message: "Configuration reset" });
-  } catch (err) {
-    console.error("Config reset error:", err);
-    await trackServerError(err, "/api/config/DELETE");
-    return NextResponse.json(
-      { error: "Failed to reset configuration" },
-      { status: 500 },
-    );
-  }
-}
+export const DELETE = withErrorTracking("/api/config", async () => {
+  await resetConfig();
+  return NextResponse.json({ success: true, message: "Configuration reset" });
+});

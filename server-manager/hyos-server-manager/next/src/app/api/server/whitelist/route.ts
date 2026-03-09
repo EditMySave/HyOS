@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiRequest } from "@/lib/hytale-api";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 
 interface WhitelistInfo {
   enabled: boolean;
@@ -7,8 +8,9 @@ interface WhitelistInfo {
   players: string[];
 }
 
-export async function POST(request: Request) {
-  try {
+export const POST = withErrorTracking(
+  "/api/server/whitelist",
+  async (request) => {
     const body = await request.json();
     const { action, players } = body;
 
@@ -25,14 +27,5 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[whitelist] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to manage whitelist",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

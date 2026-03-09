@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 
 function getBasePath(): string {
   const stateDir = process.env.HYTALE_STATE_DIR;
@@ -50,12 +51,10 @@ const renameSlotRequestSchema = z.object({
   name: z.string().min(1).max(100),
 });
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
+export const PATCH = withErrorTracking(
+  "/api/worlds/slots/[id]",
+  async (request, ctx) => {
+    const { id } = await ctx!.params;
     const body = await request.json();
     const parsed = renameSlotRequestSchema.safeParse(body);
 
@@ -84,23 +83,13 @@ export async function PATCH(
       message: `Successfully renamed to ${name}`,
       slot,
     });
-  } catch (error) {
-    console.error("[worlds/slots] Error renaming slot:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to rename slot",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
+export const DELETE = withErrorTracking(
+  "/api/worlds/slots/[id]",
+  async (_request, ctx) => {
+    const { id } = await ctx!.params;
     const metadata = await loadMetadata();
 
     // Find the slot
@@ -128,13 +117,5 @@ export async function DELETE(
       success: true,
       message: `Successfully deleted ${slot.name}`,
     });
-  } catch (error) {
-    console.error("[worlds/slots] Error deleting slot:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to delete slot",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

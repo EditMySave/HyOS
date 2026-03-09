@@ -1,39 +1,27 @@
 import { NextResponse } from "next/server";
 import { apiRequest } from "@/lib/hytale-api";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 
 interface PermissionsInfo {
   permissions: string[];
   effectivePermissions: string[];
 }
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ uuid: string }> },
-) {
-  try {
-    const { uuid } = await params;
+export const GET = withErrorTracking(
+  "/api/player/[uuid]/permissions",
+  async (_request, ctx) => {
+    const { uuid } = await ctx!.params;
     const data = await apiRequest<PermissionsInfo>(
       `/players/${uuid}/permissions`,
     );
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[permissions] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to get permissions",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ uuid: string }> },
-) {
-  try {
-    const { uuid } = await params;
+export const POST = withErrorTracking(
+  "/api/player/[uuid]/permissions",
+  async (request, ctx) => {
+    const { uuid } = await ctx!.params;
     const body = await request.json();
     const { permission } = body;
 
@@ -53,24 +41,13 @@ export async function POST(
     );
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[permissions] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to grant permission",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ uuid: string }> },
-) {
-  try {
-    const { uuid } = await params;
+export const DELETE = withErrorTracking(
+  "/api/player/[uuid]/permissions",
+  async (request, ctx) => {
+    const { uuid } = await ctx!.params;
     const url = new URL(request.url);
     const permission = url.searchParams.get("permission");
 
@@ -87,16 +64,5 @@ export async function DELETE(
     );
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[permissions] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to revoke permission",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

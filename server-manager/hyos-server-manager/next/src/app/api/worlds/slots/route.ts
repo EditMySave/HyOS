@@ -4,6 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import AdmZip from "adm-zip";
 import { NextResponse } from "next/server";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
+import { trackServerWarning } from "@/lib/services/analytics/umami.server";
 import {
   createSlotResponseSchema,
   createWorldConfigRequestSchema,
@@ -35,6 +37,7 @@ interface SlotMetadata {
   slots: SlotInfo[];
   nextSlotNumber: number;
   activeWorldName?: string;
+  activeWorldType?: string;
 }
 
 async function loadMetadata(): Promise<SlotMetadata> {
@@ -171,40 +174,31 @@ export async function GET() {
     const response = slotsResponseSchema.parse({
       slots: slotsWithSize,
       activeWorldName: metadata.activeWorldName,
+      activeWorldType: metadata.activeWorldType,
     });
     return NextResponse.json(response);
   } catch (error) {
     console.error("[worlds/slots] Error listing slots:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to list slots",
-      },
-      { status: 500 },
-    );
+    await trackServerWarning(error, {
+      route: "/api/worlds/slots",
+      url: "/api/worlds/slots",
+      category: "filesystem",
+    });
+    return NextResponse.json({ slots: [], activeWorldName: undefined });
   }
 }
 
-export async function POST(request: Request) {
-  try {
-    const contentType = request.headers.get("content-type") ?? "";
+export const POST = withErrorTracking("/api/worlds/slots", async (request) => {
+  const contentType = request.headers.get("content-type") ?? "";
 
-    // JSON body = create world from config
-    if (contentType.includes("application/json")) {
-      return handleCreateWorldFromConfig(request);
-    }
-
-    // FormData = create slot from uploaded ZIP
-    return handleCreateSlotFromZip(request);
-  } catch (error) {
-    console.error("[worlds/slots] Error creating slot:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to create slot",
-      },
-      { status: 500 },
-    );
+  // JSON body = create world from config
+  if (contentType.includes("application/json")) {
+    return handleCreateWorldFromConfig(request);
   }
-}
+
+  // FormData = create slot from uploaded ZIP
+  return handleCreateSlotFromZip(request);
+});
 
 function generateWorldUUID(): { $binary: string; $type: string } {
   const uuid = crypto.randomUUID().replace(/-/g, "");

@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { apiRequest } from "@/lib/hytale-api";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ uuid: string }> },
-) {
-  try {
-    const { uuid } = await params;
+export const POST = withErrorTracking(
+  "/api/player/[uuid]/inventory/give",
+  async (request, ctx) => {
+    const { uuid } = await ctx!.params;
     const body = await request.json();
     const { itemId, amount, slot } = body;
 
@@ -23,13 +22,5 @@ export async function POST(
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("[give] Error:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to give item",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

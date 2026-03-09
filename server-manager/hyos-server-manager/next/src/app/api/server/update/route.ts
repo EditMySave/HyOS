@@ -2,6 +2,8 @@ import { readFile } from "fs/promises";
 import { NextResponse } from "next/server";
 import { join } from "path";
 import { execInContainer, isDockerAvailable } from "@/lib/docker";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
+import { trackServerWarning } from "@/lib/services/analytics/umami.server";
 import { loadConfig } from "@/lib/services/config/config.loader";
 
 export interface UpdateCheckResult {
@@ -45,24 +47,26 @@ export async function GET() {
     }
   } catch (error) {
     console.error("[update] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to get update status",
-      },
-      { status: 500 },
-    );
+    await trackServerWarning(error, {
+      route: "/api/server/update",
+      url: "/api/server/update",
+      category: "filesystem",
+    });
+    return NextResponse.json({
+      currentVersion: "unknown",
+      latestVersion: "unknown",
+      needsUpdate: false,
+      lastCheck: null,
+      message: "Failed to get update status",
+    } satisfies UpdateCheckResult);
   }
 }
 
 /**
  * POST /api/server/update - Trigger an update check (or return cached state when Docker unavailable)
  */
-export async function POST() {
-  try {
-    const config = await loadConfig();
+export const POST = withErrorTracking("/api/server/update", async () => {
+  const config = await loadConfig();
     const stateDir = config.stateDir || "/data/.state";
     const versionPath = join(stateDir, "version.json");
 
@@ -137,16 +141,4 @@ export async function POST() {
         });
       }
     }
-  } catch (error) {
-    console.error("[update] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to check for updates",
-      },
-      { status: 500 },
-    );
-  }
-}
+});

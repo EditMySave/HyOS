@@ -1,30 +1,25 @@
 import { NextResponse } from "next/server";
 import { apiRequest } from "@/lib/hytale-api";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 
 export interface GroupResponse {
   name: string;
   permissions: string[];
 }
 
-export async function GET() {
-  try {
+export const GET = withErrorTracking(
+  "/api/server/permissions/groups",
+  async () => {
     const data = await apiRequest<GroupResponse[]>(
       "/server/permissions/groups",
     );
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[permissions/groups] Error:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to get groups",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);
 
-export async function POST(request: Request) {
-  try {
+export const POST = withErrorTracking(
+  "/api/server/permissions/groups",
+  async (request) => {
     const body = await request.json();
     const { name, permissions } = body;
 
@@ -41,14 +36,5 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[permissions/groups] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to create group",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

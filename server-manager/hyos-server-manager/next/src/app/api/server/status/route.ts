@@ -3,6 +3,7 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 import { getContainerState, isDockerAvailable } from "@/lib/docker";
 import { apiRequest, checkHealth, clearCache } from "@/lib/hytale-api";
+import { trackServerWarning } from "@/lib/services/analytics/umami.server";
 import { loadConfig } from "@/lib/services/config/config.loader";
 
 interface ApiStatusResponse {
@@ -140,6 +141,11 @@ export async function GET() {
       "[status] API request failed, checking container state:",
       error,
     );
+    await trackServerWarning(error, {
+      route: "/api/server/status",
+      url: "/api/server/status",
+      category: "network",
+    });
     clearCache();
     const state = await getOfflineState();
     return NextResponse.json(stoppedResponse(state));

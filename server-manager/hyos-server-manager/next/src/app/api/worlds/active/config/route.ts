@@ -1,7 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
-import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 import {
   createWorldConfigRequestSchema,
   type SlotInfo,
@@ -23,10 +22,22 @@ function getMetadataPath(): string {
   return path.join(getSlotsPath(), "metadata.json");
 }
 
+function getActiveConfigPath(): string {
+  return path.join(
+    getBasePath(),
+    "Server",
+    "universe",
+    "worlds",
+    "default",
+    "config.json",
+  );
+}
+
 interface SlotMetadata {
   slots: SlotInfo[];
   nextSlotNumber: number;
   activeWorldName?: string;
+  activeWorldType?: string;
 }
 
 async function loadMetadata(): Promise<SlotMetadata> {
@@ -45,31 +56,9 @@ async function saveMetadata(metadata: SlotMetadata): Promise<void> {
   await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 }
 
-export const GET = withErrorTracking(
-  "/api/worlds/slots/[id]/config",
-  async (_request, ctx) => {
-    const { id } = await ctx!.params;
-    const metadata = await loadMetadata();
-
-    const slot = metadata.slots.find((s) => s.id === id);
-    if (!slot) {
-      return NextResponse.json({ error: "Slot not found" }, { status: 404 });
-    }
-
-    if (slot.type !== "world-config") {
-      return NextResponse.json(
-        { error: "Slot is not a world-config type" },
-        { status: 400 },
-      );
-    }
-
-    const configPath = path.join(
-      getSlotsPath(),
-      id,
-      "worlds",
-      "default",
-      "config.json",
-    );
+export async function GET() {
+  try {
+    const configPath = getActiveConfigPath();
 
     let config: Record<string, unknown>;
     try {
@@ -77,33 +66,31 @@ export const GET = withErrorTracking(
       config = JSON.parse(data);
     } catch {
       return NextResponse.json(
-        { error: "Config file not found" },
+        { error: "Active world config not found" },
         { status: 404 },
       );
     }
 
-    return NextResponse.json({ config, slotName: slot.name });
-  },
-);
-
-export const PUT = withErrorTracking(
-  "/api/worlds/slots/[id]/config",
-  async (request, ctx) => {
-    const { id } = await ctx!.params;
     const metadata = await loadMetadata();
 
-    const slot = metadata.slots.find((s) => s.id === id);
-    if (!slot) {
-      return NextResponse.json({ error: "Slot not found" }, { status: 404 });
-    }
+    return NextResponse.json({
+      config,
+      slotName: metadata.activeWorldName ?? "Active World",
+    });
+  } catch (error) {
+    console.error("[worlds/active/config] Error reading config:", error);
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to read config",
+      },
+      { status: 500 },
+    );
+  }
+}
 
-    if (slot.type !== "world-config") {
-      return NextResponse.json(
-        { error: "Slot is not a world-config type" },
-        { status: 400 },
-      );
-    }
-
+export async function PUT(request: Request) {
+  try {
     const body = await request.json();
     const parsed = createWorldConfigRequestSchema.safeParse(body);
 
@@ -115,13 +102,7 @@ export const PUT = withErrorTracking(
     }
 
     const config = parsed.data;
-    const configPath = path.join(
-      getSlotsPath(),
-      id,
-      "worlds",
-      "default",
-      "config.json",
-    );
+    const configPath = getActiveConfigPath();
 
     // Read existing config to preserve UUID and Version
     let existingConfig: Record<string, unknown> = {};
@@ -171,17 +152,28 @@ export const PUT = withErrorTracking(
       Plugin: config.plugin ?? {},
     };
 
+    await fs.mkdir(path.dirname(configPath), { recursive: true });
     await fs.writeFile(configPath, JSON.stringify(worldConfig, null, 2));
 
-    // Update slot name in metadata if it changed
-    if (config.name && config.name !== slot.name) {
-      slot.name = config.name;
+    // Update activeWorldName in metadata if name changed
+    const metadata = await loadMetadata();
+    if (config.name && config.name !== metadata.activeWorldName) {
+      metadata.activeWorldName = config.name;
       await saveMetadata(metadata);
     }
 
     return NextResponse.json({
       success: true,
-      message: `Successfully updated ${slot.name}`,
+      message: `Successfully updated active world config`,
     });
-  },
-);
+  } catch (error) {
+    console.error("[worlds/active/config] Error updating config:", error);
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to update config",
+      },
+      { status: 500 },
+    );
+  }
+}

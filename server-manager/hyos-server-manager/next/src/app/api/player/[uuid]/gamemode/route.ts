@@ -1,37 +1,25 @@
 import { NextResponse } from "next/server";
 import { apiRequest } from "@/lib/hytale-api";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 
 interface GameModeInfo {
   gameMode: string;
   availableModes: string[];
 }
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ uuid: string }> },
-) {
-  try {
-    const { uuid } = await params;
+export const GET = withErrorTracking(
+  "/api/player/[uuid]/gamemode",
+  async (_request, ctx) => {
+    const { uuid } = await ctx!.params;
     const data = await apiRequest<GameModeInfo>(`/players/${uuid}/gamemode`);
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[gamemode] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to get gamemode",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ uuid: string }> },
-) {
-  try {
-    const { uuid } = await params;
+export const POST = withErrorTracking(
+  "/api/player/[uuid]/gamemode",
+  async (request, ctx) => {
+    const { uuid } = await ctx!.params;
     const body = await request.json();
     const { gameMode } = body;
 
@@ -48,14 +36,5 @@ export async function POST(
     });
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[gamemode] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to set gamemode",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

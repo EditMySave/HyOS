@@ -1,5 +1,6 @@
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 import { getProvider } from "@/lib/services/mods/browser/providers";
 import type {
   ModProvider,
@@ -17,9 +18,8 @@ function getModsPath(): string {
   return "/tmp/hytale-data/mods";
 }
 
-export async function GET() {
-  try {
-    const modsPath = getModsPath();
+export const GET = withErrorTracking("/api/mods/updates", async () => {
+  const modsPath = getModsPath();
     const registry = await loadRegistry(modsPath);
     const providerConfig = await loadProviderConfig();
 
@@ -124,18 +124,8 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({
-      updates,
-      checkedAt: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("[mods/updates] Error checking updates:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to check updates",
-      },
-      { status: 500 },
-    );
-  }
-}
+  return NextResponse.json({
+    updates,
+    checkedAt: new Date().toISOString(),
+  });
+});

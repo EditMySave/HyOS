@@ -2,6 +2,8 @@ import fsSync, { promises as fs } from "node:fs";
 import path from "node:path";
 import archiver from "archiver";
 import { NextResponse } from "next/server";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
+import { trackServerWarning } from "@/lib/services/analytics/umami.server";
 
 function getBasePath(): string {
   // Use HYTALE_STATE_DIR to derive base path, default to /data in containers
@@ -58,19 +60,17 @@ export async function GET() {
     return NextResponse.json({ backups });
   } catch (error) {
     console.error("[worlds/backup] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to list backups",
-      },
-      { status: 500 },
-    );
+    await trackServerWarning(error, {
+      route: "/api/worlds/backup",
+      url: "/api/worlds/backup",
+      category: "filesystem",
+    });
+    return NextResponse.json({ backups: [] });
   }
 }
 
-export async function POST() {
-  try {
-    const universePath = getUniversePath();
+export const POST = withErrorTracking("/api/worlds/backup", async () => {
+  const universePath = getUniversePath();
     const backupsPath = getBackupsPath();
 
     // Check if universe folder exists
@@ -112,20 +112,10 @@ export async function POST() {
 
     const stats = await fs.stat(backupPath);
 
-    return NextResponse.json({
-      success: true,
-      message: "Backup created successfully",
-      backupPath,
-      size: stats.size,
-    });
-  } catch (error) {
-    console.error("[worlds/backup] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to create backup",
-      },
-      { status: 500 },
-    );
-  }
-}
+  return NextResponse.json({
+    success: true,
+    message: "Backup created successfully",
+    backupPath,
+    size: stats.size,
+  });
+});

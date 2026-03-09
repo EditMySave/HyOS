@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 import { getProvider } from "@/lib/services/mods/browser/providers";
 import { getNexusModFiles } from "@/lib/services/mods/browser/providers/nexusmods.service";
 import type {
@@ -38,9 +39,8 @@ const installBodySchema = z.object({
   replaceFileName: z.string().optional(),
 });
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
+export const POST = withErrorTracking("/api/mods/install", async (request) => {
+  const body = await request.json();
     const parsed = installBodySchema.safeParse(body);
 
     if (!parsed.success) {
@@ -144,17 +144,8 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      message: `Installed ${safeFileName}`,
-    });
-  } catch (error) {
-    console.error("[mods/install] Error:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Install failed",
-      },
-      { status: 500 },
-    );
-  }
-}
+  return NextResponse.json({
+    success: true,
+    message: `Installed ${safeFileName}`,
+  });
+});

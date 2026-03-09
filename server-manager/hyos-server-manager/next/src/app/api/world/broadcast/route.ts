@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { apiRequest } from "@/lib/hytale-api";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 
-export async function POST(request: Request) {
-  try {
+export const POST = withErrorTracking(
+  "/api/world/broadcast",
+  async (request) => {
     const body = await request.json();
     const { message } = body;
 
@@ -19,13 +21,5 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("[broadcast] Error:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to broadcast",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

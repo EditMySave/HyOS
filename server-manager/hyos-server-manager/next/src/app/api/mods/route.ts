@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { trackServerWarning } from "@/lib/services/analytics/umami.server";
 import { inspectJar } from "@/lib/services/mods/jar-inspector";
 import { loadRegistry } from "@/lib/services/mods/mod-registry";
 
@@ -237,11 +238,11 @@ export async function GET() {
     });
   } catch (error) {
     console.error("[mods] Error listing mods:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to list mods",
-      },
-      { status: 500 },
-    );
+    await trackServerWarning(error, {
+      route: "/api/mods",
+      url: "/api/mods",
+      category: "filesystem",
+    });
+    return NextResponse.json({ mods: [], count: 0 });
   }
 }

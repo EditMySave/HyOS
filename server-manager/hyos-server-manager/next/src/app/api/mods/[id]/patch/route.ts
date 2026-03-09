@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 import { inspectJar, patchJar } from "@/lib/services/mods/jar-inspector";
 
 function getModsPath(): string {
@@ -12,16 +13,13 @@ function getModsPath(): string {
   return "/tmp/hytale-data/mods";
 }
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
 /**
  * Patch a content-only mod JAR by injecting a stub Main class
  */
-export async function POST(_request: Request, { params }: RouteParams) {
-  try {
-    const { id } = await params;
+export const POST = withErrorTracking(
+  "/api/mods/[id]/patch",
+  async (_request, ctx) => {
+    const { id } = await ctx!.params;
     const modsPath = getModsPath();
 
     const safeId = path.basename(id);
@@ -66,13 +64,5 @@ export async function POST(_request: Request, { params }: RouteParams) {
       success: true,
       message: `Patched ${fileName} with stub Main class`,
     });
-  } catch (error) {
-    console.error("[mods/patch] Error patching mod:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to patch mod",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

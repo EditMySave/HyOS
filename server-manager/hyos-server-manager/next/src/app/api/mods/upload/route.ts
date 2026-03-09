@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 import { inspectJar } from "@/lib/services/mods/jar-inspector";
 
 function getModsPath(): string {
@@ -18,9 +19,8 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024;
 /**
  * Upload a mod JAR file
  */
-export async function POST(request: Request) {
-  try {
-    const modsPath = getModsPath();
+export const POST = withErrorTracking("/api/mods/upload", async (request) => {
+  const modsPath = getModsPath();
 
     // Ensure mods directory exists
     await fs.mkdir(modsPath, { recursive: true });
@@ -107,20 +107,11 @@ export async function POST(request: Request) {
       providerSource: null,
     };
 
-    return NextResponse.json({
-      success: true,
-      message: alreadyExists
-        ? `Updated ${safeFileName}`
-        : `Installed ${safeFileName}`,
-      mod,
-    });
-  } catch (error) {
-    console.error("[mods/upload] Error uploading mod:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to upload mod",
-      },
-      { status: 500 },
-    );
-  }
-}
+  return NextResponse.json({
+    success: true,
+    message: alreadyExists
+      ? `Updated ${safeFileName}`
+      : `Installed ${safeFileName}`,
+    mod,
+  });
+});

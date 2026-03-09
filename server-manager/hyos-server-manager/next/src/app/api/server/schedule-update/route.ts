@@ -2,6 +2,8 @@ import { readFile, unlink, writeFile } from "fs/promises";
 import { NextResponse } from "next/server";
 import { join } from "path";
 import { execInContainer, isDockerAvailable } from "@/lib/docker";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
+import { trackServerWarning } from "@/lib/services/analytics/umami.server";
 import { loadConfig } from "@/lib/services/config/config.loader";
 
 export interface ScheduledUpdateStatus {
@@ -41,24 +43,25 @@ export async function GET() {
     }
   } catch (error) {
     console.error("[schedule-update] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to check scheduled update status",
-      },
-      { status: 500 },
-    );
+    await trackServerWarning(error, {
+      route: "/api/server/schedule-update",
+      url: "/api/server/schedule-update",
+      category: "filesystem",
+    });
+    return NextResponse.json({
+      scheduled: false,
+      scheduledAt: null,
+      targetVersion: null,
+      scheduledBy: null,
+    } satisfies ScheduledUpdateStatus);
   }
 }
 
 /**
  * POST /api/server/schedule-update - Schedule update for next restart
  */
-export async function POST() {
-  try {
-    const config = await loadConfig();
+export const POST = withErrorTracking("/api/server/schedule-update", async () => {
+  const config = await loadConfig();
     const stateDir = config.stateDir || "/data/.state";
     const scheduledPath = join(stateDir, ".update-on-restart");
     const versionPath = join(stateDir, "version.json");
@@ -165,24 +168,13 @@ export async function POST() {
         message: "Update scheduled for next restart",
       });
     }
-  } catch (error) {
-    console.error("[schedule-update] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to schedule update",
-      },
-      { status: 500 },
-    );
-  }
-}
+});
 
 /**
  * DELETE /api/server/schedule-update - Cancel scheduled update
  */
-export async function DELETE() {
-  try {
-    const config = await loadConfig();
+export const DELETE = withErrorTracking("/api/server/schedule-update", async () => {
+  const config = await loadConfig();
     const stateDir = config.stateDir || "/data/.state";
     const scheduledPath = join(stateDir, ".update-on-restart");
 
@@ -242,16 +234,4 @@ export async function DELETE() {
         throw error;
       }
     }
-  } catch (error) {
-    console.error("[schedule-update] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to cancel scheduled update",
-      },
-      { status: 500 },
-    );
-  }
-}
+});

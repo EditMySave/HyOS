@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { trackServerWarning } from "@/lib/services/analytics/umami.server";
 import type { FileInfo } from "@/lib/services/worlds/worlds.types";
 
 function getUniversePath(): string {
@@ -82,11 +83,11 @@ export async function GET() {
     });
   } catch (error) {
     console.error("[worlds/files] Error:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to list files",
-      },
-      { status: 500 },
-    );
+    await trackServerWarning(error, {
+      route: "/api/worlds/files",
+      url: "/api/worlds/files",
+      category: "filesystem",
+    });
+    return NextResponse.json({ files: [] });
   }
 }

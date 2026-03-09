@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 import { getProvider } from "@/lib/services/mods/browser/providers";
 import { inspectJar } from "@/lib/services/mods/jar-inspector";
 import { registerMod } from "@/lib/services/mods/mod-registry";
@@ -25,14 +26,9 @@ const linkBodySchema = z.object({
   summary: z.string(),
 });
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function POST(request: Request, { params }: RouteParams) {
-  try {
-    const { id } = await params;
-    const body = await request.json();
+export const POST = withErrorTracking("/api/mods/[id]/link", async (request, ctx) => {
+  const { id } = await ctx!.params;
+  const body = await request.json();
 
     const parsed = linkBodySchema.safeParse(body);
     if (!parsed.success) {
@@ -109,17 +105,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       installedAt: new Date().toISOString(),
     });
 
-    return NextResponse.json({
-      success: true,
-      message: `Linked ${fileName} to ${provider}`,
-    });
-  } catch (error) {
-    console.error("[mods/link] Error linking mod:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to link mod",
-      },
-      { status: 500 },
-    );
-  }
-}
+  return NextResponse.json({
+    success: true,
+    message: `Linked ${fileName} to ${provider}`,
+  });
+});

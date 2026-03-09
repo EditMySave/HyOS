@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiRequest } from "@/lib/hytale-api";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 
 export interface GroupEntry {
   permissions: string[];
@@ -15,18 +16,7 @@ export interface PermissionsData {
   users: Record<string, UserEntry>;
 }
 
-export async function GET() {
-  try {
-    const data = await apiRequest<PermissionsData>("/server/permissions");
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("[permissions] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to get permissions",
-      },
-      { status: 500 },
-    );
-  }
-}
+export const GET = withErrorTracking("/api/server/permissions", async () => {
+  const data = await apiRequest<PermissionsData>("/server/permissions");
+  return NextResponse.json(data);
+});

@@ -1,36 +1,25 @@
 import { NextResponse } from "next/server";
 import { apiRequest } from "@/lib/hytale-api";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 
 interface GroupsInfo {
   groups: string[];
   primaryGroup: string | null;
 }
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ uuid: string }> },
-) {
-  try {
-    const { uuid } = await params;
+export const GET = withErrorTracking(
+  "/api/player/[uuid]/groups",
+  async (_request, ctx) => {
+    const { uuid } = await ctx!.params;
     const data = await apiRequest<GroupsInfo>(`/players/${uuid}/groups`);
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[groups] Error:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to get groups",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ uuid: string }> },
-) {
-  try {
-    const { uuid } = await params;
+export const POST = withErrorTracking(
+  "/api/player/[uuid]/groups",
+  async (request, ctx) => {
+    const { uuid } = await ctx!.params;
     const body = await request.json();
     const { group } = body;
 
@@ -44,14 +33,5 @@ export async function POST(
     });
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[groups] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to add to group",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

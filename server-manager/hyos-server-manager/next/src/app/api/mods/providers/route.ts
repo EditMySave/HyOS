@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 import { getProviders } from "@/lib/services/mods/browser/providers";
 
 /**
  * List available mod providers and their metadata
  */
-export async function GET() {
+export const GET = withErrorTracking("/api/mods/providers", async () => {
   const providers = getProviders();
 
   const list = (["curseforge", "modtale", "nexusmods"] as const).map((id) => {
@@ -17,4 +18,4 @@ export async function GET() {
   });
 
   return NextResponse.json({ providers: list });
-}
+});

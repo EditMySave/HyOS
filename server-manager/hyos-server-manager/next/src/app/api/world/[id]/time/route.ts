@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiRequest } from "@/lib/hytale-api";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 
 interface WorldTimeInfo {
   time: number;
@@ -7,32 +8,19 @@ interface WorldTimeInfo {
   day: number;
 }
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
+export const GET = withErrorTracking(
+  "/api/world/[id]/time",
+  async (_request, ctx) => {
+    const { id } = await ctx!.params;
     const data = await apiRequest<WorldTimeInfo>(`/worlds/${id}/time`);
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[time] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to get world time",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
+export const POST = withErrorTracking(
+  "/api/world/[id]/time",
+  async (request, ctx) => {
+    const { id } = await ctx!.params;
     const body = await request.json();
     const { time, relative } = body;
 
@@ -46,14 +34,5 @@ export async function POST(
     });
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[time] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to set world time",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

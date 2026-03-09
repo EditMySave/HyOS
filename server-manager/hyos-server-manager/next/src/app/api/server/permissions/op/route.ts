@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { apiRequest } from "@/lib/hytale-api";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 
 interface CommandResponse {
   success: boolean;
   output?: string;
 }
 
-export async function POST(request: Request) {
-  try {
+export const POST = withErrorTracking(
+  "/api/server/permissions/op",
+  async (request) => {
     const body = await request.json();
     const { player } = body;
 
@@ -24,20 +26,12 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[permissions/op] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to add operator",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);
 
-export async function DELETE(request: Request) {
-  try {
+export const DELETE = withErrorTracking(
+  "/api/server/permissions/op",
+  async (request) => {
     const url = new URL(request.url);
     const player = url.searchParams.get("player");
 
@@ -54,14 +48,5 @@ export async function DELETE(request: Request) {
     );
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[permissions/op] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to remove operator",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

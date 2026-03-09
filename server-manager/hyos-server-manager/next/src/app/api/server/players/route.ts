@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiRequest, checkHealth } from "@/lib/hytale-api";
+import { trackServerWarning } from "@/lib/services/analytics/umami.server";
 
 interface ApiPlayer {
   uuid: string;
@@ -29,11 +30,11 @@ export async function GET() {
     });
   } catch (error) {
     console.error("[players] Error:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to get players",
-      },
-      { status: 500 },
-    );
+    await trackServerWarning(error, {
+      route: "/api/server/players",
+      url: "/api/server/players",
+      category: "network",
+    });
+    return NextResponse.json({ players: [], count: 0 });
   }
 }

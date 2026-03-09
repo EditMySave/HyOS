@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { getContainerLogs } from "@/lib/docker";
+import { trackServerWarning } from "@/lib/services/analytics/umami.server";
 import { loadConfig } from "@/lib/services/config/config.loader";
 
 /**
@@ -128,6 +129,11 @@ export async function GET() {
     });
   } catch (error) {
     console.error("[mods/loaded] Error parsing loaded plugins:", error);
+    await trackServerWarning(error, {
+      route: "/api/mods/loaded",
+      url: "/api/mods/loaded",
+      category: "docker",
+    });
     return NextResponse.json({ count: 0, plugins: [] });
   }
 }

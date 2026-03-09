@@ -1,30 +1,22 @@
 import { NextResponse } from "next/server";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 import {
   loadProviderSettings,
   saveProviderSettings,
 } from "@/lib/services/mods/providers.loader";
 import { saveProviderSettingsRequestSchema } from "@/lib/services/mods/providers.types";
 
-export async function GET() {
-  try {
+export const GET = withErrorTracking(
+  "/api/mods/providers/settings",
+  async () => {
     const settings = await loadProviderSettings();
     return NextResponse.json(settings);
-  } catch (err) {
-    console.error("[mods/providers/settings] GET error:", err);
-    return NextResponse.json(
-      {
-        error:
-          err instanceof Error
-            ? err.message
-            : "Failed to load provider settings",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);
 
-export async function PUT(request: Request) {
-  try {
+export const PUT = withErrorTracking(
+  "/api/mods/providers/settings",
+  async (request) => {
     const body = await request.json();
     const parsed = saveProviderSettingsRequestSchema.safeParse(body);
     if (!parsed.success) {
@@ -40,9 +32,5 @@ export async function PUT(request: Request) {
     });
     const settings = await loadProviderSettings();
     return NextResponse.json(settings);
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Failed to save provider settings";
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
-}
+  },
+);

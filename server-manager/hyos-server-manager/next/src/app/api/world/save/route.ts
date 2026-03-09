@@ -1,20 +1,11 @@
 import { NextResponse } from "next/server";
 import { apiRequest } from "@/lib/hytale-api";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 
-export async function POST() {
-  try {
-    await apiRequest("/server/save", {
-      method: "POST",
-    });
+export const POST = withErrorTracking("/api/world/save", async () => {
+  await apiRequest("/server/save", {
+    method: "POST",
+  });
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("[save] Error:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to save world",
-      },
-      { status: 500 },
-    );
-  }
-}
+  return NextResponse.json({ success: true });
+});

@@ -9,6 +9,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { getContainerLogs, parseAuthFromLogs } from "@/lib/docker";
+import { trackServerWarning } from "@/lib/services/analytics/umami.server";
 import { loadConfig } from "@/lib/services/config/config.loader";
 
 /**
@@ -110,6 +111,11 @@ export async function GET(request: Request) {
       totalLines = logs.split("\n").length;
     } catch (error) {
       console.error("Failed to get container logs:", error);
+      await trackServerWarning(error, {
+        route: "/api/server/logs",
+        url: "/api/server/logs",
+        category: "docker",
+      });
       // Return empty logs instead of error - logs might just not be available yet
     }
   }

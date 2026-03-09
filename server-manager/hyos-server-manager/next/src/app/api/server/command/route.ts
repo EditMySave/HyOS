@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { apiRequest } from "@/lib/hytale-api";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 
 interface ApiCommandResponse {
   success: boolean;
   output: string;
 }
 
-export async function POST(request: Request) {
-  try {
+export const POST = withErrorTracking(
+  "/api/server/command",
+  async (request) => {
     const body = await request.json();
     const { command } = body;
 
@@ -27,16 +29,5 @@ export async function POST(request: Request) {
       success: data.success,
       output: data.output,
     });
-  } catch (error) {
-    console.error("[command] Error:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        output: "",
-        error:
-          error instanceof Error ? error.message : "Failed to execute command",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

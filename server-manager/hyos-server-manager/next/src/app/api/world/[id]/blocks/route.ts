@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiRequest } from "@/lib/hytale-api";
+import { withErrorTracking } from "@/lib/services/analytics/route-handler";
 
 interface BlockInfo {
   blockId: string;
@@ -9,12 +10,10 @@ interface BlockInfo {
   nbt: string | null;
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
+export const GET = withErrorTracking(
+  "/api/world/[id]/blocks",
+  async (request, ctx) => {
+    const { id } = await ctx!.params;
     const url = new URL(request.url);
     const x = url.searchParams.get("x");
     const y = url.searchParams.get("y");
@@ -32,23 +31,13 @@ export async function GET(
     );
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[blocks] Error:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to get block",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
+export const POST = withErrorTracking(
+  "/api/world/[id]/blocks",
+  async (request, ctx) => {
+    const { id } = await ctx!.params;
     const body = await request.json();
     const { x, y, z, blockId, nbt } = body;
 
@@ -68,13 +57,5 @@ export async function POST(
     );
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("[blocks] Error:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to set block",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

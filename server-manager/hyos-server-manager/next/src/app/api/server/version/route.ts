@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiRequest, checkHealth } from "@/lib/hytale-api";
+import { trackServerWarning } from "@/lib/services/analytics/umami.server";
 
 interface ApiVersionResponse {
   gameVersion: string;
@@ -32,14 +33,16 @@ export async function GET() {
     });
   } catch (error) {
     console.error("[version] Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to get server version",
-      },
-      { status: 500 },
-    );
+    await trackServerWarning(error, {
+      route: "/api/server/version",
+      url: "/api/server/version",
+      category: "network",
+    });
+    return NextResponse.json({
+      gameVersion: "unknown",
+      revisionId: "",
+      patchline: "unknown",
+      protocolVersion: 0,
+    });
   }
 }
