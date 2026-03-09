@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useUpdateWorldConfig, useWorldConfig } from "@/lib/services/worlds";
+import {
+  useActiveWorldConfig,
+  useUpdateActiveWorldConfig,
+  useUpdateWorldConfig,
+  useWorldConfig,
+} from "@/lib/services/worlds";
 import {
   type WorldConfigFormValues,
   WorldConfigForm,
@@ -16,8 +21,20 @@ import {
 export default function EditWorldPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { data, error, isLoading } = useWorldConfig(id);
-  const { trigger: updateConfig, isMutating } = useUpdateWorldConfig();
+  const isActive = id === "active";
+
+  const slotConfig = useWorldConfig(isActive ? "" : id);
+  const activeConfig = useActiveWorldConfig();
+
+  const { data, error, isLoading } = isActive ? activeConfig : slotConfig;
+
+  const { trigger: updateSlotConfig, isMutating: isSlotMutating } =
+    useUpdateWorldConfig();
+  const { trigger: updateActiveConfig, isMutating: isActiveMutating } =
+    useUpdateActiveWorldConfig();
+
+  const isMutating = isActive ? isActiveMutating : isSlotMutating;
+
   const [values, setValues] = useState<WorldConfigFormValues>(
     getDefaultFormValues,
   );
@@ -58,38 +75,41 @@ export default function EditWorldPage() {
       return;
     }
 
+    const configPayload = {
+      name: values.name.trim(),
+      seed: values.seed,
+      worldGen: { type: values.worldGenType, name: values.worldGenName },
+      worldMap: { type: values.worldMapType },
+      chunkStorage: { type: values.chunkStorageType },
+      chunkConfig: parsedChunkConfig,
+      resourceStorage: { type: values.resourceStorageType },
+      isTicking: values.isTicking,
+      isBlockTicking: values.isBlockTicking,
+      isPvpEnabled: values.isPvpEnabled,
+      isFallDamageEnabled: values.isFallDamageEnabled,
+      isGameTimePaused: values.isGameTimePaused,
+      gameTime: values.gameTime,
+      gameplayConfig: values.gameplayConfig,
+      isSpawningNPC: values.isSpawningNPC,
+      isSpawnMarkersEnabled: values.isSpawnMarkersEnabled,
+      isAllNPCFrozen: values.isAllNPCFrozen,
+      isCompassUpdating: values.isCompassUpdating,
+      isSavingPlayers: values.isSavingPlayers,
+      isSavingChunks: values.isSavingChunks,
+      isUnloadingChunks: values.isUnloadingChunks,
+      isObjectiveMarkersEnabled: values.isObjectiveMarkersEnabled,
+      deleteOnUniverseStart: values.deleteOnUniverseStart,
+      deleteOnRemove: values.deleteOnRemove,
+      requiredPlugins: parsedRequiredPlugins,
+      plugin: parsedPlugin,
+    };
+
     try {
-      await updateConfig({
-        slotId: id,
-        config: {
-          name: values.name.trim(),
-          seed: values.seed,
-          worldGen: { type: values.worldGenType, name: values.worldGenName },
-          worldMap: { type: values.worldMapType },
-          chunkStorage: { type: values.chunkStorageType },
-          chunkConfig: parsedChunkConfig,
-          resourceStorage: { type: values.resourceStorageType },
-          isTicking: values.isTicking,
-          isBlockTicking: values.isBlockTicking,
-          isPvpEnabled: values.isPvpEnabled,
-          isFallDamageEnabled: values.isFallDamageEnabled,
-          isGameTimePaused: values.isGameTimePaused,
-          gameTime: values.gameTime,
-          gameplayConfig: values.gameplayConfig,
-          isSpawningNPC: values.isSpawningNPC,
-          isSpawnMarkersEnabled: values.isSpawnMarkersEnabled,
-          isAllNPCFrozen: values.isAllNPCFrozen,
-          isCompassUpdating: values.isCompassUpdating,
-          isSavingPlayers: values.isSavingPlayers,
-          isSavingChunks: values.isSavingChunks,
-          isUnloadingChunks: values.isUnloadingChunks,
-          isObjectiveMarkersEnabled: values.isObjectiveMarkersEnabled,
-          deleteOnUniverseStart: values.deleteOnUniverseStart,
-          deleteOnRemove: values.deleteOnRemove,
-          requiredPlugins: parsedRequiredPlugins,
-          plugin: parsedPlugin,
-        },
-      });
+      if (isActive) {
+        await updateActiveConfig(configPayload);
+      } else {
+        await updateSlotConfig({ slotId: id, config: configPayload });
+      }
       router.push("/worlds");
     } catch (error) {
       console.error("Update world failed:", error);
@@ -97,7 +117,7 @@ export default function EditWorldPage() {
         error instanceof Error ? error.message : "Failed to update world",
       );
     }
-  }, [values, updateConfig, id, router]);
+  }, [values, updateSlotConfig, updateActiveConfig, isActive, id, router]);
 
   if (isLoading) {
     return (
@@ -142,7 +162,9 @@ export default function EditWorldPage() {
             Edit World — {values.name}
           </h1>
           <p className="text-muted-foreground">
-            Modify the world configuration for this slot
+            {isActive
+              ? "Modify the configuration for the active world"
+              : "Modify the world configuration for this slot"}
           </p>
         </div>
       </div>

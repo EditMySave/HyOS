@@ -354,13 +354,22 @@ export default function WorldsPage() {
                 Browse the current universe folder structure
               </CardDescription>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => refreshFiles()}
-              disabled={filesError !== undefined}
-            >
-              Refresh
-            </Button>
+            <div className="flex items-center gap-2">
+              {slotsData?.activeWorldType === "world-config" && (
+                <Button variant="outline" size="icon" asChild title="Edit active world config">
+                  <Link href="/worlds/active/edit">
+                    <Settings className="size-4" />
+                  </Link>
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={() => refreshFiles()}
+                disabled={filesError !== undefined}
+              >
+                Refresh
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
