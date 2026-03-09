@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -5,6 +6,7 @@ import AdmZip from "adm-zip";
 import { NextResponse } from "next/server";
 import {
   createSlotResponseSchema,
+  createWorldConfigRequestSchema,
   type SlotInfo,
   slotsResponseSchema,
 } from "@/lib/services/worlds/worlds.types";
@@ -180,77 +182,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file") as File | null;
+    const contentType = request.headers.get("content-type") ?? "";
 
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    // JSON body = create world from config
+    if (contentType.includes("application/json")) {
+      return handleCreateWorldFromConfig(request);
     }
 
-    if (!file.name.endsWith(".zip")) {
-      return NextResponse.json(
-        { error: "File must be a .zip file" },
-        { status: 400 },
-      );
-    }
-
-    const metadata = await loadMetadata();
-
-    // Check slot limit (max 10 slots)
-    if (metadata.slots.length >= 10) {
-      return NextResponse.json(
-        { error: "Maximum of 10 slots allowed. Please delete a slot first." },
-        { status: 400 },
-      );
-    }
-
-    // Generate next slot ID
-    const slotNumber = metadata.nextSlotNumber;
-    const slotId = `slot-${slotNumber}`;
-    const slotName = `Slot ${slotNumber}`;
-
-    const slotsPath = getSlotsPath();
-    const slotPath = path.join(slotsPath, slotId);
-
-    // Save uploaded file temporarily
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "hyos-upload-"));
-    const tempZipPath = path.join(tempDir, file.name);
-    const arrayBuffer = await file.arrayBuffer();
-    await fs.writeFile(tempZipPath, Buffer.from(arrayBuffer));
-
-    // Extract zip to slot folder
-    const { filesAdded, filesModified } = await extractZip(
-      tempZipPath,
-      slotPath,
-    );
-
-    // Clean up temp file
-    await fs.unlink(tempZipPath).catch(() => {});
-    await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
-
-    // Add slot to metadata
-    const newSlot: SlotInfo = {
-      id: slotId,
-      name: slotName,
-      created: new Date().toISOString(),
-      sourceFile: file.name,
-      autoSaved: false,
-    };
-
-    metadata.slots.push(newSlot);
-    metadata.nextSlotNumber = slotNumber + 1;
-    await saveMetadata(metadata);
-
-    const response = createSlotResponseSchema.parse({
-      success: true,
-      message: `Successfully created ${slotName}`,
-      slotId,
-      slotName,
-      filesAdded,
-      filesModified,
-    });
-
-    return NextResponse.json(response);
+    // FormData = create slot from uploaded ZIP
+    return handleCreateSlotFromZip(request);
   } catch (error) {
     console.error("[worlds/slots] Error creating slot:", error);
     return NextResponse.json(
@@ -260,4 +200,177 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+}
+
+function generateWorldUUID(): { $binary: string; $type: string } {
+  const uuid = crypto.randomUUID().replace(/-/g, "");
+  const bytes = Buffer.from(uuid, "hex");
+  return { $binary: bytes.toString("base64"), $type: "04" };
+}
+
+async function handleCreateWorldFromConfig(request: Request) {
+  const body = await request.json();
+  const parsed = createWorldConfigRequestSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid request" },
+      { status: 400 },
+    );
+  }
+
+  const config = parsed.data;
+  const metadata = await loadMetadata();
+
+  if (metadata.slots.length >= 10) {
+    return NextResponse.json(
+      { error: "Maximum of 10 slots allowed. Please delete a slot first." },
+      { status: 400 },
+    );
+  }
+
+  const slotNumber = metadata.nextSlotNumber;
+  const slotId = `slot-${slotNumber}`;
+
+  const slotsPath = getSlotsPath();
+  const slotPath = path.join(slotsPath, slotId);
+  const configDir = path.join(slotPath, "worlds", "default");
+  await fs.mkdir(configDir, { recursive: true });
+
+  // Build the full Hytale world config.json with PascalCase keys
+  const worldConfig = {
+    Version: 4,
+    UUID: generateWorldUUID(),
+    Seed: config.seed ?? Date.now(),
+    WorldGen: {
+      Type: config.worldGen?.type ?? "Hytale",
+      Name: config.worldGen?.name ?? "Default",
+    },
+    WorldMap: {
+      Type: config.worldMap?.type ?? "WorldGen",
+    },
+    ChunkStorage: {
+      Type: config.chunkStorage?.type ?? "Hytale",
+    },
+    ChunkConfig: config.chunkConfig ?? {},
+    IsTicking: config.isTicking ?? true,
+    IsBlockTicking: config.isBlockTicking ?? true,
+    IsPvpEnabled: config.isPvpEnabled ?? false,
+    IsFallDamageEnabled: config.isFallDamageEnabled ?? true,
+    IsGameTimePaused: config.isGameTimePaused ?? false,
+    GameTime: config.gameTime ?? "0001-01-01T08:26:59.761606129Z",
+    RequiredPlugins: config.requiredPlugins ?? {},
+    IsSpawningNPC: config.isSpawningNPC ?? true,
+    IsSpawnMarkersEnabled: config.isSpawnMarkersEnabled ?? true,
+    IsAllNPCFrozen: config.isAllNPCFrozen ?? false,
+    GameplayConfig: config.gameplayConfig ?? "Default",
+    IsCompassUpdating: config.isCompassUpdating ?? true,
+    IsSavingPlayers: config.isSavingPlayers ?? true,
+    IsSavingChunks: config.isSavingChunks ?? true,
+    IsUnloadingChunks: config.isUnloadingChunks ?? true,
+    IsObjectiveMarkersEnabled: config.isObjectiveMarkersEnabled ?? true,
+    DeleteOnUniverseStart: config.deleteOnUniverseStart ?? false,
+    DeleteOnRemove: config.deleteOnRemove ?? false,
+    ResourceStorage: {
+      Type: config.resourceStorage?.type ?? "Hytale",
+    },
+    Plugin: config.plugin ?? {},
+  };
+
+  await fs.writeFile(
+    path.join(configDir, "config.json"),
+    JSON.stringify(worldConfig, null, 2),
+  );
+
+  const newSlot: SlotInfo = {
+    id: slotId,
+    name: config.name,
+    created: new Date().toISOString(),
+    autoSaved: false,
+    type: "world-config",
+  };
+
+  metadata.slots.push(newSlot);
+  metadata.nextSlotNumber = slotNumber + 1;
+  await saveMetadata(metadata);
+
+  const response = createSlotResponseSchema.parse({
+    success: true,
+    message: `Successfully created ${config.name}`,
+    slotId,
+    slotName: config.name,
+    filesAdded: 1,
+    filesModified: 0,
+  });
+
+  return NextResponse.json(response);
+}
+
+async function handleCreateSlotFromZip(request: Request) {
+  const formData = await request.formData();
+  const file = formData.get("file") as File | null;
+
+  if (!file) {
+    return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  }
+
+  if (!file.name.endsWith(".zip")) {
+    return NextResponse.json(
+      { error: "File must be a .zip file" },
+      { status: 400 },
+    );
+  }
+
+  const metadata = await loadMetadata();
+
+  if (metadata.slots.length >= 10) {
+    return NextResponse.json(
+      { error: "Maximum of 10 slots allowed. Please delete a slot first." },
+      { status: 400 },
+    );
+  }
+
+  const slotNumber = metadata.nextSlotNumber;
+  const slotId = `slot-${slotNumber}`;
+  const slotName = `Slot ${slotNumber}`;
+
+  const slotsPath = getSlotsPath();
+  const slotPath = path.join(slotsPath, slotId);
+
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "hyos-upload-"));
+  const tempZipPath = path.join(tempDir, file.name);
+  const arrayBuffer = await file.arrayBuffer();
+  await fs.writeFile(tempZipPath, Buffer.from(arrayBuffer));
+
+  const { filesAdded, filesModified } = await extractZip(
+    tempZipPath,
+    slotPath,
+  );
+
+  await fs.unlink(tempZipPath).catch(() => {});
+  await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+
+  const newSlot: SlotInfo = {
+    id: slotId,
+    name: slotName,
+    created: new Date().toISOString(),
+    sourceFile: file.name,
+    autoSaved: false,
+    type: "universe",
+  };
+
+  metadata.slots.push(newSlot);
+  metadata.nextSlotNumber = slotNumber + 1;
+  await saveMetadata(metadata);
+
+  const response = createSlotResponseSchema.parse({
+    success: true,
+    message: `Successfully created ${slotName}`,
+    slotId,
+    slotName,
+    filesAdded,
+    filesModified,
+  });
+
+  return NextResponse.json(response);
 }

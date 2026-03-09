@@ -1,6 +1,7 @@
 "use client";
 
 import { Pencil } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -187,12 +188,12 @@ export default function WorldsPage() {
   }, [selectedFile, createSlot, refreshFiles, refreshSlots]);
 
   const handleActivateSlot = useCallback(
-    async (slotId: string, slotName: string) => {
-      if (
-        !confirm(
-          `Activate ${slotName}? The current universe will be auto-saved to a new slot before switching.`,
-        )
-      ) {
+    async (slotId: string, slotName: string, slotType?: string) => {
+      const message =
+        slotType === "world-config"
+          ? `Activate ${slotName}? This will replace only the world configuration. Your universe data will be preserved.`
+          : `Activate ${slotName}? The current universe will be auto-saved to a new slot before switching.`;
+      if (!confirm(message)) {
         return;
       }
 
@@ -384,13 +385,18 @@ export default function WorldsPage() {
                 Manage world slots and switch between them
               </CardDescription>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => refreshSlots()}
-              disabled={slotsError !== undefined}
-            >
-              Refresh
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="default" asChild>
+                <Link href="/worlds/create">Create New World</Link>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => refreshSlots()}
+                disabled={slotsError !== undefined}
+              >
+                Refresh
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -424,6 +430,11 @@ export default function WorldsPage() {
                       >
                         <Pencil className="size-4" />
                       </button>
+                      {slot.type === "world-config" && (
+                        <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary">
+                          Config
+                        </span>
+                      )}
                       {slot.autoSaved && (
                         <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground">
                           Auto-saved
@@ -441,7 +452,9 @@ export default function WorldsPage() {
                     <Button
                       variant="default"
                       size="sm"
-                      onClick={() => handleActivateSlot(slot.id, slot.name)}
+                      onClick={() =>
+                        handleActivateSlot(slot.id, slot.name, slot.type)
+                      }
                       disabled={isActivating || activatingSlotId === slot.id}
                     >
                       {isActivating && activatingSlotId === slot.id
@@ -562,6 +575,7 @@ export default function WorldsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }

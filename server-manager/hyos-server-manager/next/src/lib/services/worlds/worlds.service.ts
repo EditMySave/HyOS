@@ -6,6 +6,7 @@ import {
   backupCreateResponseSchema,
   backupsResponseSchema,
   type CreateSlotResponse,
+  type CreateWorldConfigRequest,
   createSlotResponseSchema,
   type FilesResponse,
   filesResponseSchema,
@@ -95,6 +96,30 @@ export async function getSlots(): Promise<SlotsResponse> {
   }
   const data = await response.json();
   return slotsResponseSchema.parse(data);
+}
+
+/**
+ * Create a new world slot from a config definition
+ */
+export async function createWorldFromConfig(
+  config: CreateWorldConfigRequest,
+): Promise<CreateSlotResponse> {
+  const response = await fetch("/api/worlds/slots", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(
+      (error as { error?: string })?.error ??
+        `Failed to create world: ${response.statusText}`,
+    );
+  }
+
+  const data = await response.json();
+  return createSlotResponseSchema.parse(data);
 }
 
 /**

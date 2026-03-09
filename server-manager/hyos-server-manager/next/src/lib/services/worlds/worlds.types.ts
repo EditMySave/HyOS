@@ -64,6 +64,10 @@ export const backupCreateResponseSchema = z.object({
 // World Slots Types
 // ============================================================================
 
+export const slotTypeSchema = z
+  .enum(["universe", "world-config"])
+  .default("universe");
+
 export const slotInfoSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -71,6 +75,7 @@ export const slotInfoSchema = z.object({
   sourceFile: z.string().optional(),
   autoSaved: z.boolean().optional(),
   size: z.number().optional(),
+  type: slotTypeSchema,
 });
 
 export const slotsResponseSchema = z.object({
@@ -114,3 +119,42 @@ export type ActivateResponse = z.infer<typeof activateResponseSchema>;
 export type CreateSlotResponse = z.infer<typeof createSlotResponseSchema>;
 export type RenameSlotRequest = z.infer<typeof renameSlotRequestSchema>;
 export type RenameSlotResponse = z.infer<typeof renameSlotResponseSchema>;
+
+// ============================================================================
+// World Config Creation Types
+// ============================================================================
+
+export const createWorldConfigRequestSchema = z.object({
+  name: z.string().min(1).max(100),
+  seed: z.number().optional(),
+  worldGen: z
+    .object({ type: z.string(), name: z.string() })
+    .optional(),
+  worldMap: z.object({ type: z.string() }).optional(),
+  chunkStorage: z.object({ type: z.string() }).optional(),
+  chunkConfig: z.record(z.string(), z.unknown()).optional(),
+  resourceStorage: z.object({ type: z.string() }).optional(),
+  isTicking: z.boolean().optional(),
+  isBlockTicking: z.boolean().optional(),
+  isPvpEnabled: z.boolean().optional(),
+  isFallDamageEnabled: z.boolean().optional(),
+  isGameTimePaused: z.boolean().optional(),
+  gameTime: z.string().optional(),
+  gameplayConfig: z.string().optional(),
+  isSpawningNPC: z.boolean().optional(),
+  isSpawnMarkersEnabled: z.boolean().optional(),
+  isAllNPCFrozen: z.boolean().optional(),
+  isCompassUpdating: z.boolean().optional(),
+  isSavingPlayers: z.boolean().optional(),
+  isSavingChunks: z.boolean().optional(),
+  isUnloadingChunks: z.boolean().optional(),
+  isObjectiveMarkersEnabled: z.boolean().optional(),
+  deleteOnUniverseStart: z.boolean().optional(),
+  deleteOnRemove: z.boolean().optional(),
+  requiredPlugins: z.record(z.string(), z.unknown()).optional(),
+  plugin: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type CreateWorldConfigRequest = z.infer<
+  typeof createWorldConfigRequestSchema
+>;

@@ -3,6 +3,7 @@ import useSWRMutation from "swr/mutation";
 import {
   activateSlot,
   createSlot,
+  createWorldFromConfig,
   deleteSlot,
   getSlots,
   getUniverseFiles,
@@ -11,6 +12,7 @@ import {
 import type {
   ActivateResponse,
   CreateSlotResponse,
+  CreateWorldConfigRequest,
   FilesResponse,
   RenameSlotResponse,
   SlotsResponse,
@@ -33,6 +35,22 @@ export function useSlots() {
   return useSWR<SlotsResponse>("universe-slots", () => getSlots(), {
     refreshInterval: 0, // Manual refresh only
     revalidateOnFocus: false,
+  });
+}
+
+/**
+ * Hook to create a world slot from a config definition
+ */
+export function useCreateWorldFromConfig() {
+  return useSWRMutation<
+    CreateSlotResponse,
+    Error,
+    string,
+    CreateWorldConfigRequest
+  >("create-world-config", async (_, { arg }) => {
+    const result = await createWorldFromConfig(arg);
+    await mutate("universe-slots");
+    return result;
   });
 }
 

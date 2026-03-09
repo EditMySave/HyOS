@@ -30,6 +30,7 @@ interface SlotMetadata {
     created: string;
     sourceFile?: string;
     autoSaved?: boolean;
+    type?: "universe" | "world-config";
   }>;
   nextSlotNumber: number;
 }
@@ -94,46 +95,94 @@ export async function POST(
       );
     }
 
+    const slotType = slot.type ?? "universe";
     let autoSavedSlotId: string | undefined;
 
-    // Step 1: Save current universe to a new auto-save slot (if universe exists and has content)
-    try {
-      await fs.access(universePath);
-      const universeEntries = await fs.readdir(universePath);
+    if (slotType === "world-config") {
+      // World-config activation: only replace universe/worlds/default/
+      const worldDefaultPath = path.join(universePath, "worlds", "default");
 
-      // Only create auto-save if universe has content
-      if (universeEntries.length > 0) {
-        const autoSlotNumber = metadata.nextSlotNumber;
-        const autoSlotId = `slot-${autoSlotNumber}`;
-        const autoSlotPath = path.join(slotsPath, autoSlotId);
+      // Step 1: Auto-save current world directory (if it exists and has content)
+      try {
+        await fs.access(worldDefaultPath);
+        const worldEntries = await fs.readdir(worldDefaultPath);
 
-        // Copy current universe to auto-save slot
-        await copyDirectory(universePath, autoSlotPath);
+        if (worldEntries.length > 0) {
+          const autoSlotNumber = metadata.nextSlotNumber;
+          const autoSlotId = `slot-${autoSlotNumber}`;
+          const autoSlotPath = path.join(slotsPath, autoSlotId);
+          const autoSlotWorldDir = path.join(
+            autoSlotPath,
+            "worlds",
+            "default",
+          );
 
-        // Add auto-save slot to metadata
-        metadata.slots.push({
-          id: autoSlotId,
-          name: `Slot ${autoSlotNumber} (Auto-saved)`,
-          created: new Date().toISOString(),
-          autoSaved: true,
-        });
-        metadata.nextSlotNumber = autoSlotNumber + 1;
-        autoSavedSlotId = autoSlotId;
+          await copyDirectory(worldDefaultPath, autoSlotWorldDir);
+
+          metadata.slots.push({
+            id: autoSlotId,
+            name: `Slot ${autoSlotNumber} (Auto-saved)`,
+            created: new Date().toISOString(),
+            autoSaved: true,
+            type: "world-config",
+          });
+          metadata.nextSlotNumber = autoSlotNumber + 1;
+          autoSavedSlotId = autoSlotId;
+        }
+      } catch {
+        // World directory doesn't exist, skip auto-save
       }
-    } catch {
-      // Universe doesn't exist or is empty, skip auto-save
-    }
 
-    // Step 2: Clear active universe
-    try {
-      await fs.rm(universePath, { recursive: true, force: true });
-    } catch {
-      // Ignore if doesn't exist
-    }
-    await fs.mkdir(universePath, { recursive: true });
+      // Step 2: Clear and recreate universe/worlds/default/
+      try {
+        await fs.rm(worldDefaultPath, { recursive: true, force: true });
+      } catch {
+        // Ignore if doesn't exist
+      }
+      await fs.mkdir(worldDefaultPath, { recursive: true });
 
-    // Step 3: Copy slot contents to active universe
-    await copyDirectory(slotPath, universePath);
+      // Step 3: Copy config.json from slot to universe/worlds/default/
+      const slotWorldDir = path.join(slotPath, "worlds", "default");
+      await copyDirectory(slotWorldDir, worldDefaultPath);
+    } else {
+      // Universe activation: replace entire universe (original behavior)
+
+      // Step 1: Save current universe to a new auto-save slot
+      try {
+        await fs.access(universePath);
+        const universeEntries = await fs.readdir(universePath);
+
+        if (universeEntries.length > 0) {
+          const autoSlotNumber = metadata.nextSlotNumber;
+          const autoSlotId = `slot-${autoSlotNumber}`;
+          const autoSlotPath = path.join(slotsPath, autoSlotId);
+
+          await copyDirectory(universePath, autoSlotPath);
+
+          metadata.slots.push({
+            id: autoSlotId,
+            name: `Slot ${autoSlotNumber} (Auto-saved)`,
+            created: new Date().toISOString(),
+            autoSaved: true,
+          });
+          metadata.nextSlotNumber = autoSlotNumber + 1;
+          autoSavedSlotId = autoSlotId;
+        }
+      } catch {
+        // Universe doesn't exist or is empty, skip auto-save
+      }
+
+      // Step 2: Clear active universe
+      try {
+        await fs.rm(universePath, { recursive: true, force: true });
+      } catch {
+        // Ignore if doesn't exist
+      }
+      await fs.mkdir(universePath, { recursive: true });
+
+      // Step 3: Copy slot contents to active universe
+      await copyDirectory(slotPath, universePath);
+    }
 
     // Step 4: Delete the activated slot folder
     await fs.rm(slotPath, { recursive: true, force: true });
