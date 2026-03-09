@@ -31,6 +31,11 @@ export function UmamiProvider() {
         message: event.message?.substring(0, 500) ?? "Unknown error",
         stack: event.error?.stack?.substring(0, 500) ?? "",
         source: event.filename ?? "unknown",
+        url: window.location.pathname,
+        line: event.lineno ?? 0,
+        column: event.colno ?? 0,
+        userAgent: navigator.userAgent.substring(0, 200),
+        timestamp: new Date().toISOString(),
       });
     }
 
@@ -43,6 +48,9 @@ export function UmamiProvider() {
         message: message?.substring(0, 500) ?? "Unhandled rejection",
         stack: stack?.substring(0, 500) ?? "",
         source: "unhandledrejection",
+        url: window.location.pathname,
+        userAgent: navigator.userAgent.substring(0, 200),
+        timestamp: new Date().toISOString(),
       });
     }
 

@@ -15,6 +15,9 @@ export default function GlobalError({
       message: error.message?.substring(0, 500) ?? "Unknown error",
       stack: error.stack?.substring(0, 500) ?? "",
       source: "global-error-boundary",
+      url: window.location.pathname,
+      userAgent: navigator.userAgent.substring(0, 200),
+      timestamp: new Date().toISOString(),
     });
   }, [error]);
 
