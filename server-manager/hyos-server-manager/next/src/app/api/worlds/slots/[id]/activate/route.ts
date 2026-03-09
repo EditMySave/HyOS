@@ -33,6 +33,8 @@ interface SlotMetadata {
     type?: "universe" | "world-config";
   }>;
   nextSlotNumber: number;
+  activeWorldName?: string;
+  activeWorldType?: "universe" | "world-config";
 }
 
 async function loadMetadata(): Promise<SlotMetadata> {
@@ -121,10 +123,10 @@ export async function POST(
 
           metadata.slots.push({
             id: autoSlotId,
-            name: `Slot ${autoSlotNumber} (Auto-saved)`,
+            name: `${metadata.activeWorldName ?? "World"} (Auto-saved)`,
             created: new Date().toISOString(),
             autoSaved: true,
-            type: "world-config",
+            type: metadata.activeWorldType ?? "world-config",
           });
           metadata.nextSlotNumber = autoSlotNumber + 1;
           autoSavedSlotId = autoSlotId;
@@ -161,9 +163,10 @@ export async function POST(
 
           metadata.slots.push({
             id: autoSlotId,
-            name: `Slot ${autoSlotNumber} (Auto-saved)`,
+            name: `${metadata.activeWorldName ?? "Universe"} (Auto-saved)`,
             created: new Date().toISOString(),
             autoSaved: true,
+            type: metadata.activeWorldType ?? "universe",
           });
           metadata.nextSlotNumber = autoSlotNumber + 1;
           autoSavedSlotId = autoSlotId;
@@ -187,8 +190,10 @@ export async function POST(
     // Step 4: Delete the activated slot folder
     await fs.rm(slotPath, { recursive: true, force: true });
 
-    // Step 5: Remove slot from metadata
+    // Step 5: Remove slot from metadata and track active world name
     metadata.slots = metadata.slots.filter((s) => s.id !== id);
+    metadata.activeWorldName = slot.name;
+    metadata.activeWorldType = slotType;
     await saveMetadata(metadata);
 
     const response = activateResponseSchema.parse({

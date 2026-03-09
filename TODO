@@ -1,11 +1,7 @@
 Pre-Release:
 Documentation - Update HyOS Website docs with step by step images for Truenas - Animations?
 Documentation - Test all the documentation commands
-Documentation - Update hyos.io tab order - truenas vs custom
 Documentation - Make sure all commands make sense
-Docs - Implement Umami Stats
-
-Worlds Tab - Create new world
 
 Dashboard - After first auth have download progress shown
 Dashboard - Don't show crashed in the initial state
