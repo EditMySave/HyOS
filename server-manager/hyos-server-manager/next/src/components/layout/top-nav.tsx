@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { NotificationPanel } from "@/components/notifications";
 import { logout } from "@/lib/services/auth";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +62,7 @@ export function TopNav() {
             <span className="text-sm text-muted-foreground">
               v{process.env.NEXT_PUBLIC_APP_VERSION ?? "dev"}
             </span>
+            <NotificationPanel />
             <Button
               variant="ghost"
               size="icon-sm"
