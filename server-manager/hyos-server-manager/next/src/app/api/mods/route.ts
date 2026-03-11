@@ -64,6 +64,39 @@ async function getCrashedModFiles(stateDir: string): Promise<Set<string>> {
 /** Raw build-version pattern: YYYY.MM.DD-hexhash */
 const BUILD_VERSION_PATTERN = /^\d{4}\.\d{2}\.\d{2}-[0-9a-f]+$/;
 
+/** Read the current server version from version.json state file */
+async function getServerVersion(): Promise<string | null> {
+  try {
+    const stateDir = getStateDir();
+    const versionPath = path.join(stateDir, "version.json");
+    const content = await fs.readFile(versionPath, "utf-8");
+    const data = JSON.parse(content);
+    return data.current || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Check if a mod's ServerVersion is a mismatched raw build version.
+ * Returns true only if the ServerVersion is a raw build version AND
+ * does not match the current server version.
+ */
+function isVersionMismatch(
+  modServerVersion: string | null | undefined,
+  currentServerVersion: string | null,
+): boolean {
+  if (!modServerVersion || !BUILD_VERSION_PATTERN.test(modServerVersion)) {
+    return false;
+  }
+  if (!currentServerVersion) {
+    return false; // Can't compare, don't warn
+  }
+  // Normalize: strip leading 'v' prefix if present
+  const normalized = currentServerVersion.replace(/^v/, "");
+  return modServerVersion !== normalized;
+}
+
 /**
  * List all installed mod JAR files
  */
@@ -82,8 +115,9 @@ export async function GET() {
     // Read directory contents
     const entries = await fs.readdir(modsPath, { withFileTypes: true });
 
-    // Load registry once for all mods
+    // Load registry and server version once for all mods
     const registry = await loadRegistry(modsPath);
+    const currentServerVersion = await getServerVersion();
 
     const mods = [];
 
@@ -139,7 +173,7 @@ export async function GET() {
         path: filePath,
         needsPatch,
         isPatched,
-        versionWarning: BUILD_VERSION_PATTERN.test(manifestInfo?.serverVersion ?? ""),
+        versionWarning: isVersionMismatch(manifestInfo?.serverVersion, currentServerVersion),
         disabled: false,
         disableReason: null,
         manifestInfo,
@@ -212,7 +246,7 @@ export async function GET() {
           path: filePath,
           needsPatch,
           isPatched,
-          versionWarning: BUILD_VERSION_PATTERN.test(manifestInfo?.serverVersion ?? ""),
+          versionWarning: isVersionMismatch(manifestInfo?.serverVersion, currentServerVersion),
           disabled: true,
           disableReason,
           manifestInfo,
