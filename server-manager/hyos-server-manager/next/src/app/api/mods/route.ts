@@ -139,6 +139,7 @@ export async function GET() {
         path: filePath,
         needsPatch,
         isPatched,
+        versionWarning: BUILD_VERSION_PATTERN.test(manifestInfo?.serverVersion ?? ""),
         disabled: false,
         disableReason: null,
         manifestInfo,
@@ -191,14 +192,9 @@ export async function GET() {
         const reg = registry[entry.name];
 
         // Determine disable reason
-        let disableReason: "crashed" | "invalid_version" | "manual" = "manual";
+        let disableReason: "crashed" | "manual" = "manual";
         if (crashedFiles.has(entry.name)) {
           disableReason = "crashed";
-        } else if (
-          manifestInfo?.serverVersion &&
-          BUILD_VERSION_PATTERN.test(manifestInfo.serverVersion)
-        ) {
-          disableReason = "invalid_version";
         }
 
         mods.push({
@@ -216,6 +212,7 @@ export async function GET() {
           path: filePath,
           needsPatch,
           isPatched,
+          versionWarning: BUILD_VERSION_PATTERN.test(manifestInfo?.serverVersion ?? ""),
           disabled: true,
           disableReason,
           manifestInfo,

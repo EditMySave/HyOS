@@ -209,11 +209,6 @@ function ModGridCard({
                   Caused Crash
                 </Badge>
               )}
-              {mod.disableReason === "invalid_version" && (
-                <Badge variant="outline" className="border-amber-500 text-amber-500">
-                  Bad Version
-                </Badge>
-              )}
             </>
           ) : isLoaded ? (
             <Badge
@@ -224,6 +219,11 @@ function ModGridCard({
             </Badge>
           ) : (
             <Badge variant="secondary">Inactive</Badge>
+          )}
+          {mod.versionWarning && (
+            <Badge variant="outline" className="border-amber-500 text-amber-500">
+              Bad Version
+            </Badge>
           )}
           {hasUpdate && (
             <Badge
@@ -778,7 +778,7 @@ export function ModInstalled() {
                               Caused Crash
                             </Badge>
                           )}
-                          {mod.disableReason === "invalid_version" && (
+                          {mod.versionWarning && (
                             <Badge
                               variant="outline"
                               className="border-amber-500 text-amber-500 text-[10px] px-1.5 py-0"
@@ -798,6 +798,14 @@ export function ModInstalled() {
                         <div className="flex items-center gap-1.5">
                           <div className="h-2 w-2 rounded-full bg-green-500" />
                           <span className="text-sm">Active</span>
+                          {mod.versionWarning && (
+                            <Badge
+                              variant="outline"
+                              className="border-amber-500 text-amber-500 text-[10px] px-1.5 py-0"
+                            >
+                              Bad Version
+                            </Badge>
+                          )}
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5">

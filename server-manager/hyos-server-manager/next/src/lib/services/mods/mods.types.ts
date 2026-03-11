@@ -31,9 +31,10 @@ export const installedModSchema = z.object({
   path: z.string(),
   needsPatch: z.boolean(),
   isPatched: z.boolean(),
+  versionWarning: z.boolean(),
   disabled: z.boolean(),
   disableReason: z
-    .enum(["manual", "crashed", "invalid_version"])
+    .enum(["manual", "crashed"])
     .nullable(),
   manifestInfo: manifestInfoSchema.optional(),
   dependencies: z.array(z.string()),

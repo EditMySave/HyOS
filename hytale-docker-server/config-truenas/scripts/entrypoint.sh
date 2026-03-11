@@ -245,17 +245,14 @@ validate_mods() {
             warn_count=$((warn_count + 1))
         fi
 
-        # Check ServerVersion — raw build versions (YYYY.MM.DD-hexhash) crash SemverRange.fromString()
+        # Check ServerVersion — warn about raw build versions (YYYY.MM.DD-hexhash)
         local server_ver
         server_ver=$(echo "$manifest" | jq -r '.ServerVersion // empty' 2>/dev/null)
 
         if [[ -n "$server_ver" ]] && [[ "$server_ver" != "*" ]]; then
             if [[ "$server_ver" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}-[0-9a-f]+$ ]]; then
-                log_warn "Mod $name: invalid ServerVersion \"$server_ver\" (raw build version, not a semver range) — quarantining"
-                mkdir -p "${mods_dir}/.disabled"
-                mv "$jar" "${mods_dir}/.disabled/${name}"
+                log_warn "Mod $name: ServerVersion \"$server_ver\" is a raw build version (not a semver range)"
                 warn_count=$((warn_count + 1))
-                continue
             fi
         fi
 

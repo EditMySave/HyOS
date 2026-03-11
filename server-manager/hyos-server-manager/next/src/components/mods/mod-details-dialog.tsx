@@ -219,16 +219,16 @@ export function ModDetailsDialog({
                   {mod.disableReason === "crashed" && (
                     <Badge variant="destructive">Caused Crash</Badge>
                   )}
-                  {mod.disableReason === "invalid_version" && (
-                    <Badge
-                      variant="outline"
-                      className="border-amber-500 text-amber-500"
-                    >
-                      Bad Version
-                    </Badge>
-                  )}
                 </>
               ) : null}
+              {mod.versionWarning && (
+                <Badge
+                  variant="outline"
+                  className="border-amber-500 text-amber-500"
+                >
+                  Bad Version
+                </Badge>
+              )}
               {mod.needsPatch ? (
                 <Badge
                   variant="outline"
