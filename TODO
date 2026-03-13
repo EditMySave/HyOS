@@ -6,10 +6,10 @@ Documentation - Make sure all commands make sense
 Dashboard - After first auth have download progress shown
 Dashboard - Don't show crashed in the initial state
 Dashboard - Add warning if password for API Server is weak or default
+
 Dashboard / Notifications - 2FA Time Expirationm download,failed
 Dashboard / Notifications - Low Ram message
 Dashboard / Notifications - Update Available Message
-Dashboard / Notifications - Whats new section
 Dashboard / Notifications - Add version suffix
 
 Support Special caracters in config json
