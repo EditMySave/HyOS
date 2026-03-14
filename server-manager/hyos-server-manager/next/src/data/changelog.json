@@ -1,5 +1,18 @@
 [
   {
+    "version": "0.0.26",
+    "date": "2026-03-14",
+    "entries": [
+      { "type": "feature", "text": "Global notification panel with bell icon in nav bar" },
+      { "type": "feature", "text": "World configuration editing for existing worlds" },
+      { "type": "feature", "text": "New world creation page" },
+      { "type": "feature", "text": "Error tracking and reporting across API routes" },
+      { "type": "fix", "text": "Fixed Mod version validation and logging" },
+      { "type": "improvement", "text": "Better uptime formatting on dashboard" },
+      { "type": "fix", "text": "Mods page layout padding" }
+    ]
+  },
+  {
     "version": "0.0.25",
     "date": "2026-03-08",
     "entries": [
