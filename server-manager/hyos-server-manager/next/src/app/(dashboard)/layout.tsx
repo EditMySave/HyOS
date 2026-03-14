@@ -2,6 +2,7 @@ import { UmamiProvider } from "@/components/analytics/umami-provider";
 import { NotificationSyncer } from "@/components/notifications";
 import { SubNav } from "@/components/layout/sub-nav";
 import { TopNav } from "@/components/layout/top-nav";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function DashboardLayout({
   children,
@@ -15,6 +16,7 @@ export default function DashboardLayout({
       <TopNav />
       <SubNav />
       <main>{children}</main>
+      <Toaster />
     </>
   );
 }

@@ -12,7 +12,9 @@ import {
   Users,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { mutate } from "swr";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -45,18 +47,13 @@ import {
   useWhitelist,
   useWorlds,
 } from "@/lib/services";
+import { getUnsupportedInfo } from "@/lib/data/command-support";
 import type { InventorySection } from "@/lib/services/player";
 import type { Weather } from "@/lib/services/world";
 import { worldId } from "@/lib/services/world/world.types";
 import { cn } from "@/lib/utils";
 
-interface ResultToast {
-  success: boolean;
-  message: string;
-}
-
 export default function CommandsPage() {
-  const [result, setResult] = useState<ResultToast | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<string>("");
   const [selectedWorldId, setSelectedWorldId] = useState<string>("");
 
@@ -125,11 +122,6 @@ export default function CommandsPage() {
   const { trigger: manageWhitelistMutate, isMutating: isManagingWhitelist } =
     useManageWhitelist();
 
-  const showResult = useCallback((success: boolean, message: string) => {
-    setResult({ success, message });
-    setTimeout(() => setResult(null), 5000);
-  }, []);
-
   useEffect(() => {
     if (players && players.length > 0 && !selectedPlayer) {
       setSelectedPlayer(players[0].uuid);
@@ -181,7 +173,11 @@ export default function CommandsPage() {
     const trimmed = rawCommand.trim();
     try {
       const res = await execCommand(trimmed);
-      showResult(res.success, res.output || res.error || "Command executed");
+      if (res.success) {
+        toast.success(res.output || "Command executed");
+      } else {
+        toast.error(res.error || "Command failed");
+      }
       setRecentCommands((prev) => {
         const next = [trimmed, ...prev.filter((c) => c !== trimmed)].slice(
           0,
@@ -193,12 +189,9 @@ export default function CommandsPage() {
       setRawCommand("");
       setShowSuggestions(false);
     } catch (e) {
-      showResult(
-        false,
-        e instanceof Error ? e.message : "Failed to execute command",
-      );
+      toast.error(e instanceof Error ? e.message : "Failed to execute command");
     }
-  }, [rawCommand, execCommand, showResult]);
+  }, [rawCommand, execCommand]);
 
   const handleTypeaheadKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -256,14 +249,11 @@ export default function CommandsPage() {
         uuid: selectedPlayer,
         reason: kickReason || undefined,
       });
-      showResult(true, "Player kicked");
+      toast.success("Player kicked");
       setKickReason("");
       void mutatePlayers();
     } catch (e) {
-      showResult(
-        false,
-        e instanceof Error ? e.message : "Failed to kick player",
-      );
+      toast.error(e instanceof Error ? e.message : "Failed to kick player");
     }
   };
 
@@ -275,19 +265,21 @@ export default function CommandsPage() {
         reason: banReason || undefined,
         duration: banDuration ? Number.parseInt(banDuration, 10) : undefined,
       });
-      showResult(true, "Player banned");
+      toast.success("Player banned");
       setBanReason("");
       setBanDuration("");
       void mutatePlayers();
     } catch (e) {
-      showResult(
-        false,
-        e instanceof Error ? e.message : "Failed to ban player",
-      );
+      toast.error(e instanceof Error ? e.message : "Failed to ban player");
     }
   };
 
   const handleMute = async () => {
+    const info = getUnsupportedInfo("mute-player");
+    if (info) {
+      toast.warning("Not Implemented", { description: info.reason });
+      return;
+    }
     if (!selectedPlayer) return;
     try {
       await mutePlayer({
@@ -297,14 +289,11 @@ export default function CommandsPage() {
           ? Number.parseInt(muteDuration, 10)
           : undefined,
       });
-      showResult(true, "Player muted");
+      toast.success("Player muted");
       setMuteReason("");
       setMuteDuration("");
     } catch (e) {
-      showResult(
-        false,
-        e instanceof Error ? e.message : "Failed to mute player",
-      );
+      toast.error(e instanceof Error ? e.message : "Failed to mute player");
     }
   };
 
@@ -312,11 +301,11 @@ export default function CommandsPage() {
     if (!broadcastMessage.trim()) return;
     try {
       await broadcast({ message: broadcastMessage.trim() });
-      showResult(true, "Message broadcast");
+      toast.success("Message broadcast");
       setBroadcastMessage("");
       void mutatePlayers();
     } catch (e) {
-      showResult(false, e instanceof Error ? e.message : "Failed to broadcast");
+      toast.error(e instanceof Error ? e.message : "Failed to broadcast");
     }
   };
 
@@ -330,26 +319,33 @@ export default function CommandsPage() {
         z: teleportZ ? Number.parseFloat(teleportZ) : undefined,
         world: teleportWorld || undefined,
       });
-      showResult(true, "Player teleported");
+      toast.success("Player teleported");
     } catch (e) {
-      showResult(false, e instanceof Error ? e.message : "Failed to teleport");
+      toast.error(e instanceof Error ? e.message : "Failed to teleport");
     }
   };
 
   const handleSetGameMode = async () => {
+    const info = getUnsupportedInfo("set-game-mode");
+    if (info) {
+      toast.warning("Not Implemented", { description: info.reason });
+      return;
+    }
     if (!selectedPlayer) return;
     try {
       await setGameModeMutate({ uuid: selectedPlayer, gameMode });
-      showResult(true, "Game mode updated");
+      toast.success("Game mode updated");
     } catch (e) {
-      showResult(
-        false,
-        e instanceof Error ? e.message : "Failed to set game mode",
-      );
+      toast.error(e instanceof Error ? e.message : "Failed to set game mode");
     }
   };
 
   const handleGiveItem = async () => {
+    const info = getUnsupportedInfo("give-item");
+    if (info) {
+      toast.warning("Not Implemented", { description: info.reason });
+      return;
+    }
     if (!selectedPlayer || !giveItemId.trim()) return;
     try {
       await giveItem({
@@ -357,41 +353,47 @@ export default function CommandsPage() {
         itemId: giveItemId.trim(),
         amount: Number.parseInt(giveItemAmount, 10) || 1,
       });
-      showResult(true, "Item given");
+      toast.success("Item given");
       setGiveItemId("");
       setGiveItemAmount("1");
     } catch (e) {
-      showResult(false, e instanceof Error ? e.message : "Failed to give item");
+      toast.error(e instanceof Error ? e.message : "Failed to give item");
     }
   };
 
   const handleClearInventory = async () => {
+    const info = getUnsupportedInfo("clear-inventory");
+    if (info) {
+      toast.warning("Not Implemented", { description: info.reason });
+      return;
+    }
     if (!selectedPlayer) return;
     try {
       await clearInv({
         uuid: selectedPlayer,
         section: clearSection === "all" ? undefined : clearSection,
       });
-      showResult(true, "Inventory cleared");
+      toast.success("Inventory cleared");
     } catch (e) {
-      showResult(
-        false,
+      toast.error(
         e instanceof Error ? e.message : "Failed to clear inventory",
       );
     }
   };
 
   const handleSendMessage = async () => {
+    const info = getUnsupportedInfo("send-message");
+    if (info) {
+      toast.warning("Not Implemented", { description: info.reason });
+      return;
+    }
     if (!selectedPlayer || !privateMessage.trim()) return;
     try {
       await sendMsg({ uuid: selectedPlayer, message: privateMessage.trim() });
-      showResult(true, "Message sent");
+      toast.success("Message sent");
       setPrivateMessage("");
     } catch (e) {
-      showResult(
-        false,
-        e instanceof Error ? e.message : "Failed to send message",
-      );
+      toast.error(e instanceof Error ? e.message : "Failed to send message");
     }
   };
 
@@ -399,11 +401,10 @@ export default function CommandsPage() {
     if (!selectedPlayer || !permission.trim()) return;
     try {
       await grantPerm({ uuid: selectedPlayer, permission: permission.trim() });
-      showResult(true, "Permission granted");
+      toast.success("Permission granted");
       setPermission("");
     } catch (e) {
-      showResult(
-        false,
+      toast.error(
         e instanceof Error ? e.message : "Failed to grant permission",
       );
     }
@@ -416,46 +417,55 @@ export default function CommandsPage() {
         uuid: selectedPlayer,
         group: groupName.trim(),
       });
-      showResult(true, "Added to group");
+      toast.success("Added to group");
       setGroupName("");
     } catch (e) {
-      showResult(
-        false,
-        e instanceof Error ? e.message : "Failed to add to group",
-      );
+      toast.error(e instanceof Error ? e.message : "Failed to add to group");
     }
   };
 
   const handleSetTime = async () => {
+    const info = getUnsupportedInfo("set-world-time");
+    if (info) {
+      toast.warning("Not Implemented", { description: info.reason });
+      return;
+    }
     if (!selectedWorldId || !worldTime) return;
     try {
       await setTime({
         worldId: selectedWorldId,
         time: Number.parseInt(worldTime, 10),
       });
-      showResult(true, "World time set");
+      toast.success("World time set");
     } catch (e) {
-      showResult(false, e instanceof Error ? e.message : "Failed to set time");
+      toast.error(e instanceof Error ? e.message : "Failed to set time");
     }
   };
 
   const handleSetWeather = async () => {
+    const info = getUnsupportedInfo("set-weather");
+    if (info) {
+      toast.warning("Not Implemented", { description: info.reason });
+      return;
+    }
     if (!selectedWorldId) return;
     try {
       await setWeather({
         worldId: selectedWorldId,
         weather: worldWeather,
       });
-      showResult(true, "Weather set");
+      toast.success("Weather set");
     } catch (e) {
-      showResult(
-        false,
-        e instanceof Error ? e.message : "Failed to set weather",
-      );
+      toast.error(e instanceof Error ? e.message : "Failed to set weather");
     }
   };
 
   const handleSetBlock = async () => {
+    const info = getUnsupportedInfo("set-block");
+    if (info) {
+      toast.warning("Not Implemented", { description: info.reason });
+      return;
+    }
     if (!selectedWorldId || !blockX || !blockY || !blockZ || !blockId.trim())
       return;
     try {
@@ -466,22 +476,32 @@ export default function CommandsPage() {
         z: Number.parseInt(blockZ, 10),
         blockId: blockId.trim(),
       });
-      showResult(true, "Block set");
+      toast.success("Block set");
     } catch (e) {
-      showResult(false, e instanceof Error ? e.message : "Failed to set block");
+      toast.error(e instanceof Error ? e.message : "Failed to set block");
     }
   };
 
   const handleSave = async () => {
+    const info = getUnsupportedInfo("save-world");
+    if (info) {
+      toast.warning("Not Implemented", { description: info.reason });
+      return;
+    }
     try {
       await save();
-      showResult(true, "World saved");
+      toast.success("World saved");
     } catch (e) {
-      showResult(false, e instanceof Error ? e.message : "Failed to save");
+      toast.error(e instanceof Error ? e.message : "Failed to save");
     }
   };
 
   const handleWhitelist = async () => {
+    const info = getUnsupportedInfo("manage-whitelist");
+    if (info) {
+      toast.warning("Not Implemented", { description: info.reason });
+      return;
+    }
     const playersList = whitelistPlayers
       .split(",")
       .map((p) => p.trim())
@@ -496,12 +516,11 @@ export default function CommandsPage() {
         action: whitelistAction,
         players: playersList.length > 0 ? playersList : undefined,
       });
-      showResult(true, "Whitelist updated");
+      toast.success("Whitelist updated");
       setWhitelistPlayers("");
       void mutateWhitelist();
     } catch (e) {
-      showResult(
-        false,
+      toast.error(
         e instanceof Error ? e.message : "Failed to update whitelist",
       );
     }
@@ -537,22 +556,6 @@ export default function CommandsPage() {
           Full control over your Hytale server
         </p>
       </div>
-
-      {result ? (
-        <div
-          className={cn(
-            "fixed top-6 right-6 z-50 max-w-md border p-4 shadow-lg",
-            result.success
-              ? "border-status-online/40 bg-status-online/10 text-status-online"
-              : "border-destructive/40 bg-destructive/10 text-destructive",
-          )}
-        >
-          <div className="font-medium">
-            {result.success ? "Success" : "Error"}
-          </div>
-          <div className="mt-1 text-sm opacity-90">{result.message}</div>
-        </div>
-      ) : null}
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -795,8 +798,9 @@ export default function CommandsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-muted-foreground text-sm">
+              <label className="text-muted-foreground text-sm flex items-center gap-2">
                 Mute Player
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Not Implemented</Badge>
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <Input
@@ -910,8 +914,9 @@ export default function CommandsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-muted-foreground text-sm">
+              <label className="text-muted-foreground text-sm flex items-center gap-2">
                 Set Game Mode
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Not Implemented</Badge>
               </label>
               <div className="flex gap-2">
                 <select
@@ -939,7 +944,10 @@ export default function CommandsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-muted-foreground text-sm">Give Item</label>
+              <label className="text-muted-foreground text-sm flex items-center gap-2">
+                Give Item
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Not Implemented</Badge>
+              </label>
               <div className="grid grid-cols-3 gap-2">
                 <Input
                   value={giveItemId}
@@ -969,8 +977,9 @@ export default function CommandsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-muted-foreground text-sm">
+              <label className="text-muted-foreground text-sm flex items-center gap-2">
                 Clear Inventory
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Not Implemented</Badge>
               </label>
               <div className="flex gap-2">
                 <select
@@ -1002,8 +1011,9 @@ export default function CommandsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-muted-foreground text-sm">
+              <label className="text-muted-foreground text-sm flex items-center gap-2">
                 Send Private Message
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Not Implemented</Badge>
               </label>
               <div className="flex gap-2">
                 <Input
@@ -1114,8 +1124,9 @@ export default function CommandsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-muted-foreground text-sm">
+              <label className="text-muted-foreground text-sm flex items-center gap-2">
                 Set World Time
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Not Implemented</Badge>
               </label>
               <div className="flex gap-2">
                 <Input
@@ -1153,8 +1164,9 @@ export default function CommandsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-muted-foreground text-sm">
+              <label className="text-muted-foreground text-sm flex items-center gap-2">
                 Set Weather
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Not Implemented</Badge>
               </label>
               <div className="flex gap-2">
                 <select
@@ -1181,7 +1193,10 @@ export default function CommandsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-muted-foreground text-sm">Set Block</label>
+              <label className="text-muted-foreground text-sm flex items-center gap-2">
+                Set Block
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Not Implemented</Badge>
+              </label>
               <div className="grid grid-cols-3 gap-2">
                 <Input
                   type="number"
@@ -1241,8 +1256,9 @@ export default function CommandsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-muted-foreground text-sm">
+              <label className="text-muted-foreground text-sm flex items-center gap-2">
                 Save Server
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Not Implemented</Badge>
               </label>
               <Button
                 variant="outline"
@@ -1259,8 +1275,9 @@ export default function CommandsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-muted-foreground text-sm">
+              <label className="text-muted-foreground text-sm flex items-center gap-2">
                 Manage Whitelist
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Not Implemented</Badge>
               </label>
               {whitelist ? (
                 <div className="mb-3 border border-border bg-background-secondary px-2 py-2 text-sm">

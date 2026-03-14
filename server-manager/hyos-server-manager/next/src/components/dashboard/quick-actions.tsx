@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { mutate } from "swr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +39,7 @@ import {
   useStopServer,
   useUpdateStatus,
 } from "@/lib/services/server";
+import { getUnsupportedInfo } from "@/lib/data/command-support";
 import { useBroadcast, useSave } from "@/lib/services/world";
 
 export function QuickActions() {
@@ -77,36 +79,45 @@ export function QuickActions() {
   const handleStart = async () => {
     try {
       await startServer();
+      toast.success("Server starting");
       void mutateStatus();
     } catch (error) {
-      console.error("Failed to start server:", error);
+      toast.error("Failed to start server");
     }
   };
 
   const handleStop = async () => {
     try {
       await stopServer();
+      toast.success("Server stopping");
       void mutateStatus();
     } catch (error) {
-      console.error("Failed to stop server:", error);
+      toast.error("Failed to stop server");
     }
   };
 
   const handleRestart = async () => {
     try {
       await restartServer();
+      toast.success("Server restarting");
       void mutateStatus();
     } catch (error) {
-      console.error("Failed to restart server:", error);
+      toast.error("Failed to restart server");
     }
   };
 
   const handleBackup = async () => {
+    const info = getUnsupportedInfo("save-world");
+    if (info) {
+      toast.warning("Not Implemented", { description: info.reason });
+      return;
+    }
     try {
       await save();
+      toast.success("Backup started");
       void mutateStatus();
     } catch (error) {
-      console.error("Failed to backup:", error);
+      toast.error("Failed to backup");
     }
   };
 
@@ -114,12 +125,13 @@ export function QuickActions() {
     if (!broadcastMessage.trim()) return;
     try {
       await broadcast({ message: broadcastMessage });
+      toast.success("Message broadcast");
       setBroadcastMessage("");
       setBroadcastOpen(false);
       void mutateStatus();
       mutate("players");
     } catch (error) {
-      console.error("Failed to broadcast:", error);
+      toast.error("Failed to broadcast");
     }
   };
 
@@ -128,26 +140,28 @@ export function QuickActions() {
       await checkForUpdates();
       void mutateUpdateStatus();
     } catch (error) {
-      console.error("Failed to check for updates:", error);
+      toast.error("Failed to check for updates");
     }
   };
 
   const handleScheduleUpdate = async () => {
     try {
       await scheduleUpdate();
+      toast.success("Update scheduled");
       void mutateScheduledUpdate();
       void mutateUpdateStatus();
     } catch (error) {
-      console.error("Failed to schedule update:", error);
+      toast.error("Failed to schedule update");
     }
   };
 
   const handleCancelScheduledUpdate = async () => {
     try {
       await cancelScheduledUpdate();
+      toast.success("Scheduled update cancelled");
       void mutateScheduledUpdate();
     } catch (error) {
-      console.error("Failed to cancel scheduled update:", error);
+      toast.error("Failed to cancel scheduled update");
     }
   };
 
