@@ -8,14 +8,11 @@ Dashboard - Don't show crashed in the initial state
 Dashboard - Add warning if password for API Server is weak or default
 
 Dashboard / Notifications - 2FA Time Expirationm download,failed
-Dashboard / Notifications - Low Ram message
-Dashboard / Notifications - Update Available Message
 Dashboard / Notifications - Add version suffix
 
 Support Special caracters in config json
 
 Commands Tab - Disable non working commands in server manager
-Commands Tab - Make OP has an error
 
 Error Reporting
 

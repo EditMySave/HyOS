@@ -183,6 +183,27 @@ check_memory() {
     return 0
 }
 
+# Check 6: Total memory allocation (warning if < 8GB)
+check_memory_total() {
+    if command -v free > /dev/null 2>&1; then
+        local mem_total_kb
+        mem_total_kb=$(free | awk '/Mem:/ {print $2}')
+
+        if [[ $mem_total_kb -lt 8388608 ]]; then
+            local mem_total_gb
+            mem_total_gb=$(awk "BEGIN {printf \"%.1f\", $mem_total_kb / 1048576}")
+            checks+=("$(json_object "name" "memory_total" "status" "warn" "message" "Low total RAM: ${mem_total_gb}GB allocated (8GB+ recommended)")")
+        else
+            local mem_total_gb
+            mem_total_gb=$(awk "BEGIN {printf \"%.1f\", $mem_total_kb / 1048576}")
+            checks+=("$(json_object "name" "memory_total" "status" "pass" "message" "Total RAM: ${mem_total_gb}GB")")
+        fi
+    else
+        checks+=("$(json_object "name" "memory_total" "status" "skip" "message" "Total memory check unavailable")")
+    fi
+    return 0
+}
+
 # =============================================================================
 # Run Checks
 # =============================================================================
@@ -193,6 +214,7 @@ check_port
 check_data
 check_jar
 check_memory
+check_memory_total
 
 # =============================================================================
 # Output Results
