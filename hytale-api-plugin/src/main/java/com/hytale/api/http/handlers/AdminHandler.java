@@ -133,7 +133,7 @@ public final class AdminHandler {
 
         try {
             // Disconnect the player through their packet handler
-            playerRef.getPacketHandler().disconnect(reason);
+            playerRef.getPacketHandler().disconnect(Message.raw(reason));
             auditLog("KICK", identity, "player=" + playerRef.getUsername() + ", reason=" + reason);
 
             return GSON.toJson(new AdminActionResponse(
@@ -169,7 +169,7 @@ public final class AdminHandler {
             // Try to find and kick player if online
             PlayerRef playerRef = findPlayer(banRequest.player());
             if (playerRef != null) {
-                playerRef.getPacketHandler().disconnect("Banned: " + reason);
+                playerRef.getPacketHandler().disconnect(Message.raw("Banned: " + reason));
             }
 
             // Note: Actual ban persistence would require access to server's ban system
