@@ -2,22 +2,21 @@ Pre-Release:
 Documentation - Update HyOS Website docs with step by step images for Truenas - Animations?
 Documentation - Test all the documentation commands
 Documentation - Make sure all commands make sense
+Documentation - Add mods setup to docs
+Documentation - Add feature matrix
 
 Dashboard - After first auth have download progress shown
 Dashboard - Don't show crashed in the initial state
 Dashboard - Add warning if password for API Server is weak or default
 
-Dashboard / Notifications - 2FA Time Expirationm download,failed
-Dashboard / Notifications - Add version suffix
+Dashboard / Notifications - 2FA Time Expiration download,failed
 
 Support Special caracters in config json
 
-Commands Tab - Disable non working commands in server manager
-
-Error Reporting
-
 Post-Release:
 Demo Platform - Offer a demo button on the 
+
+Unraid
 
 New Tabs:
 Connected Players
@@ -42,7 +41,12 @@ Ngrokking
 Bcrypt Auth
 Add more accounts
 
-Notifications - Load Failures, Server Crashes
+Server Hosting
+
+Add user names to the Groups / MAke OP
+Get full item list for command helpers
+
+
 
 Automatic installation script? One touch install for docker compose? CURL Download compose?
 My Installations - Link your MineOS installations to your account. Your installation ID is shown during setup.
