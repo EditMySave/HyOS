@@ -4,20 +4,162 @@
  * Uses Dockerode to communicate with Docker via the mounted socket.
  */
 
+import { promises as fs } from "node:fs";
 import Docker from "dockerode";
 import { loadConfig } from "./services/config/config.loader";
 
 // Initialize Docker client - uses /var/run/docker.sock by default
 const docker = new Docker({ socketPath: "/var/run/docker.sock" });
 
+// Cache the resolved server container id so we don't list containers on every
+// poll. Invalidated whenever an inspect() turns up a 404.
+let resolvedContainerId: string | null = null;
+let resolvedForName: string | null = null;
+
+// Cache the manager's own compose project so we can disambiguate when multiple
+// stacks expose a service with the same name. `null` once we've tried and failed.
+let managerProject: string | null | undefined;
+
+function isNotFound(error: unknown): boolean {
+  return (error as { statusCode?: number })?.statusCode === 404;
+}
+
 /**
- * Get the Hytale server container by name
- * Uses getContainer directly (same approach as experiments)
+ * Best-effort: find the compose project label of the container we're running
+ * in, so resolveServerContainer can prefer a sibling in the same stack.
+ */
+async function getManagerProject(): Promise<string | null> {
+  if (managerProject !== undefined) return managerProject;
+  managerProject = null;
+  try {
+    // In a container, the hostname is the (short) container id by default.
+    const selfId = process.env.HOSTNAME;
+    if (selfId) {
+      try {
+        const info = await docker.getContainer(selfId).inspect();
+        managerProject =
+          info.Config?.Labels?.["com.docker.compose.project"] ?? null;
+        return managerProject;
+      } catch {
+        // fall through to cgroup parsing
+      }
+    }
+    // Fallback: parse the container id out of /proc/self/cgroup or /proc/self/mountinfo
+    for (const path of ["/proc/self/cgroup", "/proc/self/mountinfo"]) {
+      try {
+        const content = await fs.readFile(path, "utf8");
+        const match = content.match(/[0-9a-f]{64}/);
+        if (match) {
+          const info = await docker.getContainer(match[0]).inspect();
+          managerProject =
+            info.Config?.Labels?.["com.docker.compose.project"] ?? null;
+          return managerProject;
+        }
+      } catch {
+        // try next source
+      }
+    }
+  } catch {
+    // give up — disambiguation just becomes best-effort
+  }
+  return managerProject;
+}
+
+/**
+ * Resolve the Hytale server container, tolerating compose project prefixes.
+ *
+ * Order of preference:
+ *  1. Exact name/id match (works for plain `docker compose` / Custom App where
+ *     the container literally is e.g. `hyos-server`).
+ *  2. A container whose `com.docker.compose.service` label equals the configured
+ *     name. When several match, prefer one in the manager's own project.
+ *  3. A container whose name ends with `/<name>`, `-<name>-N` or `_<name>_N`
+ *     (TrueNAS / docker-compose v1 style prefixes).
+ */
+async function resolveServerContainer(
+  preferredName?: string,
+): Promise<Docker.Container> {
+  let containerName = preferredName;
+  if (!containerName) {
+    const config = await loadConfig();
+    containerName = config.containerName || "hyos-server";
+  }
+
+  // Use cached id if it's still for the same configured name.
+  if (resolvedContainerId && resolvedForName === containerName) {
+    const cached = docker.getContainer(resolvedContainerId);
+    try {
+      await cached.inspect();
+      return cached;
+    } catch (error) {
+      if (!isNotFound(error)) throw error;
+      resolvedContainerId = null;
+      resolvedForName = null;
+    }
+  }
+
+  // 1. Exact match.
+  try {
+    const exact = docker.getContainer(containerName);
+    await exact.inspect();
+    resolvedContainerId = containerName;
+    resolvedForName = containerName;
+    return exact;
+  } catch (error) {
+    if (!isNotFound(error)) throw error;
+  }
+
+  // 2 & 3. Scan all containers.
+  const list = await docker.listContainers({ all: true });
+  const byServiceLabel = list.filter(
+    (c) => c.Labels?.["com.docker.compose.service"] === containerName,
+  );
+
+  let chosen: Docker.ContainerInfo | undefined = byServiceLabel[0];
+  if (byServiceLabel.length > 1) {
+    const project = await getManagerProject();
+    if (project) {
+      const sameProject = byServiceLabel.find(
+        (c) => c.Labels?.["com.docker.compose.project"] === project,
+      );
+      if (sameProject) chosen = sameProject;
+    }
+  }
+
+  if (!chosen) {
+    const suffixes = [
+      `/${containerName}`,
+      `-${containerName}-`,
+      `_${containerName}_`,
+    ];
+    chosen = list.find((c) =>
+      (c.Names ?? []).some((n) =>
+        suffixes.some((s) =>
+          s.endsWith("-") || s.endsWith("_")
+            ? new RegExp(`${s}\\d+$`).test(n)
+            : n.endsWith(s),
+        ),
+      ),
+    );
+  }
+
+  if (!chosen) {
+    throw Object.assign(new Error(`No such container: ${containerName}`), {
+      statusCode: 404,
+      reason: "no such container",
+    });
+  }
+
+  resolvedContainerId = chosen.Id;
+  resolvedForName = containerName;
+  return docker.getContainer(chosen.Id);
+}
+
+/**
+ * Get the Hytale server container by name (compose-project aware).
  */
 async function getServerContainer(): Promise<Docker.Container> {
-  const config = await loadConfig();
-  const containerName = config.containerName || "hyos-server";
-  return docker.getContainer(containerName);
+  return resolveServerContainer();
 }
 
 /**
@@ -64,6 +206,10 @@ export async function restartServerContainer(): Promise<void> {
   console.log("[docker] Container restarted");
 }
 
+// Only log a container-not-found once per outage, so a missing/renamed
+// container doesn't spam the logs on every status poll.
+let loggedMissingContainer = false;
+
 /**
  * Get the current state of the server container
  */
@@ -75,6 +221,7 @@ export async function getContainerState(): Promise<{
   try {
     const container = await getServerContainer();
     const info = await container.inspect();
+    loggedMissingContainer = false;
 
     return {
       running: info.State.Running,
@@ -82,7 +229,17 @@ export async function getContainerState(): Promise<{
       startedAt: info.State.Running ? info.State.StartedAt : null,
     };
   } catch (error) {
-    console.error("[docker] Failed to get container state:", error);
+    if (isNotFound(error)) {
+      if (!loggedMissingContainer) {
+        console.warn(
+          "[docker] Server container not found (will fall back to REST API):",
+          (error as Error).message,
+        );
+        loggedMissingContainer = true;
+      }
+    } else {
+      console.error("[docker] Failed to get container state:", error);
+    }
     return {
       running: false,
       status: "unknown",
@@ -151,14 +308,18 @@ export async function execInContainer(
 }
 
 /**
- * Get container logs
+ * Get container logs.
+ *
+ * `containerName` is treated as the configured/compose-service name; the real
+ * container is resolved via resolveServerContainer so compose project prefixes
+ * (e.g. TrueNAS `ix-<release>-server-1`) are handled transparently.
  */
 export async function getContainerLogs(
   containerName: string,
   options: { tail?: number; since?: number; timestamps?: boolean } = {},
 ): Promise<string> {
   try {
-    const container = docker.getContainer(containerName);
+    const container = await resolveServerContainer(containerName);
 
     // Check if container uses TTY (affects log format)
     const info = await container.inspect();
