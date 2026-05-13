@@ -29,8 +29,7 @@ HyOS is a multi-container system for running and managing Hytale dedicated serve
 
 ## Quick Start
 
-<details>
-<summary><strong>Docker Compose (Linux / macOS / Windows)</strong></summary>
+**Docker Compose (Linux / macOS / Windows)**
 
 Create a `compose.yaml`:
 
@@ -119,10 +118,9 @@ docker compose up -d
 docker logs -f hyos-server  # Complete OAuth when prompted
 ```
 
-</details>
 
-<details>
-<summary><strong>TrueNAS SCALE (Custom App)</strong></summary>
+
+**TrueNAS SCALE (Custom App)**
 
 Create a Custom App in **Apps → Discover → Custom App** with this `compose.yaml`:
 
@@ -218,30 +216,34 @@ services:
 
 > **Note:** Replace `/mnt/pool/apps/hyos/data` with your actual dataset path. For the native TrueNAS app catalog (with the full configuration UI), see [config-truenas/SETUP.md](hytale-docker-server/config-truenas/SETUP.md).
 
-</details>
+
 
 For the full configuration reference, see the [Quick Start guide](website/content/docs/getting-started/index.mdx).
 
 ## Compatibility
 
-| Requirement | Details |
-|---|---|
-| Architecture | x86_64 / amd64 only |
-| Docker | Engine 24+ or Docker Desktop |
-| TrueNAS SCALE | 24.10.2.2+ (optional, for native app deployment) |
-| Hytale Account | Server hosting access required |
-| RAM | 8 GB minimum, 12 GB+ recommended |
-| Java | 25 (bundled in image, Eclipse Temurin) |
-| Network | UDP 5520 (game), TCP 30381 (API), TCP 3000 (manager UI) |
+
+| Requirement    | Details                                                 |
+| -------------- | ------------------------------------------------------- |
+| Architecture   | x86_64 / amd64 only                                     |
+| Docker         | Engine 24+ or Docker Desktop                            |
+| TrueNAS SCALE  | 24.10.2.2+ (optional, for native app deployment)        |
+| Hytale Account | Server hosting access required                          |
+| RAM            | 8 GB minimum, 12 GB+ recommended                        |
+| Java           | 25 (bundled in image, Eclipse Temurin)                  |
+| Network        | UDP 5520 (game), TCP 30381 (API), TCP 3000 (manager UI) |
+
 
 ## Architecture
 
 HyOS runs two containers that share a single `/data` volume:
 
-| Container | Image | Ports | Role |
-|---|---|---|---|
-| Hytale Server | `ghcr.io/editmysave/hyos/server` | 5520/UDP, 30381/TCP | Game server (QUIC), REST API plugin |
-| HyOS Manager | `ghcr.io/editmysave/hyos/manager` | 3000/TCP | Next.js web dashboard, Docker socket for lifecycle control |
+
+| Container     | Image                             | Ports               | Role                                                       |
+| ------------- | --------------------------------- | ------------------- | ---------------------------------------------------------- |
+| Hytale Server | `ghcr.io/editmysave/hyos/server`  | 5520/UDP, 30381/TCP | Game server (QUIC), REST API plugin                        |
+| HyOS Manager  | `ghcr.io/editmysave/hyos/manager` | 3000/TCP            | Next.js web dashboard, Docker socket for lifecycle control |
+
 
 The server container handles authentication, updates, mod validation, and config generation before launching the Java process. The Manager reads state files from `/data/.state/` and communicates with the embedded API plugin over HTTP.
 
@@ -249,17 +251,19 @@ See [Architecture](website/content/docs/architecture/overview.mdx) for diagrams 
 
 ## Documentation
 
-| Document | Description |
-|---|---|
-| [Quick Start](website/content/docs/getting-started/index.mdx) | Get a server running in minutes |
+
+| Document                                                                | Description                                             |
+| ----------------------------------------------------------------------- | ------------------------------------------------------- |
+| [Quick Start](website/content/docs/getting-started/index.mdx)           | Get a server running in minutes                         |
 | [Configuration Reference](website/content/docs/configuration/index.mdx) | Environment variables, memory tuning, config generation |
-| [TrueNAS Deployment](website/content/docs/deployment/truenas.mdx) | TrueNAS SCALE native and custom app deployment |
-| [Server Manager](website/content/docs/server-management/dashboard.mdx) | Web UI user guide |
-| [Mods & Plugins](website/content/docs/mods/index.mdx) | Installing mods, content-only patching, API plugin |
-| [Architecture](website/content/docs/architecture/overview.mdx) | System design, diagrams, state files, security model |
-| [Security](website/content/docs/security/index.mdx) | Authentication, hardening, and known limitations |
-| [Scripts Reference](website/content/docs/scripts-reference/index.mdx) | Entrypoint, library scripts, and command scripts |
-| [Troubleshooting](website/content/docs/troubleshooting/index.mdx) | Common issues and solutions |
+| [TrueNAS Deployment](website/content/docs/deployment/truenas.mdx)       | TrueNAS SCALE native and custom app deployment          |
+| [Server Manager](website/content/docs/server-management/dashboard.mdx)  | Web UI user guide                                       |
+| [Mods & Plugins](website/content/docs/mods/index.mdx)                   | Installing mods, content-only patching, API plugin      |
+| [Architecture](website/content/docs/architecture/overview.mdx)          | System design, diagrams, state files, security model    |
+| [Security](website/content/docs/security/index.mdx)                     | Authentication, hardening, and known limitations        |
+| [Scripts Reference](website/content/docs/scripts-reference/index.mdx)   | Entrypoint, library scripts, and command scripts        |
+| [Troubleshooting](website/content/docs/troubleshooting/index.mdx)       | Common issues and solutions                             |
+
 
 ## Project Structure
 
@@ -280,6 +284,57 @@ HyOS/
 ## Contributing
 
 Contributions are welcome. Please open an issue to discuss changes before submitting a pull request.
+
+## Credits & Attributions
+
+HyOS is an unofficial, community-built project. It is not affiliated with, endorsed by, or sponsored by Hypixel Studios. "Hytale" and all related assets are trademarks of Hypixel Studios.
+
+### Upstream Hytale Tooling
+
+- **[Hytale](https://hytale.com)** by Hypixel Studios — the dedicated server software this project orchestrates
+- **[Hytale Downloader CLI](https://downloader.hytale.com)** — used to authenticate and fetch server binaries inside the container
+
+### Container Runtime
+
+- **[Eclipse Temurin 25](https://adoptium.net/)** — bundled JRE
+- **[Alpine Linux](https://alpinelinux.org/)** — base image
+- **[tini](https://github.com/krallin/tini)** — PID 1 init
+- **[su-exec](https://github.com/ncopa/su-exec)** — privilege drop for non-root execution
+- **[Docker](https://www.docker.com/)** & **[Dockerode](https://github.com/apocas/dockerode)** — container runtime and Node.js API client
+
+### Server Manager (Next.js Dashboard)
+
+- **[Next.js 16](https://nextjs.org/)**, **[React 19](https://react.dev/)**, **[TypeScript](https://www.typescriptlang.org/)**
+- **[Tailwind CSS 4](https://tailwindcss.com/)**, **[Radix UI](https://www.radix-ui.com/)**, **[lucide-react](https://lucide.dev/)**, **[sonner](https://sonner.emilkowal.ski/)**, **[recharts](https://recharts.org/)**, **[tw-animate-css](https://github.com/wombosvideo/tw-animate-css)**
+- **[SWR](https://swr.vercel.app/)**, **[Zustand](https://zustand-demo.pmnd.rs/)**, **[Zod](https://zod.dev/)**
+- **[iron-session](https://github.com/vvo/iron-session)**, **[bcryptjs](https://github.com/dcodeIO/bcrypt.js)** — session and auth
+- **[archiver](https://github.com/archiverjs/node-archiver)** / **[adm-zip](https://github.com/cthackers/adm-zip)** — world and mod archive handling
+- **[Biome](https://biomejs.dev/)** — linting and formatting
+
+### API Plugin (Java)
+
+- **[jBCrypt](https://www.mindrot.org/projects/jBCrypt/)** — password hashing compatible with `htpasswd` / `bcryptjs`
+- Bundled with the Hytale server JAR: **Netty**, **Nimbus JOSE + JWT**, **Bouncy Castle**, **Gson**
+
+### Developer Build
+
+- **[Bun](https://bun.sh/)** — runtime for `config-developer` tooling
+
+### Documentation Site
+
+- **[Fumadocs](https://fumadocs.dev/)** — docs framework
+- **[Mermaid](https://mermaid.js.org/)** — architecture diagrams
+- **[next-themes](https://github.com/pacocoursey/next-themes)**, **[sharp](https://sharp.pixelplumbing.com/)**
+
+### Mod Sources
+
+Mod installation integrates with **[CurseForge](https://www.curseforge.com/)**, **[Modtale](https://modtale.com/)**, and **[NexusMods](https://www.nexusmods.com/)**. All mod content remains the property of its respective authors.
+
+### Inspiration
+
+Patterns and ideas were drawn from the broader self-hosting ecosystem — projects like **[LinuxServer.io](https://www.linuxserver.io/)** images and **[itzg's Minecraft server images](https://github.com/itzg/docker-minecraft-server)** for entrypoint and PUID/PGID conventions.
+
+If we've missed an attribution, please open an issue or PR.
 
 ## License
 
